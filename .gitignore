@@ -42,3 +42,10 @@ next-env.d.ts
 
 # antigravity agents
 .agent/
+
+# Google Cloud Service Account Keys
+*.json
+!package.json
+!package-lock.json
+!tsconfig.json
+!jsconfig.json

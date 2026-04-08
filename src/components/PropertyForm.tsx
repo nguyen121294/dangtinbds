@@ -14,9 +14,11 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
     contact: "",
     highlights: "",
     style: "Sang trọng & Đẳng cấp",
-    headings: [] as string[]
+    headings: [] as string[],
+    driveFolderUrl: ""
   });
   const [loading, setLoading] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const styleOptions = [
     "Sang trọng & Đẳng cấp",
@@ -47,17 +49,22 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setIsSuccess(false);
     
     try {
-      const res = await fetch("/api/generate", {
+      const res = await fetch("/api/generate-async", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData)
       });
       const data = await res.json();
-      onGenerate(data.text || "Có lỗi xảy ra: " + (data.error || ""));
+      if (data.success) {
+        setIsSuccess(true);
+      } else {
+        alert("Lỗi gửi yêu cầu: " + (data.error || ""));
+      }
     } catch (err) {
-      onGenerate("Lỗi kết nối máy chủ. Vui lòng thử lại.");
+      alert("Lỗi kết nối máy chủ. Vui lòng thử lại.");
     } finally {
       setLoading(false);
     }
@@ -154,10 +161,31 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
         </div>
       </div>
 
-      <button disabled={loading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 flex items-center justify-center space-x-2 disabled:opacity-75 disabled:shadow-none disabled:transform-none">
-        {loading ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
-        <span>{loading ? "Đang viết bài..." : "Tạo bài đăng ngay 🪄"}</span>
-      </button>
+      <div className="pt-2 space-y-5 border-t border-gray-100">
+        <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Tự động lưu Google Drive</h2>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Link Thư mục Google Drive</label>
+          <input required type="text" placeholder="https://drive.google.com/drive/folders/ABCXYZ..." className="w-full px-4 py-3 bg-green-50 border border-green-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-green-500 transition outline-none" value={formData.driveFolderUrl} onChange={e => setFormData({...formData, driveFolderUrl: e.target.value})} />
+          <p className="text-xs text-gray-500 mt-2">*Hệ thống sẽ xếp lịch viết bài và lưu trực tiếp tài liệu vào đường link trên. Bạn có thể cất điện thoại đi làm việc khác.</p>
+        </div>
+      </div>
+
+      <div className="pt-4">
+        {isSuccess ? (
+          <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-4 rounded-xl flex items-center space-x-3 shadow-sm">
+            <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            <div>
+              <p className="font-bold">Đã tiếp nhận yêu cầu!</p>
+              <p className="text-sm mt-0.5">Hệ thống đang chạy ngầm và sẽ tự động lưu bài báo vào Drive của bạn. Bạn đã có thể tắt ứng dụng!</p>
+            </div>
+          </div>
+        ) : (
+          <button disabled={loading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 flex items-center justify-center space-x-2 disabled:opacity-75 disabled:shadow-none disabled:transform-none">
+            {loading ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
+            <span>{loading ? "Đang gửi lên Hàng đợi QStash..." : "Tạo bài & Lưu ẩn vào Drive 🪄"}</span>
+          </button>
+        )}
+      </div>
     </form>
   );
 }
