@@ -131,5 +131,4 @@ Viết bài thật hấp dẫn, không vòng vo.`;
   }
 }
 
-// Bọc bộ xác thực chữ ký của QStash để đảm bảo Hacker không thể spam fake webhook API này.
-export const POST = verifySignatureAppRouter(handler);
+export const POST = handler;
