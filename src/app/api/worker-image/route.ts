@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 import Replicate from 'replicate';
 import { google } from 'googleapis';
+import { Readable } from 'stream';
+
+export const maxDuration = 60; // Nới lỏng thời gian chạy trên Serverless để chờ AI xử lý
 
 async function handler(req: NextRequest) {
   try {
@@ -95,7 +98,6 @@ async function handler(req: NextRequest) {
     const fileName = fileNameMatch ? `[Đã xử lý AI] ${Math.random().toString(36).substring(7)}_${fileNameMatch[1]}` : `[Đã xử lý AI] image_${Math.random().toString(36).substring(7)}.jpg`;
 
     // Tạo luồng dữ liệu ảo để up lên Drive
-    const { Readable } = require('stream');
     const mediaStream = new Readable();
     mediaStream.push(Buffer.from(imageBuffer));
     mediaStream.push(null);
