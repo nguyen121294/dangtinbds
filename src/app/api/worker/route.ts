@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
@@ -21,7 +22,7 @@ async function handler(req: NextRequest) {
     const systemPrompt = `Bạn là một chuyên gia môi giới bất động sản xuất sắc. Nhiệm vụ của bạn là viết một bài đăng facebook/zalo để chốt sale. Trình bày đẹp mắt, dùng emoji hiệu quả.`;
 
     const selectedHeadings = headings && headings.length > 0 ? headings.map((h: string) => `[x] ${h}`).join('\n') : 'Cung cấp đầy đủ thông tin';
-    
+
     const userPrompt = `ĐĂNG TIN BẤT ĐỘNG SẢN:
 - Loại hình: ${type}
 - Vị trí: ${location}
@@ -40,7 +41,7 @@ ${selectedHeadings}
 Viết bài thật hấp dẫn, không vòng vo.`;
 
     let responseText = "";
-    
+
     try {
       const response = await ai.models.generateContent({
         model: 'gemini-2.5-flash',
@@ -71,7 +72,7 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       name: `[${folderName}] ${type}`,
       mimeType: 'application/vnd.google-apps.folder',
     };
-    
+
     const folderRes = await drive.files.create({
       requestBody: folderMetadata,
       fields: 'id'
@@ -87,12 +88,12 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       mimeType: 'application/vnd.google-apps.document',
       parents: [subFolderId]
     };
-    
+
     const fileRes = await drive.files.create({
       requestBody: fileMetadata,
       fields: 'id'
     });
-    
+
     const documentId = fileRes.data?.id;
     if (!documentId) throw new Error("Không thể tạo file Google Docs");
 
@@ -114,7 +115,7 @@ Viết bài thật hấp dẫn, không vòng vo.`;
     // --- 4. KÍCH HOẠT QUÁ TRÌNH XỬ LÝ ẢNH (FAN-OUT QSTASH) ---
     if (images && Array.isArray(images) && images.length > 0) {
       console.log(`Bắt đầu xử lý và gom ${images.length} ảnh từ Temp Drive...`);
-      
+
       // Tạo thư mục "Anh Goc"
       const anhGocMetadata = {
         name: 'Anh Goc',
@@ -133,47 +134,47 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       const workerImageUrl = `${protocol}://${host}/api/worker-image`;
 
       const publishPromises = images.map(async (fileId: string, index: number) => {
-         try {
-            // Lấy thư mục gốc hiện tại để chuẩn bị dời đi
-            const file = await drive.files.get({ fileId: fileId, fields: 'parents' });
-            const previousParents = file.data.parents?.join(',') || '';
-            
-            // Chia sẻ public View Link để Replicate AI có thể tải được ảnh về xử lý
-            await drive.permissions.create({
-               fileId: fileId,
-               requestBody: { role: 'reader', type: 'anyone' }
-            });
+        try {
+          // Lấy thư mục gốc hiện tại để chuẩn bị dời đi
+          const file = await drive.files.get({ fileId: fileId, fields: 'parents' });
+          const previousParents = file.data.parents?.join(',') || '';
 
-            // Tiến hành dời file từ Thư mục gốc / Temp Drive => "Anh Goc"
-            const movedFile = await drive.files.update({
-               fileId: fileId,
-               addParents: anhGocFolderId!,
-               removeParents: previousParents,
-               fields: 'id, webContentLink, webViewLink'
-            });
+          // Chia sẻ public View Link để Replicate AI có thể tải được ảnh về xử lý
+          await drive.permissions.create({
+            fileId: fileId,
+            requestBody: { role: 'reader', type: 'anyone' }
+          });
 
-            // Sử dụng Google Drive Direct Download Link (uc?id=...)
-            const imageUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
+          // Tiến hành dời file từ Thư mục gốc / Temp Drive => "Anh Goc"
+          const movedFile = await drive.files.update({
+            fileId: fileId,
+            addParents: anhGocFolderId!,
+            removeParents: previousParents,
+            fields: 'id, webContentLink, webViewLink'
+          });
 
-            // Bắn tín hiệu sang image-worker (kèm thời gian Delay giãn cách)
-            // Thay vì dùng string `${index * 25}s` bị TypeScript bắt lỗi type, ta dùng số giây trực tiếp (number)
-            const delayTime = index > 0 ? index * 25 : undefined;
-            return qstashClient.publishJSON({
-              url: workerImageUrl,
-              body: {
-                imageUrl,
-                subFolderId,
-                access_token,
-                objectsToRemove: objectsToRemoveStr,
-                enhanceImage
-              },
-              delay: delayTime
-            });
-         } catch (e: any) {
-            console.error(`Lỗi gom/di chuyển file ${fileId}:`, e.message);
-         }
+          // Sử dụng Google Drive Direct Download Link (uc?id=...)
+          const imageUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
+
+          // Bắn tín hiệu sang image-worker (kèm thời gian Delay giãn cách)
+          // Thay vì dùng string `${index * 25}s` bị TypeScript bắt lỗi type, ta dùng số giây trực tiếp (number)
+          const delayTime = index > 0 ? index * 25 : undefined;
+          return qstashClient.publishJSON({
+            url: workerImageUrl,
+            body: {
+              imageUrl,
+              subFolderId,
+              access_token,
+              objectsToRemove: objectsToRemoveStr,
+              enhanceImage
+            },
+            delay: delayTime
+          });
+        } catch (e: any) {
+          console.error(`Lỗi gom/di chuyển file ${fileId}:`, e.message);
+        }
       });
-      
+
       await Promise.allSettled(publishPromises);
       console.log(`🚀 Đã bắn ${images.length} message sang QStash (Image Worker). Đang chờ xử lý ngầm...`);
     }

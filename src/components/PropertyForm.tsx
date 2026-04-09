@@ -82,7 +82,10 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const options = {
       maxSizeMB: 0.5,
-      maxWidthOrHeight: 1920,
+      // Giảm Resolution xuống 1024 để AI Replicate (Instruct-Pix2Pix)
+      // không bị quá tải bộ nhớ CUDA (OOM). 
+      // Lát AI Real-ESRGAN sẽ kéo nét bù lại x2 lên 2048px sau.
+      maxWidthOrHeight: 1024,
       useWebWorker: true
     };
     
