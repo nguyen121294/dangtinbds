@@ -1,0 +1,25 @@
+BÁO CÁO ĐỀ XUẤT: NÂNG CẤP HỆ THỐNG AI HẬU KỲ HÌNH ẢNH (AUTO-SAVE)
+Giải pháp: Replicate API (Mô hình Serverless GPU)
+
+1. MỤC TIÊU KINH DOANH
+- Tự động hóa 100% công đoạn hậu kỳ ảnh bất động sản (xóa rác, gỡ xe máy, nâng nét bức ảnh).
+- Triệt tiêu chi phí vận hành máy chủ (Zero DevOps Tax) và rủi ro sập hệ thống (OOM).
+- Chỉ thanh toán khi phát sinh lượng tải thực tế (Pay-as-you-go).
+
+2. KẾ HOẠCH NGÂN SÁCH (BUDGET)
+- Ngân sách trần phân bổ: ~$50 / tháng (Khoảng 1.200.000 VNĐ).
+- Với ngân sách này, hệ thống xử lý được khoảng ~7.100 bức hình / tháng (tương đương bao trọn 470 bài đăng, mỗi bài 15 ảnh điểm nhấn).
+- Phương pháp tính phí: ~$0.005 đến $0.007 trên 1 bức ảnh. (Chỉ tính cước trong 5 giây AI hoạt động, không tốn tiền nuôi máy chủ rảnh rỗi).
+
+3. KIẾN TRÚC AI SỬ DỤNG (REPLICATE UNIFIED API)
+Chúng ta sẽ kích hoạt sức mạnh của cạc đồ họa đỉnh nhất (NVIDIA A100) cho 3 tác vụ liền mạch ngầm định:
+- A. Quét Dò Tọa Độ (DINO/SAM): Nhận diện chữ user gõ (Xe máy, thùng rác,...) và tự sinh tọa độ mặt nạ cắt. Tốn ~1 giây (~$0.0004).
+- B. Xóa & Phục Dựng (LaMa / Flux): Xóa sạch bóng vật thể và lấp đầy bối cảnh như thật. Tốn ~2 giây (~$0.0010).
+- C. Kéo Sáng Làm Nét (Real-ESRGAN/Codeformer): Cứu các bức ảnh nhiễu hạt, mờ. Tốn ~3-4 giây (~$0.003).
+Tổng thời gian chờ: ~5s - 7s mỗi tấm với giá siêu rẻ.
+
+4. KIẾN TRÚC HOẠT ĐỘNG (FAN-OUT QUEUE)
+Để chống sập băng thông nếu User dội thẳng 15 ảnh một lúc:
+- Bước 1. Ảnh được kéo lên kho lưu trữ đám mây tạm thời.
+- Bước 2. Main Worker (Job gốc) sinh ra 15 lệnh Job con (Upstash QStash) chứa URL từng ảnh.
+- Bước 3. Image Worker nhận từng URL riêng biệt, ném qua Replicate xử lý, nhận ảnh về và tự âm thầm upload gọn vào thư mục bài đăng Google Drive (Không cần user duyệt trực tiếp).

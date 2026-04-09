@@ -1,6 +1,7 @@
 import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
+import { Client } from '@upstash/qstash';
 import { google } from 'googleapis';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
@@ -8,7 +9,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function handler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token } = body;
+    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token, images, objectsToRemove } = body;
 
     // --- 1. VALIDATE OAUTH TOKEN ---
     if (!access_token) {
@@ -109,6 +110,31 @@ Viết bài thật hấp dẫn, không vòng vo.`;
         ]
       }
     });
+
+    // --- 4. KÍCH HOẠT QUÁ TRÌNH XỬ LÝ ẢNH (FAN-OUT QSTASH) ---
+    if (images && Array.isArray(images) && images.length > 0) {
+      console.log(`Bắt đầu tạo ${images.length} job chỉnh ảnh...`);
+      const qstashClient = new Client({ token: process.env.QSTASH_TOKEN || "" });
+      
+      const protocol = req.headers.get("x-forwarded-proto") || "http";
+      const host = req.headers.get("host") || "localhost:3000";
+      const workerImageUrl = `${protocol}://${host}/api/worker-image`;
+
+      const publishPromises = images.map((imageUrl: string) => {
+        return qstashClient.publishJSON({
+          url: workerImageUrl,
+          body: {
+            imageUrl,
+            subFolderId,
+            access_token,
+            objectsToRemove
+          }
+        });
+      });
+      
+      await Promise.allSettled(publishPromises);
+      console.log(`🚀 Đã bắn ${images.length} message sang QStash (Image Worker). Đang chờ xử lý ngầm...`);
+    }
 
     console.log("✅ Successfully generated and saved to Drive ID:", documentId);
     return NextResponse.json({ success: true, documentId });
