@@ -30,14 +30,17 @@ async function handler(req: NextRequest) {
 
     // --- 1. Gọi Replicate API ---
     const customPrompt = objectsToRemove ? objectsToRemove : "car, motorbike, trash can, house number";
+    const instructionPrompt = `Remove ${customPrompt} and blend the background naturally`;
     
-    // Gọi model Unified Remove Object của lucataco
+    // Đã thay đổi model từ "lucataco/remove-object" sang "timbrooks/instruct-pix2pix"
+    // Lý do: Model cũ yêu cầu phải có một tấm ảnh đen trắng song song (Mask) để biết chỗ nào cần xóa.
+    // Instruct-Pix2Pix dùng văn bản thuần túy (Text Instruction) để tự động nhận diện và xóa.
     const output = await replicate.run(
-      "lucataco/remove-object:0e3a841c913f597c1e4c321560aa69e2bc1f15c65f8c366caafc379240efd8ba", 
+      "timbrooks/instruct-pix2pix:30c1d0b916a6f8efce20493f5d61ee27491ab2a60437c13c588468b9810ec23f", 
       {
         input: {
           image: imageUrl,
-          prompt: customPrompt,
+          prompt: instructionPrompt,
         }
       }
     );
