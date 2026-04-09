@@ -53,7 +53,8 @@ export async function POST(req: NextRequest) {
         const nextWebhookUrl = `${protocol}://${host}/api/webhook-replicate?step=esrgan&subFolderId=${subFolderId}&token=${encodeURIComponent(access_token)}&fileName=${encodeURIComponent(originalFileName)}&enhanceImage=false`;
 
         await replicate.predictions.create({
-            model: "nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
+            // Sửa lỗi 404: Hàm create() bắt buộc truyền mã Hash vào thuộc tính 'version'
+            version: "42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
             input: {
               image: resultUrl,
               scale: 2, 

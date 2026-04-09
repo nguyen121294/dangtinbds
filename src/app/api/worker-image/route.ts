@@ -45,7 +45,8 @@ async function handler(req: NextRequest) {
 
     // Gọi bằng hàm CREATE thay vì RUN. Nó sẽ đẩy job vào Replicate Queue và NHẢ RA NGAY LẬP TỨC (0.5s)
     await replicate.predictions.create({
-      model: "timbrooks/instruct-pix2pix:30c1d0b916a6f8efce20493f5d61ee27491ab2a60437c13c588468b9810ec23f",
+      // LƯU Ý: Với hàm create(), Replicate SDK yêu cầu tham số là `version` chứa mã Hash, không dùng `model`
+      version: "30c1d0b916a6f8efce20493f5d61ee27491ab2a60437c13c588468b9810ec23f",
       input: {
         image: imageUrl,
         prompt: instructionPrompt,
