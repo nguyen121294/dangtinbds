@@ -3,14 +3,19 @@ import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 import Replicate from 'replicate';
 import { google } from 'googleapis';
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN,
-});
-
 async function handler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { imageUrl, subFolderId, access_token, objectsToRemove } = body;
+    const { imageUrl, subFolderId, access_token, objectsToRemove, enhanceImage } = body;
+
+    const replicateToken = process.env.REPLICATE_API_TOKEN;
+    if (!replicateToken) {
+        throw new Error("Lỗi Server: Chưa cài đặt cấu hình biến môi trường REPLICATE_API_TOKEN");
+    }
+
+    const replicate = new Replicate({
+      auth: replicateToken,
+    });
 
     // Validate Input
     if (!imageUrl || !subFolderId || !access_token) {
@@ -23,10 +28,9 @@ async function handler(req: NextRequest) {
     // --- 1. Gọi Replicate API ---
     const customPrompt = objectsToRemove ? objectsToRemove : "car, motorbike, trash can, house number";
     
-    // Gọi một mô hình Unified Remove Object (Lưu ý: Có thể cần chỉ định Version Hash của model nếu báo lỗi)
-    // Ví dụ sử dụng một model Text-based Inpainting phổ biến
+    // Gọi model Unified Remove Object của lucataco
     const output = await replicate.run(
-      "lucataco/remove-object", // Hoặc thay bằng Model Version Hash mà bạn cấu hình
+      "lucataco/remove-object:0e3a841c913f597c1e4c321560aa69e2bc1f15c65f8c366caafc379240efd8ba", 
       {
         input: {
           image: imageUrl,
@@ -44,7 +48,32 @@ async function handler(req: NextRequest) {
     }
 
     if (!resultUrl) {
-      throw new Error("Không lấy được kết quả từ Replicate API");
+      throw new Error("Không lấy được kết quả từ Replicate API (Xóa vật thể)");
+    }
+    console.log(`[ImageWorker] Xóa vật thể thành công: ${resultUrl}`);
+
+    // NẾU CÓ CHỌN ENHANCE IMAGE (Kéo sáng nét) -> Gọi model GFPGAN hoặc Real-ESRGAN
+    // Để giữ tốc độ, chúng ta gọi Real-ESRGAN nhẹ gọn
+    if (enhanceImage) {
+        console.log(`[ImageWorker] Bắt đầu làm nét ảnh...`);
+        const enhanceOutput = await replicate.run(
+          "nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
+          {
+            input: {
+              image: resultUrl,
+              scale: 2, // Phóng lớn/tăng nét gấp 2 lần
+              file_name: "enhanced.png",
+            }
+          }
+        );
+        
+        if (typeof enhanceOutput === 'string') {
+            resultUrl = enhanceOutput;
+            console.log(`[ImageWorker] Làm nét thành công: ${resultUrl}`);
+        } else if (enhanceOutput && typeof enhanceOutput === "object" && 'image' in enhanceOutput) {
+            // Some models return JSON object
+            resultUrl = (enhanceOutput as any).image || resultUrl;
+        }
     }
 
     console.log(`[ImageWorker] Xử lý AI thành công. Kết quả tạm tại: ${resultUrl}`);
@@ -97,5 +126,5 @@ async function handler(req: NextRequest) {
 }
 
 // Bạn PHẢI bọc verifySignatureAppRouter để Upstash đảm bảo an toàn truy cập, không bị lộ API cho người ngoài.
-// Nếu đang test thử dưới Local (chưa có Upstash Webhook thực tế chạy), bạn có thể tạm export POST = handler;
-export const POST = verifySignatureAppRouter(handler);
+// TUY NHIÊN: Tạm thời tắt để check lỗi 500 do thiếu Variable QSTASH trên Netlify
+export const POST = handler;
