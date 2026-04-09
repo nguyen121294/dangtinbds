@@ -156,7 +156,8 @@ Viết bài thật hấp dẫn, không vòng vo.`;
             const imageUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
 
             // Bắn tín hiệu sang image-worker (kèm thời gian Delay giãn cách)
-            const delayTime = index > 0 ? `${index * 25}s` : undefined;
+            // Thay vì dùng string `${index * 25}s` bị TypeScript bắt lỗi type, ta dùng số giây trực tiếp (number)
+            const delayTime = index > 0 ? index * 25 : undefined;
             return qstashClient.publishJSON({
               url: workerImageUrl,
               body: {
