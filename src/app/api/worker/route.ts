@@ -132,7 +132,7 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       const host = req.headers.get("host") || "localhost:3000";
       const workerImageUrl = `${protocol}://${host}/api/worker-image`;
 
-      const publishPromises = images.map(async (fileId: string) => {
+      const publishPromises = images.map(async (fileId: string, index: number) => {
          try {
             // Lấy thư mục gốc hiện tại để chuẩn bị dời đi
             const file = await drive.files.get({ fileId: fileId, fields: 'parents' });
@@ -155,7 +155,8 @@ Viết bài thật hấp dẫn, không vòng vo.`;
             // Sử dụng Google Drive Direct Download Link (uc?id=...)
             const imageUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
 
-            // Bắn tín hiệu sang image-worker
+            // Bắn tín hiệu sang image-worker (kèm thời gian Delay giãn cách)
+            const delayTime = index > 0 ? `${index * 25}s` : undefined;
             return qstashClient.publishJSON({
               url: workerImageUrl,
               body: {
@@ -164,7 +165,8 @@ Viết bài thật hấp dẫn, không vòng vo.`;
                 access_token,
                 objectsToRemove: objectsToRemoveStr,
                 enhanceImage
-              }
+              },
+              delay: delayTime
             });
          } catch (e: any) {
             console.error(`Lỗi gom/di chuyển file ${fileId}:`, e.message);
