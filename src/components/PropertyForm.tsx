@@ -1,7 +1,9 @@
 "use client";
-import { useState } from "react";
-import { Loader2, Sparkles } from "lucide-react"; 
+import { useState, useCallback } from "react";
+import { Loader2, Sparkles, ImagePlus, X } from "lucide-react"; 
 import { useGoogleLogin } from '@react-oauth/google';
+import { useDropzone } from 'react-dropzone';
+import imageCompression from 'browser-image-compression';
 
 export default function PropertyForm({ onGenerate }: { onGenerate: (data: string) => void }) {
   const [formData, setFormData] = useState({
@@ -16,10 +18,14 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
     highlights: "",
     style: "Sang trọng & Đẳng cấp",
     headings: [] as string[],
+    objectsToRemove: ["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"] as string[],
+    customObjectsToRemove: "",
+    enhanceImage: true
   });
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [accessToken, setAccessToken] = useState("");
+  const [images, setImages] = useState<{file: File, preview: string, base64: string}[]>([]);
 
   const login = useGoogleLogin({
     onSuccess: (codeResponse) => setAccessToken(codeResponse.access_token),
@@ -53,6 +59,66 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
     });
   };
 
+  const defaultObjectsToRemove = ["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"];
+  const handleObjectCheckboxChange = (obj: string) => {
+    setFormData((prev) => {
+      if (prev.objectsToRemove.includes(obj)) {
+        return { ...prev, objectsToRemove: prev.objectsToRemove.filter((o) => o !== obj) };
+      } else {
+        return { ...prev, objectsToRemove: [...prev.objectsToRemove, obj] };
+      }
+    });
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const onDrop = useCallback(async (acceptedFiles: File[]) => {
+    const options = {
+      maxSizeMB: 0.5,
+      maxWidthOrHeight: 1920,
+      useWebWorker: true
+    };
+    
+    // Validate number of images just stringently for demo purpose
+    if (images.length + acceptedFiles.length > 10) {
+      alert("Chỉ được up tối đa 10 ảnh!");
+      return;
+    }
+
+    const compressedImages = await Promise.all(acceptedFiles.map(async (file) => {
+      try {
+        const compressedFile = await imageCompression(file, options);
+        const base64 = await fileToBase64(compressedFile);
+        return {
+          file: compressedFile,
+          preview: URL.createObjectURL(compressedFile),
+          base64: base64
+        };
+      } catch (error) {
+        console.error(error);
+        return null;
+      }
+    }));
+    
+    setImages(prev => [...prev, ...compressedImages.filter((i): i is any => i !== null)]);
+  }, [images]);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ 
+    onDrop,
+    accept: { 'image/*': [] }
+  });
+
+  const removeImage = (index: number) => {
+    setImages(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!accessToken) {
@@ -64,10 +130,40 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
     setIsSuccess(false);
     
     try {
+      let uploadedDriveIds: string[] = [];
+
+      // Bước 1: Upload hình ảnh lên Temp Drive nếu có
+      if (images.length > 0) {
+        const base64Images = images.map(img => img.base64);
+        const uploadRes = await fetch("/api/upload-drive-temp", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ access_token: accessToken, images: base64Images })
+        });
+        
+        const uploadData = await uploadRes.json();
+        if (!uploadData.success) {
+           alert("Lỗi upload ảnh lên Drive: " + uploadData.error);
+           setLoading(false);
+           return;
+        }
+        uploadedDriveIds = uploadData.driveFileIds;
+      }
+
+      // Bước 2: Bắn sang QStash / api-generate-async
+      const objectsStr = [...formData.objectsToRemove, formData.customObjectsToRemove].filter(Boolean).join(", ");
+      
+      const payload = {
+         ...formData,
+         access_token: accessToken,
+         images: uploadedDriveIds,
+         objectsToRemoveStr: objectsStr
+      };
+
       const res = await fetch("/api/generate-async", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...formData, access_token: accessToken })
+        body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.success) {
@@ -171,6 +267,64 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
             ))}
           </div>
         </div>
+      </div>
+
+      <div className="pt-2 space-y-5 border-t border-gray-100">
+        <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Hình ảnh & Xử lý AI</h2>
+        
+        <div 
+          {...getRootProps()} 
+          className={`border-2 border-dashed p-6 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}
+        >
+          <input {...getInputProps()} />
+          <ImagePlus className="w-10 h-10 text-gray-400 mb-3" />
+          <p className="text-sm font-medium text-gray-600 text-center">Bấm để lấy ảnh từ thư viện/máy tính<br/>hoặc kéo thả vào đây</p>
+          <p className="text-xs text-gray-500 mt-1">Ảnh sẽ tự động được nén trước khi upload</p>
+        </div>
+
+        {images.length > 0 && (
+          <div className="flex flex-wrap gap-4 mt-4">
+            {images.map((img, index) => (
+              <div key={index} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 shadow-sm">
+                <img src={img.preview} alt="preview" className="w-full h-full object-cover" />
+                <button 
+                  type="button" 
+                  onClick={() => removeImage(index)} 
+                  className="absolute p-1 bg-red-500 text-white rounded-full top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {images.length > 0 && (
+          <div className="mt-5 space-y-4 bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+            <h3 className="font-semibold text-sm text-blue-800">Cấu hình AI Xóa vật thể & Làm đẹp</h3>
+            <div>
+               <label className="block text-xs font-semibold text-gray-700 mb-2">Mặc định xoá:</label>
+               <div className="flex flex-wrap gap-2">
+                 {defaultObjectsToRemove.map(obj => (
+                   <label key={obj} className="flex items-center space-x-2 text-sm text-gray-700 bg-white border border-gray-200 px-3 py-1.5 rounded-lg cursor-pointer hover:bg-blue-50 transition">
+                     <input type="checkbox" checked={formData.objectsToRemove.includes(obj)} onChange={() => handleObjectCheckboxChange(obj)} className="rounded text-blue-600 w-3.5 h-3.5" />
+                     <span>{obj}</span>
+                   </label>
+                 ))}
+               </div>
+            </div>
+            
+            <div>
+               <label className="block text-xs font-semibold text-gray-700 mb-1">Xóa thêm vật thể khác (Nhập text):</label>
+               <input type="text" placeholder="Bãi rác, xe ba gác, ổ gà..." className="w-full px-3 py-2 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none" value={formData.customObjectsToRemove} onChange={e => setFormData({...formData, customObjectsToRemove: e.target.value})} />
+            </div>
+
+            <label className="flex items-start space-x-3 text-sm text-gray-700 cursor-pointer pt-2">
+                <input type="checkbox" checked={formData.enhanceImage} onChange={e => setFormData({...formData, enhanceImage: e.target.checked})} className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer" />
+                <span className="font-medium text-blue-900">Kéo sáng, tăng độ nét cho hình ảnh (Có thể mất thêm 10s)</span>
+            </label>
+          </div>
+        )}
       </div>
 
       <div className="pt-2 space-y-5 border-t border-gray-100">

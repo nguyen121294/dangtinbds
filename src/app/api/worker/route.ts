@@ -9,7 +9,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function handler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token, images, objectsToRemove } = body;
+    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token, images, objectsToRemoveStr, enhanceImage } = body;
 
     // --- 1. VALIDATE OAUTH TOKEN ---
     if (!access_token) {
@@ -113,23 +113,62 @@ Viết bài thật hấp dẫn, không vòng vo.`;
 
     // --- 4. KÍCH HOẠT QUÁ TRÌNH XỬ LÝ ẢNH (FAN-OUT QSTASH) ---
     if (images && Array.isArray(images) && images.length > 0) {
-      console.log(`Bắt đầu tạo ${images.length} job chỉnh ảnh...`);
-      const qstashClient = new Client({ token: process.env.QSTASH_TOKEN || "" });
+      console.log(`Bắt đầu xử lý và gom ${images.length} ảnh từ Temp Drive...`);
       
+      // Tạo thư mục "Anh Goc"
+      const anhGocMetadata = {
+        name: 'Anh Goc',
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [subFolderId]
+      };
+      const anhGocRes = await drive.files.create({
+        requestBody: anhGocMetadata,
+        fields: 'id'
+      });
+      const anhGocFolderId = anhGocRes.data.id;
+
+      const qstashClient = new Client({ token: process.env.QSTASH_TOKEN || "" });
       const protocol = req.headers.get("x-forwarded-proto") || "http";
       const host = req.headers.get("host") || "localhost:3000";
       const workerImageUrl = `${protocol}://${host}/api/worker-image`;
 
-      const publishPromises = images.map((imageUrl: string) => {
-        return qstashClient.publishJSON({
-          url: workerImageUrl,
-          body: {
-            imageUrl,
-            subFolderId,
-            access_token,
-            objectsToRemove
-          }
-        });
+      const publishPromises = images.map(async (fileId: string) => {
+         try {
+            // Lấy thư mục gốc hiện tại để chuẩn bị dời đi
+            const file = await drive.files.get({ fileId: fileId, fields: 'parents' });
+            const previousParents = file.data.parents?.join(',') || '';
+            
+            // Chia sẻ public View Link để Replicate AI có thể tải được ảnh về xử lý
+            await drive.permissions.create({
+               fileId: fileId,
+               requestBody: { role: 'reader', type: 'anyone' }
+            });
+
+            // Tiến hành dời file từ Thư mục gốc / Temp Drive => "Anh Goc"
+            const movedFile = await drive.files.update({
+               fileId: fileId,
+               addParents: anhGocFolderId!,
+               removeParents: previousParents,
+               fields: 'id, webContentLink, webViewLink'
+            });
+
+            // Sử dụng Google Drive Direct Download Link (uc?id=...)
+            const imageUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
+
+            // Bắn tín hiệu sang image-worker
+            return qstashClient.publishJSON({
+              url: workerImageUrl,
+              body: {
+                imageUrl,
+                subFolderId,
+                access_token,
+                objectsToRemove: objectsToRemoveStr,
+                enhanceImage
+              }
+            });
+         } catch (e: any) {
+            console.error(`Lỗi gom/di chuyển file ${fileId}:`, e.message);
+         }
       });
       
       await Promise.allSettled(publishPromises);
