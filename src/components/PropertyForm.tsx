@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Loader2, Sparkles } from "lucide-react"; 
+import { useGoogleLogin } from '@react-oauth/google';
 
 export default function PropertyForm({ onGenerate }: { onGenerate: (data: string) => void }) {
   const [formData, setFormData] = useState({
@@ -15,10 +16,16 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
     highlights: "",
     style: "Sang trọng & Đẳng cấp",
     headings: [] as string[],
-    driveFolderUrl: ""
   });
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [accessToken, setAccessToken] = useState("");
+
+  const login = useGoogleLogin({
+    onSuccess: (codeResponse) => setAccessToken(codeResponse.access_token),
+    onError: (error) => console.log('Login Failed:', error),
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents',
+  });
 
   const styleOptions = [
     "Sang trọng & Đẳng cấp",
@@ -48,6 +55,11 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!accessToken) {
+      login();
+      return;
+    }
+    
     setLoading(true);
     setIsSuccess(false);
     
@@ -55,7 +67,7 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
       const res = await fetch("/api/generate-async", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({ ...formData, access_token: accessToken })
       });
       const data = await res.json();
       if (data.success) {
@@ -164,9 +176,7 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
       <div className="pt-2 space-y-5 border-t border-gray-100">
         <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Tự động lưu Google Drive</h2>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Link Thư mục Google Drive</label>
-          <input required type="text" placeholder="https://drive.google.com/drive/folders/ABCXYZ..." className="w-full px-4 py-3 bg-green-50 border border-green-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-green-500 transition outline-none" value={formData.driveFolderUrl} onChange={e => setFormData({...formData, driveFolderUrl: e.target.value})} />
-          <p className="text-xs text-gray-500 mt-2">*Hệ thống sẽ xếp lịch viết bài và lưu trực tiếp tài liệu vào đường link trên. Bạn có thể cất điện thoại đi làm việc khác.</p>
+          <p className="text-sm text-gray-700 mb-2">Hệ thống sẽ tự động tạo thư mục và tài liệu trên Google Drive của bạn mà không lo giới hạn server.</p>
         </div>
       </div>
 
@@ -176,13 +186,13 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
             <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <div>
               <p className="font-bold">Đã tiếp nhận yêu cầu!</p>
-              <p className="text-sm mt-0.5">Hệ thống đang chạy ngầm và sẽ tự động lưu bài báo vào Drive của bạn. Bạn đã có thể tắt ứng dụng!</p>
+              <p className="text-sm mt-0.5">Hệ thống đang chạy ngầm và sẽ tự động tạo thư mục & bài viết trên Drive của bạn. Bạn đã có thể tắt ứng dụng!</p>
             </div>
           </div>
         ) : (
-          <button disabled={loading} type="submit" className="w-full bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-bold py-3.5 px-4 rounded-xl transition-all shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5 flex items-center justify-center space-x-2 disabled:opacity-75 disabled:shadow-none disabled:transform-none">
+          <button disabled={loading} type="submit" className={`w-full text-white font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-75 disabled:shadow-none disabled:transform-none ${accessToken ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:-translate-y-0.5'}`}>
             {loading ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
-            <span>{loading ? "Đang gửi lên Hàng đợi QStash..." : "Tạo bài & Lưu ẩn vào Drive 🪄"}</span>
+            <span>{loading ? "Đang xử lý..." : (!accessToken ? "Uỷ quyền Google Drive để Tiếp tục" : "Tạo bài & Lưu ẩn vào Drive 🪄")}</span>
           </button>
         )}
       </div>

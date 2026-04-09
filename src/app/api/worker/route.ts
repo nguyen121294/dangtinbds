@@ -8,15 +8,12 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function handler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, driveFolderUrl } = body;
+    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token } = body;
 
-    // --- 1. EXTRACT FOLDER ID ---
-    const folderIdMatch = driveFolderUrl.match(/folders\/([a-zA-Z0-9-_]+)/);
-    const parentFolderId = folderIdMatch ? folderIdMatch[1] : null;
-
-    if (!parentFolderId) {
-      console.error("Invalid Drive Folder URL:", driveFolderUrl);
-      return NextResponse.json({ success: false, error: "Link Drive không hợp lệ" }, { status: 400 });
+    // --- 1. VALIDATE OAUTH TOKEN ---
+    if (!access_token) {
+      console.error("Missing User Access Token");
+      return NextResponse.json({ success: false, error: "Thiếu quyền truy cập vào Drive của người dùng" }, { status: 400 });
     }
 
     // --- 2. GENERATE AI CONTENT ---
@@ -61,27 +58,17 @@ Viết bài thật hấp dẫn, không vòng vo.`;
     }
 
     // --- 3. GOOGLE DRIVE/DOCS INTEGRATION ---
-    const credentialsStr = process.env.GOOGLE_SERVICE_ACCOUNT_CREDENTIALS;
-    if (!credentialsStr) {
-       console.error("Missing GOOGLE_SERVICE_ACCOUNT_CREDENTIALS");
-       return NextResponse.json({ success: false, error: "Server thiếu chứng chỉ con Bot Google (JSON)" }, { status: 500 });
-    }
+    const oAuth2Client = new google.auth.OAuth2();
+    oAuth2Client.setCredentials({ access_token });
 
-    const credentials = JSON.parse(credentialsStr);
-    const auth = new google.auth.GoogleAuth({
-      credentials,
-      scopes: ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/documents'],
-    });
-
-    const drive = google.drive({ version: 'v3', auth });
-    const docs = google.docs({ version: 'v1', auth });
+    const drive = google.drive({ version: 'v3', auth: oAuth2Client });
+    const docs = google.docs({ version: 'v1', auth: oAuth2Client });
 
     // 3.1. Tạo thư mục con (dd-mm-yyyy hh-mm-ss)
     const folderName = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }).replace(/[\/:]/g, '-');
     const folderMetadata = {
       name: `[${folderName}] ${type}`,
       mimeType: 'application/vnd.google-apps.folder',
-      parents: [parentFolderId]
     };
     
     const folderRes = await drive.files.create({
@@ -131,5 +118,4 @@ Viết bài thật hấp dẫn, không vòng vo.`;
   }
 }
 
-// Bọc bộ xác thực chữ ký của QStash để đảm bảo Hacker không thể spam fake webhook API này.
-export const POST = verifySignatureAppRouter(handler);
+export const POST = handler;

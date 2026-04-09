@@ -10,11 +10,11 @@ const qstashClient = new Client({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { driveFolderUrl } = body;
+    const { access_token } = body;
 
     // Validate Input
-    if (!driveFolderUrl || !driveFolderUrl.includes('drive.google.com/')) {
-      return NextResponse.json({ success: false, error: "Link thư mục Google Drive không hợp lệ!" }, { status: 400 });
+    if (!access_token) {
+      return NextResponse.json({ success: false, error: "Thiếu quyền truy cập Google Drive!" }, { status: 400 });
     }
 
     if (process.env.QSTASH_TOKEN === 'MISSING_TOKEN' || !process.env.QSTASH_TOKEN) {
