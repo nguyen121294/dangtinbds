@@ -32,97 +32,30 @@ async function handler(req: NextRequest) {
     const customPrompt = objectsToRemove ? objectsToRemove : "car, motorbike, trash can, house number";
     const instructionPrompt = `Remove ${customPrompt} and blend the background naturally`;
     
-    // Đã thay đổi model từ "lucataco/remove-object" sang "timbrooks/instruct-pix2pix"
-    // Lý do: Model cũ yêu cầu phải có một tấm ảnh đen trắng song song (Mask) để biết chỗ nào cần xóa.
-    // Instruct-Pix2Pix dùng văn bản thuần túy (Text Instruction) để tự động nhận diện và xóa.
-    const output = await replicate.run(
-      "timbrooks/instruct-pix2pix:30c1d0b916a6f8efce20493f5d61ee27491ab2a60437c13c588468b9810ec23f", 
-      {
-        input: {
-          image: imageUrl,
-          prompt: instructionPrompt,
-        }
-      }
-    );
-
-    // Replicate thường trả về URL của ảnh kết quả dưới dạng mảng hoặc chuỗi
-    let resultUrl = "";
-    if (Array.isArray(output) && output.length > 0) {
-      resultUrl = output[0];
-    } else if (typeof output === 'string') {
-      resultUrl = output;
-    }
-
-    if (!resultUrl) {
-      throw new Error("Không lấy được kết quả từ Replicate API (Xóa vật thể)");
-    }
-    console.log(`[ImageWorker] Xóa vật thể thành công: ${resultUrl}`);
-
-    // NẾU CÓ CHỌN ENHANCE IMAGE (Kéo sáng nét) -> Gọi model GFPGAN hoặc Real-ESRGAN
-    // Để giữ tốc độ, chúng ta gọi Real-ESRGAN nhẹ gọn
-    if (enhanceImage) {
-        console.log(`[ImageWorker] Bắt đầu làm nét ảnh...`);
-        const enhanceOutput = await replicate.run(
-          "nightmareai/real-esrgan:42fed1c4974146d4d2414e2be2c5277c7fcf05fcc3a73abf41610695738c1d7b",
-          {
-            input: {
-              image: resultUrl,
-              scale: 2, // Phóng lớn/tăng nét gấp 2 lần
-              file_name: "enhanced.png",
-            }
-          }
-        );
-        
-        if (typeof enhanceOutput === 'string') {
-            resultUrl = enhanceOutput;
-            console.log(`[ImageWorker] Làm nét thành công: ${resultUrl}`);
-        } else if (enhanceOutput && typeof enhanceOutput === "object" && 'image' in enhanceOutput) {
-            // Some models return JSON object
-            resultUrl = (enhanceOutput as any).image || resultUrl;
-        }
-    }
-
-    console.log(`[ImageWorker] Xử lý AI thành công. Kết quả tạm tại: ${resultUrl}`);
-
-    // --- 2. Tải ảnh từ Replicate về buffer để up lên Drive ---
-    const imageResponse = await fetch(resultUrl);
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch processed image: ${imageResponse.statusText}`);
-    }
-    const imageBuffer = await imageResponse.arrayBuffer();
-
-    // --- 3. GOOGLE DRIVE INTEGRATION ---
-    const oAuth2Client = new google.auth.OAuth2();
-    oAuth2Client.setCredentials({ access_token });
-    const drive = google.drive({ version: 'v3', auth: oAuth2Client });
-
-    // Trích xuất tên file từ URL gốc (VD: a.jpg)
+    // Replicate API Configuration for Async Webhook
+    const protocol = req.headers.get("x-forwarded-proto") || "http";
+    const host = req.headers.get("host") || "localhost:3000";
+    
+    // Tách tên file gốc từ Google Drive URL
     const fileNameMatch = imageUrl.match(/\/([^\/?#]+)[^\/]*$/);
-    const fileName = fileNameMatch ? `[Đã xử lý AI] ${Math.random().toString(36).substring(7)}_${fileNameMatch[1]}` : `[Đã xử lý AI] image_${Math.random().toString(36).substring(7)}.jpg`;
+    const fileName = fileNameMatch ? fileNameMatch[1] : `image_${Math.random().toString(36).substring(7)}.jpg`;
 
-    // Tạo luồng dữ liệu ảo để up lên Drive
-    const mediaStream = new Readable();
-    mediaStream.push(Buffer.from(imageBuffer));
-    mediaStream.push(null);
+    // Đóng gói Webhook URL (Xây dựng Payload cực dài để ném cho Replicate gọi lại mình)
+    const webhookUrl = `${protocol}://${host}/api/webhook-replicate?step=pix2pix&subFolderId=${subFolderId}&token=${encodeURIComponent(access_token)}&fileName=${encodeURIComponent(fileName)}&enhanceImage=${enhanceImage}`;
 
-    const fileMetadata = {
-      name: fileName,
-      parents: [subFolderId]
-    };
-
-    const media = {
-      mimeType: 'image/jpeg', // Hoặc 'image/png' tùy ảnh gốc
-      body: mediaStream
-    };
-
-    const driveRes = await drive.files.create({
-      requestBody: fileMetadata,
-      media: media,
-      fields: 'id'
+    // Gọi bằng hàm CREATE thay vì RUN. Nó sẽ đẩy job vào Replicate Queue và NHẢ RA NGAY LẬP TỨC (0.5s)
+    await replicate.predictions.create({
+      model: "timbrooks/instruct-pix2pix:30c1d0b916a6f8efce20493f5d61ee27491ab2a60437c13c588468b9810ec23f",
+      input: {
+        image: imageUrl,
+        prompt: instructionPrompt,
+      },
+      webhook: webhookUrl,
+      webhook_events_filter: ["completed"]
     });
 
-    console.log(`✅ [ImageWorker] Successfully processed and saved image to Drive. Document ID: ${driveRes.data.id}`);
-    return NextResponse.json({ success: true, processedImageId: driveRes.data.id });
+    console.log(`[ImageWorker] Đã châm ngòi nổ AI qua API Webhook thành công. Tạm biệt! (Tránh TimeOut)`);
+    return NextResponse.json({ success: true, message: "Started processing. Webhook will take care of it." });
 
   } catch (error: any) {
     console.error("[ImageWorker] Error:", error.message || error);
