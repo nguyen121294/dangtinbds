@@ -146,19 +146,22 @@ export async function POST(req: NextRequest) {
     
     const projectId = await gcpAuth.getProjectId();
     const region = process.env.GCP_REGION || "us-central1"; 
-    const vertexEndpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/imagegeneration@006:predict`;
+    // Migrate from imagegeneration@006 to newer imagen-3.0-capability-001 based on Deprecation logs
+    const vertexEndpoint = `https://${region}-aiplatform.googleapis.com/v1/projects/${projectId}/locations/${region}/publishers/google/models/imagen-3.0-capability-001:predict`;
     const vertexToken = await gcpAuth.getAccessToken();
 
     const vertexPayload = {
       instances: [
         {
-          prompt: "blend the background to seamlessly integrate the removed objects with the environment",
           image: { bytesBase64Encoded: originalBase64 },
           mask: { image: { bytesBase64Encoded: maskBase64 } }
         }
       ],
       parameters: {
         sampleCount: 1,
+        editConfig: {
+          editMode: "INPAINT_REMOVAL"
+        }
       }
     };
 
