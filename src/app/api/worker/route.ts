@@ -10,7 +10,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function handler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token, images, objectsToRemoveStr, enhanceImage } = body;
+    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token, images, objectsToRemoveStr, enhanceImage, imageProcessingEngine } = body;
 
     // --- 1. VALIDATE OAUTH TOKEN ---
     if (!access_token) {
@@ -128,10 +128,26 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       });
       const anhGocFolderId = anhGocRes.data.id;
 
+      let maskFolderId = undefined;
+      if (imageProcessingEngine === 'vertex_ai') {
+        const maskMetadata = {
+          name: 'Anh Mask',
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [subFolderId]
+        };
+        const maskRes = await drive.files.create({
+          requestBody: maskMetadata,
+          fields: 'id'
+        });
+        maskFolderId = maskRes.data.id;
+      }
+
       const qstashClient = new Client({ token: process.env.QSTASH_TOKEN || "" });
       const protocol = req.headers.get("x-forwarded-proto") || "http";
       const host = req.headers.get("host") || "localhost:3000";
-      const workerImageUrl = `${protocol}://${host}/api/worker-image`;
+      const workerImageUrl = imageProcessingEngine === 'vertex_ai'
+        ? `${protocol}://${host}/api/worker-vertex-image`
+        : `${protocol}://${host}/api/worker-image`;
 
       const publishPromises = images.map(async (fileId: string, index: number) => {
         try {
@@ -164,6 +180,7 @@ Viết bài thật hấp dẫn, không vòng vo.`;
             body: {
               imageUrl,
               subFolderId,
+              maskFolderId,
               access_token,
               objectsToRemove: objectsToRemoveStr,
               enhanceImage

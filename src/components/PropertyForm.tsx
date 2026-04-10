@@ -20,7 +20,8 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
     headings: [] as string[],
     objectsToRemove: ["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"] as string[],
     customObjectsToRemove: "",
-    enhanceImage: true
+    enhanceImage: true,
+    imageProcessingEngine: "replicate"
   });
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -326,6 +327,27 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
                 <input type="checkbox" checked={formData.enhanceImage} onChange={e => setFormData({...formData, enhanceImage: e.target.checked})} className="mt-0.5 rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer" />
                 <span className="font-medium text-blue-900">Kéo sáng, tăng độ nét cho hình ảnh (Có thể mất thêm 10s)</span>
             </label>
+
+            <div className="pt-2 border-t border-blue-100 mt-2">
+               <label className="block text-xs font-semibold text-gray-700 mb-2 mt-2">Công cụ AI xử lý ảnh:</label>
+               <div className="flex flex-col space-y-2">
+                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'replicate' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
+                   <input type="radio" name="imageEngine" value="replicate" checked={formData.imageProcessingEngine === 'replicate'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                   <div className="ml-3">
+                     <span className="block text-sm font-semibold text-gray-900">⚡ Replicate (LaMa)</span>
+                     <span className="block text-xs text-gray-500 mt-0.5">Xóa vật thể cực nhanh, ít lỗi Timeout Server.</span>
+                   </div>
+                 </label>
+                 
+                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'vertex_ai' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
+                   <input type="radio" name="imageEngine" value="vertex_ai" checked={formData.imageProcessingEngine === 'vertex_ai'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                   <div className="ml-3">
+                     <span className="block text-sm font-semibold text-gray-900">🎨 Vertex AI + Google Vision</span>
+                     <span className="block text-xs text-gray-500 mt-0.5">Xóa thông minh (Imagen 4), tự lưu Mask lên Drive.</span>
+                   </div>
+                 </label>
+               </div>
+            </div>
           </div>
         )}
       </div>
