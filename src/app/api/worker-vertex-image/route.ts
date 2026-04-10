@@ -40,9 +40,14 @@ export async function POST(req: NextRequest) {
 
     // --- 2. Google Cloud Vision API: Tìm Bounding Boxes (Cần GCP Môi Trường) ---
     console.log(`[VertexWorker] 2. Object Localization via Vision API...`);
-    // Lấy Application Default Credentials từ biến môi trường (GOOLE_APPLICATION_CREDENTIALS) 
-    // Hệ thống backend Auth:
+    // Hệ thống backend Auth: Dùng ENV vars tối giản hóa thay vì cả file JSON để tránh lỗi 4KB limit
     const gcpAuth = new google.auth.GoogleAuth({
+      credentials: {
+        client_email: process.env.GCP_CLIENT_EMAIL,
+        private_key: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, '\n'), // Fix format xuống dòng nếu copy bị lỗi
+        project_id: process.env.GCP_PROJECT_ID,
+      },
+      projectId: process.env.GCP_PROJECT_ID,
       scopes: ['https://www.googleapis.com/auth/cloud-platform']
     });
     
