@@ -153,15 +153,24 @@ export async function POST(req: NextRequest) {
     const vertexPayload = {
       instances: [
         {
-          image: { bytesBase64Encoded: originalBase64 },
-          mask: { image: { bytesBase64Encoded: maskBase64 } }
+          prompt: "", // Prompt có thể để trống khi Inpaint Removal
+          referenceImages: [
+            {
+              referenceType: "REFERENCE_TYPE_RAW",
+              referenceId: 1,
+              referenceImage: { bytesBase64Encoded: originalBase64 }
+            },
+            {
+              referenceType: "REFERENCE_TYPE_MASK",
+              referenceId: 2,
+              referenceImage: { bytesBase64Encoded: maskBase64 }
+            }
+          ]
         }
       ],
       parameters: {
         sampleCount: 1,
-        editConfig: {
-          editMode: "INPAINT_REMOVAL"
-        }
+        editMode: "EDIT_MODE_INPAINT_REMOVAL"
       }
     };
 
