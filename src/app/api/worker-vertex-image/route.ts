@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import sharp from 'sharp';
+import { Readable } from 'stream';
 
 export const maxDuration = 60; // 60s max on Pro for heavy processing
 
@@ -111,31 +112,15 @@ export async function POST(req: NextRequest) {
 
     // --- 4. Upload Mask lên Drive ---
     console.log(`[VertexWorker] 4. Uploading Mask buffer to Drive...`);
-    const boundary = "-------314159265358979323846";
-    const delimiter = `\r\n--${boundary}\r\n`;
-    const closeDelimiter = `\r\n--${boundary}--`;
     
-    const maskFileMetadata = {
-      name: `mask_${fileId}.png`,
-      mimeType: 'image/png',
-      parents: [maskFolderId]
-    };
-    
-    const maskMultipartRequestBody =
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        JSON.stringify(maskFileMetadata) +
-        delimiter +
-        'Content-Type: image/png\r\n' +
-        'Content-Transfer-Encoding: base64\r\n\r\n' +
-        maskBase64 +
-        closeDelimiter;
-
     await drive.files.create({
-      requestBody: maskMultipartRequestBody as any,
+      requestBody: {
+        name: `mask_${fileId}.png`,
+        parents: [maskFolderId]
+      },
       media: {
-        mimeType: 'multipart/related; boundary=' + boundary,
-        body: maskMultipartRequestBody
+        mimeType: 'image/png',
+        body: Readable.from(maskBuffer)
       },
       fields: 'id'
     });
@@ -205,27 +190,16 @@ export async function POST(req: NextRequest) {
     // --- 6. Upload ảnh hoàn thiện lên Drive ---
     console.log(`[VertexWorker] 6. Uploading final edited image to Drive...`);
     
-    const finalFileMetadata = {
-      name: `[AI-Vertex] _Edited.jpg`,
-      mimeType: 'image/jpeg',
-      parents: [subFolderId]
-    };
-    
-    const finalMultipartRequestBody =
-        delimiter +
-        'Content-Type: application/json\r\n\r\n' +
-        JSON.stringify(finalFileMetadata) +
-        delimiter +
-        'Content-Type: image/jpeg\r\n' +
-        'Content-Transfer-Encoding: base64\r\n\r\n' +
-        enhancedBase64 +
-        closeDelimiter;
+    const finalBuffer = Buffer.from(enhancedBase64, 'base64');
 
     await drive.files.create({
-      requestBody: finalMultipartRequestBody as any,
+      requestBody: {
+        name: `[AI-Vertex] _Edited.jpg`,
+        parents: [subFolderId]
+      },
       media: {
-        mimeType: 'multipart/related; boundary=' + boundary,
-        body: finalMultipartRequestBody
+        mimeType: 'image/jpeg',
+        body: Readable.from(finalBuffer)
       },
       fields: 'id'
     });
