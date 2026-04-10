@@ -163,14 +163,21 @@ export async function POST(req: NextRequest) {
             {
               referenceType: "REFERENCE_TYPE_MASK",
               referenceId: 2,
-              referenceImage: { bytesBase64Encoded: maskBase64 }
+              referenceImage: { bytesBase64Encoded: maskBase64 },
+              maskImageConfig: {
+                maskMode: "MASK_MODE_USER_PROVIDED",
+                dilation: 0.01
+              }
             }
           ]
         }
       ],
       parameters: {
-        sampleCount: 1,
-        editMode: "EDIT_MODE_INPAINT_REMOVAL"
+        editConfig: {
+          baseSteps: 12
+        },
+        editMode: "EDIT_MODE_INPAINT_REMOVAL",
+        sampleCount: 1
       }
     };
 
