@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
     console.log("[Worker-VisionFlux] Đang gọi Flux Fill Dev qua cơ chế create() webhook:", webhookUrl);
     
     await replicate.predictions.create({
-      model: "black-forest-labs/flux-fill-dev",
+      model: "zsxkib/flux-dev-inpainting",
       input: {
         image: base64Original,
         mask: base64Mask,
