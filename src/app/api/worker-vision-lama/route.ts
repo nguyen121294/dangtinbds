@@ -140,9 +140,8 @@ export async function POST(req: NextRequest) {
     console.log("[Worker-VisionLama] Đang gọi create() với webhook:", webhookUrl);
     
     await replicate.predictions.create({
-      // LƯU Ý CHO USER: Ở phiên bản Replicate mới (>=1.0.0), bạn được dùng `model: ...`. 
-      // Nhưng nếu hệ thống ném HTTP 422 nhắc "version hash required", hãy xóa dòng model và dùng version hash của Lama model.
-      model: "cjwbw/lama",
+      // Đã cập nhật model LAMA active: allenhooo/lama
+      version: "cdac78a1bec5b23c07fd29692fb70baa513ea403a39e643c48ec5edadb15fe72",
       input: {
         image: base64Original,
         mask: base64Mask,
