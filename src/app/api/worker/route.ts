@@ -129,7 +129,7 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       const anhGocFolderId = anhGocRes.data.id;
 
       let maskFolderId = undefined;
-      if (imageProcessingEngine === 'vertex_ai' || imageProcessingEngine === 'vision_lama') {
+      if (imageProcessingEngine === 'vertex_ai' || imageProcessingEngine === 'vision_lama' || imageProcessingEngine === 'vision_flux') {
         const maskMetadata = {
           name: 'Anh Mask',
           mimeType: 'application/vnd.google-apps.folder',
@@ -150,6 +150,8 @@ Viết bài thật hấp dẫn, không vòng vo.`;
         workerImageUrl = `${protocol}://${host}/api/worker-vertex-image`;
       } else if (imageProcessingEngine === 'vision_lama') {
         workerImageUrl = `${protocol}://${host}/api/worker-vision-lama`;
+      } else if (imageProcessingEngine === 'vision_flux') {
+        workerImageUrl = `${protocol}://${host}/api/worker-vision-flux`;
       }
 
       const publishPromises = images.map(async (fileId: string, index: number) => {

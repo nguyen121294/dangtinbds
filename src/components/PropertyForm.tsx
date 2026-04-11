@@ -350,8 +350,16 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
                  <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'vision_lama' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
                    <input type="radio" name="imageEngine" value="vision_lama" checked={formData.imageProcessingEngine === 'vision_lama'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
                    <div className="ml-3">
-                     <span className="block text-sm font-semibold text-gray-900">🚀 Vision AI + Replicate LaMa (Khuyên dùng)</span>
+                     <span className="block text-sm font-semibold text-gray-900">🚀 Vision AI + Replicate LaMa</span>
                      <span className="block text-xs text-gray-500 mt-0.5">Khoanh vùng xuất sắc và xoá vật thể tốc độ cao không tì vết.</span>
+                   </div>
+                 </label>
+                 
+                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'vision_flux' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
+                   <input type="radio" name="imageEngine" value="vision_flux" checked={formData.imageProcessingEngine === 'vision_flux'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                   <div className="ml-3">
+                     <span className="block text-sm font-semibold text-gray-900">⭐ Vision AI + Flux Fill (Cao cấp)</span>
+                     <span className="block text-xs text-gray-500 mt-0.5">Model Inpaint hàng đầu hiện nay. Hòa trộn tự nhiên, fill bối cảnh cực thực.</span>
                    </div>
                  </label>
                </div>
