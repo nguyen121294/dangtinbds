@@ -129,7 +129,7 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       const anhGocFolderId = anhGocRes.data.id;
 
       let maskFolderId = undefined;
-      if (imageProcessingEngine === 'vertex_ai') {
+      if (imageProcessingEngine === 'vertex_ai' || imageProcessingEngine === 'vision_lama') {
         const maskMetadata = {
           name: 'Anh Mask',
           mimeType: 'application/vnd.google-apps.folder',
@@ -145,9 +145,12 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       const qstashClient = new Client({ token: process.env.QSTASH_TOKEN || "" });
       const protocol = req.headers.get("x-forwarded-proto") || "http";
       const host = req.headers.get("host") || "localhost:3000";
-      const workerImageUrl = imageProcessingEngine === 'vertex_ai'
-        ? `${protocol}://${host}/api/worker-vertex-image`
-        : `${protocol}://${host}/api/worker-image`;
+      let workerImageUrl = `${protocol}://${host}/api/worker-image`;
+      if (imageProcessingEngine === 'vertex_ai') {
+        workerImageUrl = `${protocol}://${host}/api/worker-vertex-image`;
+      } else if (imageProcessingEngine === 'vision_lama') {
+        workerImageUrl = `${protocol}://${host}/api/worker-vision-lama`;
+      }
 
       const publishPromises = images.map(async (fileId: string, index: number) => {
         try {
