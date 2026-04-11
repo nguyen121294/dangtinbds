@@ -140,9 +140,9 @@ export async function POST(req: NextRequest) {
     const fillPrompt = `clean empty realistic background, natural lighting, seamless blending with surrounding environment, photorealistic, high detail, absolutely empty, clean, no cars, no vehicles, no objects, no ${customPromptKeywords.join(", no ")}`;
 
     console.log("[Worker-VisionFlux] Đang gọi Flux Fill Dev qua cơ chế create() webhook:", webhookUrl);
-    
     await replicate.predictions.create({
-      model: "zsxkib/flux-dev-inpainting",
+      // Bắt buộc phải có version hash cho model này để tránh lỗi 404
+      version: "ca8350ff748d56b3ebbd5a12bd3436c2214262a4ff8619de9890ecc41751a008",
       input: {
         image: base64Original,
         mask: base64Mask,
