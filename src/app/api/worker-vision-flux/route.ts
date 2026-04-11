@@ -136,8 +136,8 @@ export async function POST(req: NextRequest) {
     const base64Original = `data:image/jpeg;base64,${originalBuffer.toString('base64')}`;
     const base64Mask = `data:image/png;base64,${maskBuffer.toString('base64')}`;
     
-    // Dựng Prompt siêu đỉnh của Flux Fill
-    const fillPrompt = `Remove these objects: [${customPromptKeywords.join(", ")}]. Replace with clean empty realistic background, natural lighting, seamless blending with surrounding environment, photorealistic, high detail, no objects.`;
+    // Dựng Prompt siêu đỉnh của Flux Fill, tập trung tuyệt đối vào việc KHÔNG VẼ VẬT THỂ
+    const fillPrompt = `clean empty realistic background, natural lighting, seamless blending with surrounding environment, photorealistic, high detail, absolutely empty, clean, no cars, no vehicles, no objects, no ${customPromptKeywords.join(", no ")}`;
 
     console.log("[Worker-VisionFlux] Đang gọi Flux Fill Dev qua cơ chế create() webhook:", webhookUrl);
     
