@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     await replicate.predictions.create({
       model: "google/nano-banana",
       input: {
-        image: base64Original,
+        image_input: [base64Original],
         prompt: bananaPrompt,
       },
       webhook: webhookUrl,

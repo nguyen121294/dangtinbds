@@ -13,14 +13,14 @@ export async function POST(req: NextRequest) {
     if (!imageUrl || !subFolderId || !access_token) {
       return NextResponse.json({ success: false, error: "Missing required parameters" }, { status: 400 });
     }
-    
+
     console.log(`[Worker-GPT] Bắt đầu luồng xử lý OpenAI GPT Image cho: ${imageUrl}`);
 
     // --- 1. Tải file gốc về Buffer (Sử dụng User OAuth Token) ---
     console.log(`[Worker-GPT] 1. Tải hình ảnh gốc từ Drive...`);
     const oAuth2Client = new google.auth.OAuth2();
     oAuth2Client.setCredentials({ access_token });
-    
+
     const fileIdMatch = imageUrl.match(/id=([^&]+)/);
     const fileId = fileIdMatch ? fileIdMatch[1] : null;
 
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
 
     const protocol = req.headers.get("x-forwarded-proto") || "http";
     const host = req.headers.get("host") || "localhost:3000";
-    
+
     const fileNameMatch = imageUrl.match(/\/([^\/?#]+)[^\/]*$/);
     const originalFileName = fileNameMatch ? fileNameMatch[1] : `image_${Math.random().toString(36).substring(7)}.jpg`;
 
@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
 
     // Sử dụng DATA URIs để truyền buff ảnh 
     const base64Original = `data:image/jpeg;base64,${originalBuffer.toString('base64')}`;
-    
+
     const customObjects = objectsToRemove || "cars, motorbikes, trash cans, house numbers, people";
     const gptPrompt = `xóa các vật thể sau nếu có trong hình: ${customObjects}`;
 
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
         aspect_ratio: "1:1",
         number_of_images: 1,
         quality: "low",
-        output_format: "jpg",
+        output_format: "jpeg",
         input_fidelity: "low",
         background: "auto",
         output_compression: 90,
