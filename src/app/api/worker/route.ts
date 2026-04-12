@@ -152,6 +152,8 @@ Viết bài thật hấp dẫn, không vòng vo.`;
         workerImageUrl = `${protocol}://${host}/api/worker-vision-lama`;
       } else if (imageProcessingEngine === 'vision_flux') {
         workerImageUrl = `${protocol}://${host}/api/worker-vision-flux`;
+      } else if (imageProcessingEngine === 'replicate_banana') {
+        workerImageUrl = `${protocol}://${host}/api/worker-replicate-banana`;
       }
 
       const publishPromises = images.map(async (fileId: string, index: number) => {
