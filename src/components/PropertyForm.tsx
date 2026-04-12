@@ -370,6 +370,14 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
                      <span className="block text-xs text-gray-500 mt-0.5">Xóa và lấp đầy vật thể siêu nhanh bằng Prompt tự nhiên qua Webhook Replicate.</span>
                    </div>
                  </label>
+
+                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'openai_gpt' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
+                   <input type="radio" name="imageEngine" value="openai_gpt" checked={formData.imageProcessingEngine === 'openai_gpt'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                   <div className="ml-3">
+                     <span className="block text-sm font-semibold text-gray-900">🟢 OpenAI GPT-Image 1.5 (Replicate)</span>
+                     <span className="block text-xs text-gray-500 mt-0.5">Chỉnh sửa qua Replicate sử dụng model GPT-Image 1.5 với tham số nâng cao.</span>
+                   </div>
+                 </label>
                </div>
             </div>
           </div>
