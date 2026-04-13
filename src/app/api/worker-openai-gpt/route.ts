@@ -59,7 +59,7 @@ export async function POST(req: NextRequest) {
     await replicate.predictions.create({
       model: "openai/gpt-image-1.5",
       input: {
-        image_input: [base64Original],
+        image: base64Original,
         prompt: gptPrompt,
         aspect_ratio: "1:1",
         number_of_images: 1,
