@@ -49,8 +49,10 @@ export async function POST(req: NextRequest) {
     // Chuẩn bị URL Webhook để Replicate bắn trả kết quả
     const webhookUrl = `${protocol}://${host}/api/webhook-openai-gpt?subFolderId=${subFolderId}&token=${encodeURIComponent(access_token)}&fileName=${encodeURIComponent(originalFileName)}`;
 
-    // Sử dụng DATA URIs để truyền buff ảnh 
-    const base64Original = `data:image/jpeg;base64,${originalBuffer.toString('base64')}`;
+    // Sử dụng DATA URIs để truyền buff ảnh
+    // Detect MIME type thực từ header Drive thay vì hard-code jpeg
+    const mimeType = (fileResponse.headers?.['content-type'] as string | undefined)?.split(';')[0]?.trim() || 'image/jpeg';
+    const base64Original = `data:${mimeType};base64,${originalBuffer.toString('base64')}`;
 
     const customObjects = objectsToRemove || "cars, motorbikes, trash cans, house numbers, people";
     const gptPrompt = `xóa các vật thể sau nếu có trong hình: ${customObjects}`;
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
     await replicate.predictions.create({
       model: "openai/gpt-image-1.5",
       input: {
-        image: [base64Original],
+        image: base64Original,  // string, không phải array — Replicate yêu cầu FileInput đơn
         prompt: gptPrompt,
         aspect_ratio: "1:1",
         number_of_images: 1,
