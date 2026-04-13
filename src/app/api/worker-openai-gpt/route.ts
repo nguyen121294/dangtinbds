@@ -71,18 +71,32 @@ export async function POST(req: NextRequest) {
     // Chuẩn bị URL Webhook để Replicate bắn trả kết quả
     const webhookUrl = `${protocol}://${host}/api/webhook-openai-gpt?subFolderId=${subFolderId}&token=${encodeURIComponent(access_token)}&fileName=${encodeURIComponent(originalFileName)}`;
 
-    // Encode base64 và truyền thẳng string vào Replicate (không dùng array)
-    const base64Original = `data:${mimeType};base64,${originalBuffer.toString('base64')}`;
-    console.log(`[Worker-GPT] base64 length: ${base64Original.length} chars (~${(base64Original.length / 1024).toFixed(0)}KB)`);
+    // --- 3. Upload ảnh lên Replicate Files API ---
+    // Lý do: gpt-image-1.5 KHÔNG chấp nhận base64 data URI trong JSON body.
+    // Cần upload file binary lên Replicate trước, nhận HTTPS URL, rồi mới truyền vào model.
+    console.log(`[Worker-GPT] 3. Upload ảnh lên Replicate Files API...`);
+    const imageBlob = new Blob([originalBuffer], { type: mimeType });
+    const uploadedFile = await replicate.files.create(imageBlob, {
+      filename: originalFileName.endsWith('.jpg') || originalFileName.endsWith('.jpeg') || originalFileName.endsWith('.png')
+        ? originalFileName
+        : `image_${fileId}.jpg`,
+    });
+    const replicateFileUrl = uploadedFile.urls?.get;
+    console.log(`[Worker-GPT] Upload thành công. Replicate File URL: ${replicateFileUrl}`);
 
+    if (!replicateFileUrl) {
+      throw new Error("Replicate Files API không trả về URL hợp lệ");
+    }
+
+    // --- 4. Gọi Replicate Prediction với URL (không phải base64) ---
     const customObjects = objectsToRemove || "cars, motorbikes, trash cans, house numbers, people";
     const gptPrompt = `xóa các vật thể sau nếu có trong hình: ${customObjects}`;
 
-    console.log("[Worker-GPT] Đang gọi OpenAI GPT Image qua cơ chế create() webhook:", webhookUrl);
+    console.log("[Worker-GPT] 4. Gọi OpenAI GPT Image qua webhook:", webhookUrl);
     const prediction = await replicate.predictions.create({
       model: "openai/gpt-image-1.5",
       input: {
-        image: base64Original,  // string đơn — KHÔNG phải array
+        image: replicateFileUrl,  // HTTPS URL từ Replicate Files API — model nhận được binary đúng cách
         prompt: gptPrompt,
         aspect_ratio: "1:1",
         number_of_images: 1,
