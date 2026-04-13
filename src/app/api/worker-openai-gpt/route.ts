@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
     // Lý do: gpt-image-1.5 KHÔNG chấp nhận base64 data URI trong JSON body.
     // Cần upload file binary lên Replicate trước, nhận HTTPS URL, rồi mới truyền vào model.
     console.log(`[Worker-GPT] 3. Upload ảnh lên Replicate Files API...`);
-    const imageBlob = new Blob([originalBuffer], { type: mimeType });
+    const imageBlob = new Blob([new Uint8Array(originalBuffer)], { type: mimeType });
     const uploadedFile = await replicate.files.create(imageBlob, {
       filename: originalFileName.endsWith('.jpg') || originalFileName.endsWith('.jpeg') || originalFileName.endsWith('.png')
         ? originalFileName
