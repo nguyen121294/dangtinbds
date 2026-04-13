@@ -27,11 +27,33 @@ export async function POST(req: NextRequest) {
     if (!fileId) throw new Error("Invalid imageUrl format");
 
     const drive = google.drive({ version: 'v3', auth: oAuth2Client });
-    const fileResponse = await drive.files.get(
-      { fileId: fileId, alt: 'media' },
-      { responseType: 'arraybuffer' }
-    );
-    const originalBuffer = Buffer.from(fileResponse.data as ArrayBuffer);
+
+    let originalBuffer: Buffer;
+    let mimeType = 'image/jpeg';
+
+    try {
+      const fileResponse = await drive.files.get(
+        { fileId: fileId, alt: 'media' },
+        { responseType: 'arraybuffer' }
+      );
+      originalBuffer = Buffer.from(fileResponse.data as ArrayBuffer);
+      mimeType = (fileResponse.headers?.['content-type'] as string | undefined)?.split(';')[0]?.trim() || 'image/jpeg';
+    } catch (driveErr: any) {
+      throw new Error(`[Worker-GPT] Lỗi tải ảnh từ Drive API: ${driveErr.message}`);
+    }
+
+    // --- VALIDATION: Kiểm tra buffer có data không ---
+    console.log(`[Worker-GPT] Buffer size: ${originalBuffer.length} bytes | MIME: ${mimeType}`);
+
+    if (originalBuffer.length === 0) {
+      throw new Error(`Buffer rỗng — Drive trả về file trống. Có thể OAuth token hết hạn hoặc file bị xoá quyền. fileId: ${fileId}`);
+    }
+
+    // Nếu Drive trả về HTML (cảnh báo virus hoặc login page), buffer sẽ bắt đầu bằng '<'
+    const firstBytes = originalBuffer.slice(0, 10).toString('utf8');
+    if (firstBytes.trimStart().startsWith('<')) {
+      throw new Error(`Drive trả về HTML thay vì binary image. Token có thể hết hạn. Bytes đầu: "${firstBytes.substring(0, 20)}"`);
+    }
 
     // --- 2. Châm ngòi Webhook gọi Replicate OpenAI GPT Image ---
     console.log(`[Worker-GPT] 2. Gửi request Webhook tới Replicate...`);
@@ -49,19 +71,18 @@ export async function POST(req: NextRequest) {
     // Chuẩn bị URL Webhook để Replicate bắn trả kết quả
     const webhookUrl = `${protocol}://${host}/api/webhook-openai-gpt?subFolderId=${subFolderId}&token=${encodeURIComponent(access_token)}&fileName=${encodeURIComponent(originalFileName)}`;
 
-    // Sử dụng DATA URIs để truyền buff ảnh
-    // Detect MIME type thực từ header Drive thay vì hard-code jpeg
-    const mimeType = (fileResponse.headers?.['content-type'] as string | undefined)?.split(';')[0]?.trim() || 'image/jpeg';
+    // Encode base64 và truyền thẳng string vào Replicate (không dùng array)
     const base64Original = `data:${mimeType};base64,${originalBuffer.toString('base64')}`;
+    console.log(`[Worker-GPT] base64 length: ${base64Original.length} chars (~${(base64Original.length / 1024).toFixed(0)}KB)`);
 
     const customObjects = objectsToRemove || "cars, motorbikes, trash cans, house numbers, people";
     const gptPrompt = `xóa các vật thể sau nếu có trong hình: ${customObjects}`;
 
     console.log("[Worker-GPT] Đang gọi OpenAI GPT Image qua cơ chế create() webhook:", webhookUrl);
-    await replicate.predictions.create({
+    const prediction = await replicate.predictions.create({
       model: "openai/gpt-image-1.5",
       input: {
-        image: base64Original,  // string, không phải array — Replicate yêu cầu FileInput đơn
+        image: base64Original,  // string đơn — KHÔNG phải array
         prompt: gptPrompt,
         aspect_ratio: "1:1",
         number_of_images: 1,
@@ -76,11 +97,11 @@ export async function POST(req: NextRequest) {
       webhook_events_filter: ["completed"]
     });
 
-    console.log(`[Worker-GPT] ✅ Châm ngòi xong tiến trình Webhook! Nhiệm vụ kết thúc.`);
-    return NextResponse.json({ success: true, message: "Started processing with Replicate OpenAI GPT Image." });
+    console.log(`[Worker-GPT] ✅ Prediction created. ID: ${prediction.id} | Status: ${prediction.status}`);
+    return NextResponse.json({ success: true, predictionId: prediction.id, message: "Started processing with Replicate OpenAI GPT Image." });
 
   } catch (error: any) {
-    console.error(`[Worker-GPT] Lỗi:`, error);
+    console.error(`[Worker-GPT] Lỗi:`, error.message || error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
