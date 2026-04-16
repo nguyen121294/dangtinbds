@@ -27,7 +27,7 @@ export default function Home() {
 
       {/* Main content */}
       <main className="max-w-3xl mx-auto px-4 md:px-6 -mt-10 relative z-20">
-         <PropertyForm onGenerate={(content) => {}} />
+         <PropertyForm />
       </main>
       
       {/* Footer */}

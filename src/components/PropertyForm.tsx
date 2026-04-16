@@ -6,7 +6,7 @@ import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
 import { createClient } from '@/lib/supabase/client';
 
-export default function PropertyForm({ onGenerate }: { onGenerate: (data: string) => void }) {
+export default function PropertyForm() {
   const [formData, setFormData] = useState({
     type: "Đất nền",
     area: "",

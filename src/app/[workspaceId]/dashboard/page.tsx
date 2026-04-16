@@ -108,7 +108,7 @@ export default async function DashboardPage({
             <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-2">Công cụ Đăng tin AI Tốc độ cao</h2>
             <p className="text-gray-500">Thông tin biên soạn sẽ lưu trực tiếp vào Drive của bạn.</p>
          </div>
-         <PropertyForm onGenerate={(content) => {}} />
+         <PropertyForm />
       </div>
     </>
   );
