@@ -4,6 +4,7 @@ import { profiles } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { CreditCard, CheckCircle2, XCircle, FileType, Bot } from 'lucide-react';
 import { checkWorkspaceAccess, checkFeatureAccess, getWorkspacePlanDetails } from '@/lib/workspace-utils';
+import PropertyForm from '@/components/PropertyForm';
 
 export default async function DashboardPage({
   params,
@@ -71,6 +72,14 @@ export default async function DashboardPage({
              <div className="text-xl font-bold bg-zinc-800/50 p-2 rounded-xl text-zinc-300 border border-zinc-800">
                {isPersonalVip ? 'Tài khoản Đã Nâng Cấp' : 'Tài khoản Miễn phí'}
              </div>
+             <p className="mt-6 text-emerald-400 font-bold text-3xl flex items-center gap-2">
+                💳 {dbUser?.credits ?? 0} <span className="text-lg text-emerald-500/70">Credits</span>
+             </p>
+             {dbUser?.subscriptionExpiresAt && (
+                <p className="mt-3 text-sm text-zinc-400 bg-zinc-950 px-3 py-2 rounded-lg inline-block border border-zinc-800">
+                   Hết hạn: {new Date(dbUser.subscriptionExpiresAt).toLocaleDateString('vi-VN')}
+                </p>
+             )}
           </div>
           <div className="mt-6">
             {isPersonalVip ? (
@@ -86,63 +95,20 @@ export default async function DashboardPage({
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-center font-bold text-white transition hover:opacity-90 active:scale-[0.98]"
               >
                 <CreditCard className="h-5 w-5" />
-                Nâng cấp tài khoản bạn
+                Nạp thêm Credit
               </a>
             )}
           </div>
         </div>
       </div>
 
-      {/* Pro Content */}
-      <h2 className="text-2xl font-bold mt-12 mb-6 text-zinc-300 border-b border-zinc-800 pb-4">Công cụ trong phòng làm việc</h2>
-      <div className="grid md:grid-cols-2 gap-6">
-         {/* Tính năng AI */}
-         <div className={`rounded-2xl border p-8 transition-all relative overflow-hidden ${canUseAi ? 'border-indigo-500/50 bg-indigo-500/5 hover:bg-indigo-500/10' : 'border-dashed border-zinc-800 bg-zinc-900/50'}`}>
-            <div className="flex justify-between items-start mb-4">
-               <Bot className={`w-8 h-8 ${canUseAi ? 'text-indigo-400' : 'text-zinc-600'}`} />
-               {canUseAi ? (
-                  <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-1 rounded-md font-bold uppercase">Đã mở</span>
-               ) : (
-                  <span className="text-xs bg-rose-500/10 text-rose-500 px-2 py-1 rounded-md font-bold uppercase">Khoá</span>
-               )}
-            </div>
-            <h3 className={`text-xl font-bold mb-2 ${canUseAi ? 'text-white' : 'text-zinc-600'}`}>Tạo Báo cáo bằng AI</h3>
-            <p className={canUseAi ? 'text-zinc-400' : 'text-zinc-600'}>
-               Sử dụng mô hình AI tiên tiến để đọc hiểu dữ liệu trong Workspace này.
-            </p>
-            <div className="mt-6">
-               {canUseAi ? (
-                  <a href="/dashboard/tool" className="inline-block text-center px-5 py-2.5 rounded-xl font-semibold transition w-full bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg">
-                     Khởi động AI Đoán Định BĐS
-                  </a>
-               ) : (
-                  <button disabled className="px-5 py-2.5 rounded-xl font-semibold transition w-full bg-zinc-800 text-zinc-600 cursor-not-allowed">
-                     Yêu cầu gói VIP
-                  </button>
-               )}
-            </div>
+      {/* Tool Content Embedded */}
+      <div className="mt-12 mb-20 bg-[#F8FAFC] rounded-3xl p-6 md:p-12 shadow-2xl overflow-hidden border border-zinc-800">
+         <div className="mb-8 text-center">
+            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-2">Công cụ Đăng tin AI Tốc độ cao</h2>
+            <p className="text-gray-500">Thông tin biên soạn sẽ lưu trực tiếp vào Drive của bạn.</p>
          </div>
-
-         {/* Tính năng Export PDF */}
-         <div className={`rounded-2xl border p-8 transition-all relative overflow-hidden ${canExportPdf ? 'border-rose-500/50 bg-rose-500/5 hover:bg-rose-500/10' : 'border-dashed border-zinc-800 bg-zinc-900/50'}`}>
-            <div className="flex justify-between items-start mb-4">
-               <FileType className={`w-8 h-8 ${canExportPdf ? 'text-rose-400' : 'text-zinc-600'}`} />
-               {canExportPdf ? (
-                  <span className="text-xs bg-rose-500/20 text-rose-400 px-2 py-1 rounded-md font-bold uppercase">Đã mở</span>
-               ) : (
-                  <span className="text-xs bg-rose-500/10 text-rose-500 px-2 py-1 rounded-md font-bold uppercase">Khoá</span>
-               )}
-            </div>
-            <h3 className={`text-xl font-bold mb-2 ${canExportPdf ? 'text-white' : 'text-zinc-600'}`}>Xuất PDF Tốc độ cao</h3>
-            <p className={canExportPdf ? 'text-zinc-400' : 'text-zinc-600'}>
-               Đóng gói dữ liệu ra định dạng in ấn chuyên nghiệp không giới hạn trang.
-            </p>
-            <div className="mt-6">
-               <button disabled={!canExportPdf} className={`px-5 py-2.5 rounded-xl font-semibold transition w-full ${canExportPdf ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-lg' : 'bg-zinc-800 text-zinc-600 cursor-not-allowed'}`}>
-                  {canExportPdf ? 'Tải PDF Xuống' : 'Yêu cầu gói Premium'}
-               </button>
-            </div>
-         </div>
+         <PropertyForm onGenerate={(content) => {}} />
       </div>
     </>
   );
