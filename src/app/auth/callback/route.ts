@@ -57,9 +57,9 @@ export async function GET(request: Request) {
       console.error('Database insertion failed:', dbError);
     }
 
-    return NextResponse.redirect(`${origin}${next}`);
+    return NextResponse.redirect(`${origin}${next}`, { status: 303 });
   }
 
   // return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/login?error=Could not authenticate user`);
+  return NextResponse.redirect(`${origin}/login?error=Could-not-authenticate-user`, { status: 303 });
 }
