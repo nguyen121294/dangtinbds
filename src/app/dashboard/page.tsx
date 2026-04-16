@@ -143,9 +143,12 @@ export default async function DashboardHub() {
                              </div>
                           </div>
                           
-                          <div className="relative z-10 text-right mt-4">
+                          <div className="relative z-10 text-right mt-4 flex items-center justify-between">
+                             <a href="/dashboard/tool" className="inline-block bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg z-20">
+                                Dùng Tool AI BĐS
+                             </a>
                              <span className="text-sm text-indigo-400 opacity-0 group-hover:opacity-100 transition translate-x-4 group-hover:translate-x-0 inline-block font-semibold">
-                                Vào phòng &rarr;
+                                Quản lý phòng &rarr;
                              </span>
                           </div>
                        </a>

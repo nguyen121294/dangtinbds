@@ -1,39 +1,75 @@
-"use client";
-import { useState } from "react";
-import PropertyForm from "@/components/PropertyForm";
+import Link from 'next/link';
+import { ArrowRight, Shield, Zap, Sparkles } from 'lucide-react';
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-gray-900 pb-12 font-sans selection:bg-blue-200">
-      {/* Header */}
-      <header className="bg-gradient-to-r from-blue-700 to-blue-500 text-white pt-10 pb-20 shadow-sm relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
-        <div className="max-w-4xl mx-auto px-4 md:px-6 relative z-10 text-center">
-          <div className="inline-flex items-center justify-center space-x-2 bg-white/20 backdrop-blur text-white px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-100 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
-            </span>
-            <span>Trợ lý AI Bất Động Sản (Tự Động Lưu Drive)</span>
+    <div className="min-h-screen bg-[#F8FAFC] text-[#0b1c30] selection:bg-[#059669]/30">
+      {/* Hero Section */}
+      <header className="relative overflow-hidden pt-16 pb-24 lg:pt-32">
+        <div className="absolute top-0 left-1/2 -z-10 h-[600px] w-full -translate-x-1/2 [background:radial-gradient(50%_50%_at_50%_0%,rgba(5,150,105,0.08)_0%,rgba(248,250,252,0)_100%)]" />
+        
+        <div className="mx-auto max-w-7xl px-4 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#059669]/20 bg-[#059669]/10 px-4 py-1.5 text-sm font-medium text-[#059669]">
+            <Sparkles className="h-4 w-4" />
+            <span>Đăng tin bằng AI siêu tốc</span>
           </div>
-          <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
-            Bấm 1 Lần, Cất Chìa Khoá Chạy!<br className="hidden md:block" />
+          
+          <h1 className="mt-8 text-5xl font-extrabold tracking-tight sm:text-7xl">
+             Trợ lý AI <span className="bg-gradient-to-r from-[#006948] to-[#059669] bg-clip-text text-transparent">Bất Động Sản</span>
           </h1>
-          <p className="text-blue-100/90 md:text-lg max-w-2xl mx-auto font-medium">
-            Hệ thống sẽ chạy ngầm và tự động xếp bài viết thẳng vào thư mục Google Drive của bạn sau 10s. Bạn không cần ngồi màn hình chờ đợi nữa.
+          
+          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 sm:text-xl">
+            Tự động tạo nội dung tin đăng, tối ưu hóa hình ảnh và sắp xếp bài viết thẳng vào thư mục Google Drive của bạn dưới 10 giây.
           </p>
+          
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <Link
+              href="/login"
+              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#006948] to-[#059669] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#059669]/20 transition hover:opacity-90 active:scale-[0.98]"
+            >
+              Đăng nhập / Dùng thử
+              <ArrowRight className="h-5 w-5" />
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Main content */}
-      <main className="max-w-3xl mx-auto px-4 md:px-6 -mt-10 relative z-20">
-         <PropertyForm onGenerate={(content) => {}} />
-      </main>
-      
-      {/* Footer */}
-      <footer className="text-center text-gray-500 text-sm mt-12 py-6 border-t border-gray-100">
-        Powered by Next.js, Upstash QStash & Google Gemini AI.
-      </footer>
+      {/* Features */}
+      <section className="py-24">
+        <div className="mx-auto max-w-7xl px-4">
+          <div className="grid gap-12 md:grid-cols-3">
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600">
+                <Shield className="h-6 w-6" />
+              </div>
+              <h3 className="mt-6 text-xl font-bold">Lưu Trữ Tự Động</h3>
+              <p className="mt-2 text-slate-600 text-sm leading-relaxed">
+                Liên kết trực tiếp với Google Drive cá nhân của bạn. Dữ liệu tin đăng và hình ảnh luôn được cất giữ an toàn.
+              </p>
+            </div>
+            
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
+                <Zap className="h-6 w-6" />
+              </div>
+              <h3 className="mt-6 text-xl font-bold">Tốc Độ Phản Hồi</h3>
+              <p className="mt-2 text-slate-600 text-sm leading-relaxed">
+                Tạo 1 bài đăng chuẩn SEO kèm hình ảnh xóa rác chỉ trong tích tắc, giúp bạn ra hàng nhanh chóng.
+              </p>
+            </div>
+            
+            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
+                <Sparkles className="h-6 w-6" />
+              </div>
+              <h3 className="mt-6 text-xl font-bold">Thanh Toán Quét Mã</h3>
+              <p className="mt-2 text-slate-600 text-sm leading-relaxed">
+                Tích hợp PayOS cho phép nạp Credit bằng mã QR 24/7. Hết thẻ nạp vào ngay trong vòng 3 giây!
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
