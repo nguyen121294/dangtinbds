@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from '@upstash/qstash';
+import { createClient } from '@/lib/supabase/server';
 
 // Initialize QStash client
 // Note: It's safe to initialize even if process.env.QSTASH_TOKEN is undefined yet (it will fail on publish).
@@ -20,6 +21,31 @@ export async function POST(req: NextRequest) {
     if (process.env.QSTASH_TOKEN === 'MISSING_TOKEN' || !process.env.QSTASH_TOKEN) {
       return NextResponse.json({ success: false, error: "Thiếu biến môi trường QSTASH_TOKEN trên Server!" }, { status: 500 });
     }
+
+    // Check Authentication & Credits
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Bạn cần đăng nhập để tạo khóa học ảo." }, { status: 401 });
+    }
+
+    const { db } = await import('@/db');
+    const { profiles } = await import('@/db/schema');
+    const { eq, sql } = await import('drizzle-orm');
+
+    const profile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, user.id)
+    });
+
+    if (!profile || profile.credits === null || profile.credits < 1) {
+      return NextResponse.json({ success: false, error: "Bạn đã hết Credit. Vui lòng nạp thêm!" }, { status: 403 });
+    }
+
+    // Deduct 1 credit
+    await db.update(profiles)
+      .set({ credits: sql`${profiles.credits} - 1` })
+      .where(eq(profiles.id, user.id));
 
     // Determine the host dynamically so QStash knows where to call back
     // This requires the site to be deployed to a public URL (e.g. Vercel/Netlify) or tunneled via ngrok

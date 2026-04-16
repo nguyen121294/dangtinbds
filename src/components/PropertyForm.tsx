@@ -1,9 +1,10 @@
 "use client";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Loader2, Sparkles, ImagePlus, X } from "lucide-react"; 
 import { useGoogleLogin } from '@react-oauth/google';
 import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
+import { createClient } from '@/lib/supabase/client';
 
 export default function PropertyForm({ onGenerate }: { onGenerate: (data: string) => void }) {
   const [formData, setFormData] = useState({
@@ -27,6 +28,25 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
   const [isSuccess, setIsSuccess] = useState(false);
   const [accessToken, setAccessToken] = useState("");
   const [images, setImages] = useState<{file: File, preview: string, base64: string}[]>([]);
+  const supabase = createClient();
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.provider_token) {
+        setAccessToken(session.provider_token);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.provider_token) {
+        setAccessToken(session.provider_token);
+      } else if (!session) {
+        setAccessToken("");
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
 
   const login = useGoogleLogin({
     onSuccess: (codeResponse) => setAccessToken(codeResponse.access_token),
@@ -125,6 +145,14 @@ export default function PropertyForm({ onGenerate }: { onGenerate: (data: string
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { data: { session } } = await supabase.auth.getSession();
+    
+    if (!session) {
+      alert("Vui lòng đăng nhập để sử dụng tính năng AI.");
+      window.location.href = '/login';
+      return;
+    }
+
     if (!accessToken) {
       login();
       return;
