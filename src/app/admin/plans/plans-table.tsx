@@ -76,76 +76,82 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-end">
+      <div className="flex gap-4 justify-end mb-6">
         <button 
           onClick={() => { setIsAdding(true); setEditingPlan(emptyPlan); }}
-          className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition active:scale-95 shadow-lg shadow-indigo-500/20"
+          className="bg-zinc-800 hover:bg-zinc-700 text-white px-4 py-2 rounded-sm font-bold flex items-center gap-2 transition active:scale-95 border border-zinc-700"
         >
-          <Plus className="w-5 h-5" />
-          Thêm gói mới
+          <Plus className="w-4 h-4" />
+          Thêm Mốc Khác
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {plans.map((plan) => (
-          <div key={plan.id} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 flex flex-col group hover:border-indigo-500/50 transition">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-              <div className="flex gap-2">
-                <button 
-                  onClick={() => { setEditingPlan(plan); setIsAdding(false); }}
-                  className="p-2 rounded-lg hover:bg-zinc-800 text-zinc-400 hover:text-white transition"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                {plan.id !== 'free' ? (
-                   <button 
-                     onClick={() => handleDeletePlan(plan.id)}
-                     className="p-2 rounded-lg hover:bg-red-500/10 text-zinc-400 hover:text-red-400 transition"
-                     title="Xoá gói này"
-                   >
-                     <Trash2 className="w-4 h-4" />
-                   </button>
-                ) : (
-                   <button 
-                     disabled
-                     className="p-2 rounded-lg text-zinc-600 transition cursor-not-allowed"
-                     title="Gói Free là gói cố định, không thể xoá"
-                   >
-                     <Trash2 className="w-4 h-4" />
-                   </button>
-                )}
-              </div>
-            </div>
-
-            <div className="mb-4">
-              <div className="text-2xl font-bold text-indigo-400">
-                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(plan.price)}
-              </div>
-              <div className="text-sm text-zinc-500">{plan.days} ngày sử dụng</div>
-              <div className="text-sm text-zinc-500 mt-1 font-semibold text-emerald-500/80">Phòng tối đa: {plan.maxWorkspaces}</div>
-              <div className="text-sm text-zinc-500 font-semibold text-blue-500/80">Thành viên mời: {plan.maxInvites} người</div>
-            </div>
-
-            <p className="text-sm text-zinc-400 mb-4 line-clamp-2">{plan.description || 'Không có mô tả'}</p>
-
-            <div className="mt-auto pt-4 border-t border-zinc-800">
-              <div className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-2">Tính năng:</div>
-              <ul className="space-y-1">
-                {plan.features.slice(0, 3).map((f, i) => (
-                  <li key={i} className="text-sm text-zinc-300 flex items-center gap-2">
-                    <Check className="w-3 h-3 text-green-500" />
-                    {f}
-                  </li>
-                ))}
-                {plan.features.length > 3 && (
-                  <li className="text-xs text-zinc-500 italic">+{plan.features.length - 3} tính năng khác</li>
-                )}
-              </ul>
-            </div>
-          </div>
-        ))}
+      <div className="w-full overflow-x-auto shadow-sm rounded-sm border border-zinc-800 bg-zinc-950">
+        <table className="w-full text-left min-w-[700px]">
+          <thead>
+            <tr className="bg-zinc-900 border-b border-zinc-800">
+              <th className="py-4 px-6 font-extrabold text-white text-lg border-r border-zinc-800 w-1/4">
+                Credits \ Thời gian
+              </th>
+              {Array.from(new Set(plans.map(p => p.days))).sort((a,b) => a - b).map(days => (
+                <th key={days} className="py-4 px-6 font-bold text-emerald-500 text-lg text-center border-r border-zinc-800 last:border-r-0 w-1/4">
+                  {days} Ngày
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from(new Set(plans.map(p => p.creditsOffered))).sort((a,b) => a - b).map((credits) => (
+              <tr key={credits} className="border-b border-zinc-800 last:border-b-0 hover:bg-zinc-900/50 transition-colors">
+                <td className="py-4 px-6 font-bold text-white text-lg border-r border-zinc-800">
+                  {new Intl.NumberFormat('vi-VN').format(credits)} Credits
+                </td>
+                {Array.from(new Set(plans.map(p => p.days))).sort((a,b) => a - b).map(days => {
+                  const plan = plans.find(p => p.creditsOffered === credits && p.days === days);
+                  
+                  return (
+                    <td 
+                      key={days} 
+                      className="p-3 border-r border-zinc-800 last:border-r-0 text-center"
+                    >
+                      {plan ? (
+                        <div className="flex flex-col items-center gap-2">
+                           <span className="text-xl font-extrabold text-white">
+                             {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(plan.price)}
+                           </span>
+                           <div className="flex gap-2">
+                             <button
+                               onClick={() => { setEditingPlan(plan); setIsAdding(false); }}
+                               className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                             >
+                               Chỉnh sửa
+                             </button>
+                             <button
+                               onClick={() => handleDeletePlan(plan.id)}
+                               className="text-xs text-red-500 hover:text-red-400 font-medium"
+                             >
+                               Xoá
+                             </button>
+                           </div>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { 
+                            setIsAdding(true); 
+                            setEditingPlan({ ...emptyPlan, days, creditsOffered: credits }); 
+                          }}
+                          className="w-full h-full py-4 text-zinc-600 hover:text-white flex items-center justify-center bg-zinc-900 border border-dashed border-zinc-800 hover:border-zinc-500 rounded-sm transition"
+                        >
+                          <Plus className="w-5 h-5" /> Thêm Mới Giá
+                        </button>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
       {/* Edit/Add Modal */}

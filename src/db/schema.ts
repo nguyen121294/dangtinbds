@@ -5,10 +5,12 @@ export const profiles = table('profiles', {
   email: text('email').notNull(),
   firstName: text('first_name'),
   lastName: text('last_name'),
-  credits: integer('credits').default(10), // User gets 10 credits by default upon registration
+  trialCredits: integer('trial_credits').default(200), // Trial gets 200 credits
+  trialExpiresAt: timestamp('trial_expires_at'), 
+  paidCredits: integer('paid_credits').default(0), // VIP paid credits
   subscriptionId: text('subscription_id'),
   subscriptionStatus: text('subscription_status').default('inactive'), // active, inactive, past_due
-  subscriptionExpiresAt: timestamp('subscription_expires_at'),
+  subscriptionExpiresAt: timestamp('subscription_expires_at'), // This serves as Paid expires at
   status: text('status').default('active'), // active, locked
   createdAt: timestamp('created_at').defaultNow(),
 });
@@ -25,6 +27,7 @@ export const payments = table('payments', {
 export const plans = table('plans', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),
+  category: text('category').notNull().default('personal'), // personal, business
   price: doublePrecision('price').notNull(),
   days: integer('days').notNull(),
   creditsOffered: integer('credits_offered').notNull().default(100), // How many credits this plan offers
@@ -49,5 +52,7 @@ export const workspaceMembers = table('workspace_members', {
   workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
   userId: text('user_id').references(() => profiles.id, { onDelete: 'cascade' }).notNull(),
   role: text('role').notNull().default('member'), // owner, admin, member
+  creditLimit: integer('credit_limit').notNull().default(0), // Number of credits owner allows this member to use. 0 = cannot use.
+  creditsUsed: integer('credits_used').notNull().default(0), // Number of credits this member has actively used
   joinedAt: timestamp('joined_at').defaultNow(),
 });

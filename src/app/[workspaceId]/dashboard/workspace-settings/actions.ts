@@ -66,3 +66,23 @@ export async function transferOwnershipAction(workspaceId: string, newOwnerId: s
   }
   return result;
 }
+
+export async function updateCreditLimitAction(workspaceId: string, targetUserId: string, newLimit: number) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return { error: 'Unauthorized' };
+
+  // Only Owner can modify credit limits
+  const ws = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  if (ws[0].ownerId !== user.id) {
+    return { error: 'Chỉ Chủ sở hữu mới có quyền thay đổi hạn mức' };
+  }
+
+  await db.update(workspaceMembers)
+    .set({ creditLimit: newLimit })
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, targetUserId)));
+
+  revalidatePath(`/${workspaceId}/dashboard/workspace-settings`);
+  return { success: true };
+}

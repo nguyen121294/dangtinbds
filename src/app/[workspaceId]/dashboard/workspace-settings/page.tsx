@@ -5,7 +5,7 @@ import { eq } from 'drizzle-orm';
 import { Users, UserPlus, Crown, ShieldAlert } from 'lucide-react';
 import { redirect } from 'next/navigation';
 import { checkInviteQuota } from '@/lib/workspace-utils';
-import { InviteMemberForm, TransferOwnershipButton, RemoveMemberButton } from './client-components';
+import { InviteMemberForm, TransferOwnershipButton, RemoveMemberButton, UpdateCreditLimitForm } from './client-components';
 
 export default async function WorkspaceSettingsPage({
   params,
@@ -58,11 +58,11 @@ export default async function WorkspaceSettingsPage({
 
       {/* BOX 1: THÊM THÀNH VIÊN */}
       {isOwner && (
-        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+        <div className="bg-white border border-gray-200 rounded-sm p-6 shadow-sm">
           <div className="flex justify-between items-center mb-6">
-             <h2 className="text-xl font-bold flex items-center gap-2"><UserPlus className="w-5 h-5" /> Mời Thành Viên</h2>
+             <h2 className="text-xl font-bold flex items-center gap-2 text-gray-900"><UserPlus className="w-5 h-5 text-[#E03C31]" /> Mời Nhóm Viên</h2>
              {quotaInfo && (
-                <div className={`px-3 py-1 text-sm font-semibold rounded-full border ${quotaInfo.canInvite ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border-rose-500/20'}`}>
+                <div className={`px-3 py-1 text-sm font-semibold rounded-sm border ${quotaInfo.canInvite ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-red-50 text-[#E03C31] border-red-200'}`}>
                    Quota: {quotaInfo.used} / {quotaInfo.total} người duy nhất
                 </div>
              )}
@@ -73,8 +73,8 @@ export default async function WorkspaceSettingsPage({
       )}
 
       {/* BOX 2: DANH SÁCH THÀNH VIÊN */}
-      <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-6 shadow-xl">
-         <h2 className="text-xl font-bold flex items-center gap-2 mb-6"><Users className="w-5 h-5" /> Thành Viên ({members.length})</h2>
+      <div className="bg-white border border-gray-200 rounded-sm p-6 shadow-sm">
+         <h2 className="text-xl font-bold flex items-center gap-2 mb-6 text-gray-900"><Users className="w-5 h-5 text-[#E03C31]" /> Ban Quản Trị & Nhân Viên ({members.length})</h2>
          
          <div className="space-y-4">
            {members.map((member) => {
@@ -82,31 +82,35 @@ export default async function WorkspaceSettingsPage({
               const isMe = user.id === member.userId;
               
               return (
-                <div key={member.id} className="flex items-center justify-between p-4 rounded-xl border border-zinc-800 bg-zinc-950 hover:bg-zinc-800/30 transition">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 font-bold uppercase">
+                <div key={member.id} className="flex flex-col md:flex-row items-center justify-between p-4 rounded-sm border border-gray-200 bg-white hover:bg-gray-50 transition min-h-[72px]">
+                  <div className="flex items-center gap-4 w-full md:w-auto">
+                    <div className="w-10 h-10 rounded-sm bg-gray-100 border border-gray-200 flex shrink-0 items-center justify-center text-gray-600 font-bold uppercase">
                       {member.profile?.email.charAt(0)}
                     </div>
                     <div>
-                       <p className="font-semibold">{member.profile?.firstName || 'Người dùng'} {isMe && '(Bạn)'}</p>
-                       <p className="text-sm text-zinc-500">{member.profile?.email}</p>
+                       <p className="font-semibold text-gray-900">{member.profile?.firstName || 'Người dùng'} {isMe && '(Bạn)'}</p>
+                       <p className="text-sm text-gray-500">{member.profile?.email}</p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-3">
+                  <div className="flex flex-wrap items-center gap-3 mt-4 md:mt-0 w-full md:w-auto justify-end">
                      {isMemOwner ? (
-                       <span className="flex items-center gap-1 text-amber-500 bg-amber-500/10 px-3 py-1 rounded-md text-sm font-bold uppercase">
-                         <Crown className="w-4 h-4" /> Chủ sở hữu
+                       <span className="flex items-center gap-1 text-amber-600 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-sm text-sm font-bold uppercase">
+                         <Crown className="w-4 h-4" /> Tổ Trưởng
                        </span>
                      ) : (
-                       <span className="text-zinc-400 bg-zinc-800 px-3 py-1 rounded-md text-sm font-semibold uppercase">
-                         Thành viên
+                       <span className="text-gray-600 bg-gray-100 border border-gray-200 px-3 py-1.5 rounded-sm text-sm font-semibold uppercase">
+                         Nhân Viên
                        </span>
+                     )}
+
+                     {!isMemOwner && isOwner && (
+                       <UpdateCreditLimitForm workspaceId={workspaceId} userId={member.userId} initialLimit={member.creditLimit} used={member.creditsUsed} />
                      )}
 
                      {/* Các nút Hành động chỉ cho Owner */}
                      {isOwner && !isMemOwner && (
-                       <div className="flex items-center gap-2 border-l border-zinc-800 pl-3 ml-2">
+                       <div className="flex items-center gap-2 border-l border-gray-200 pl-3 ml-2">
                           <TransferOwnershipButton workspaceId={workspaceId} userId={member.userId} />
                           <RemoveMemberButton workspaceId={workspaceId} userId={member.userId} />
                        </div>

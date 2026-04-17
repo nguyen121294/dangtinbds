@@ -6,6 +6,7 @@ import { cache } from 'react';
 export type Plan = {
   id: string;
   name: string;
+  category: string;
   price: number;
   days: number;
   creditsOffered: number;
@@ -16,10 +17,16 @@ export type Plan = {
 };
 
 // Cache the plans fetch for the duration of the request
-export const getPlans = cache(async (): Promise<Plan[]> => {
+export const getPlans = cache(async (categoryFilter: string = 'personal'): Promise<Plan[]> => {
   try {
-    const allPlans = await db.select().from(plansTable);
-    return allPlans.map(p => ({
+    const allPlans = await db.select()
+      .from(plansTable)
+      .where(eq(plansTable.category, categoryFilter));
+      
+    // Sort logic to make consistent matrices
+    return allPlans
+      .sort((a, b) => a.creditsOffered === b.creditsOffered ? a.days - b.days : a.creditsOffered - b.creditsOffered)
+      .map(p => ({
       ...p,
       features: (p.features as string[]) || [],
     }));

@@ -2,7 +2,52 @@
 
 import { useTransition, useState } from 'react';
 import { Crown, Trash2, Loader2 } from 'lucide-react';
-import { inviteMemberAction, transferOwnershipAction, removeMemberAction } from './actions';
+import { inviteMemberAction, transferOwnershipAction, removeMemberAction, updateCreditLimitAction } from './actions';
+
+export function UpdateCreditLimitForm({ workspaceId, userId, initialLimit, used }: { workspaceId: string, userId: string, initialLimit: number, used: number }) {
+  const [isPending, startTransition] = useTransition();
+  const [limit, setLimit] = useState(initialLimit.toString());
+  const [editing, setEditing] = useState(false);
+
+  const handleUpdate = () => {
+    const val = parseInt(limit, 10);
+    if (isNaN(val) || val < 0) return alert('Hạn mức không hợp lệ');
+
+    startTransition(async () => {
+      const res = await updateCreditLimitAction(workspaceId, userId, val);
+      if (res?.error) {
+        alert('Lỗi: ' + res.error);
+      } else {
+        setEditing(false);
+      }
+    });
+  };
+
+  if (!editing) {
+     return (
+        <div className="flex bg-[#F2F4F5] rounded-sm px-3 py-1.5 items-center gap-2 border border-gray-200">
+           <span className="text-xs text-gray-500 font-medium uppercase min-w-max">Hạn mức</span>
+           <span className="text-sm font-bold text-gray-900">{used} / {initialLimit === 0 ? "0 (Chặn)" : initialLimit}</span>
+           <button onClick={() => setEditing(true)} className="ml-2 text-xs text-blue-600 hover:underline">Sửa</button>
+        </div>
+     );
+  }
+
+  return (
+    <div className="flex bg-[#F2F4F5] rounded-sm px-2 py-1 items-center gap-2 border border-blue-500">
+       <span className="text-xs text-gray-500 font-medium uppercase min-w-max">Cấp hạn mức:</span>
+       <input 
+         type="number" 
+         min="0"
+         value={limit} 
+         onChange={e => setLimit(e.target.value)}
+         className="w-16 px-1.5 py-0.5 text-sm font-bold text-gray-900 bg-white border border-gray-300 rounded outline-none focus:border-blue-500"
+       />
+       <button onClick={handleUpdate} disabled={isPending} className="text-xs font-bold text-emerald-600 hover:text-emerald-700">Lưu</button>
+       <button onClick={() => setEditing(false)} disabled={isPending} className="text-xs font-medium text-gray-500 hover:text-gray-700">Huỷ</button>
+    </div>
+  );
+}
 
 export function InviteMemberForm({ workspaceId, quotaCanInvite }: { workspaceId: string, quotaCanInvite: boolean }) {
   const [isPending, startTransition] = useTransition();
@@ -35,12 +80,12 @@ export function InviteMemberForm({ workspaceId, quotaCanInvite }: { workspaceId:
           required
           disabled={isPending}
           placeholder="Nhập địa chỉ email của thành viên..." 
-          className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50"
+          className="flex-1 bg-white border border-gray-200 rounded-sm px-4 py-3 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#E03C31] transition disabled:opacity-50"
         />
         <button 
           type="submit" 
           disabled={!quotaCanInvite || isPending}
-          className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[140px] justify-center"
+          className="bg-[#E03C31] hover:bg-[#c9362c] text-white px-6 py-3 rounded-sm font-bold transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 min-w-[140px] justify-center"
         >
           {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Gửi Lời Mời'}
         </button>

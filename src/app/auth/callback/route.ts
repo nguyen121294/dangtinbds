@@ -42,12 +42,16 @@ export async function GET(request: Request) {
   if (!authError && user) {
     try {
       // Create user in our DB if not exists
+      const trialExpiryDate = new Date();
+      trialExpiryDate.setDate(trialExpiryDate.getDate() + 15);
+
       await db.insert(profiles)
         .values({
           id: user.id,
           email: user.email!,
           firstName: user.user_metadata?.firstName || null,
           lastName: user.user_metadata?.lastName || null,
+          trialExpiresAt: trialExpiryDate,
         })
         .onConflictDoUpdate({
           target: profiles.id,

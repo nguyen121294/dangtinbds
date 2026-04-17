@@ -6,7 +6,7 @@ import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
 import { createClient } from '@/lib/supabase/client';
 
-export default function PropertyForm() {
+export default function PropertyForm({ workspaceId }: { workspaceId?: string }) {
   const [formData, setFormData] = useState({
     type: "Đất nền",
     area: "",
@@ -189,7 +189,8 @@ export default function PropertyForm() {
          ...formData,
          access_token: accessToken,
          images: uploadedDriveIds,
-         objectsToRemoveStr: objectsStr
+         objectsToRemoveStr: objectsStr,
+         workspaceId: workspaceId
       };
 
       const res = await fetch("/api/generate-async", {

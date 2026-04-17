@@ -11,11 +11,11 @@ const qstashClient = new Client({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { access_token } = body;
+    const { access_token, workspaceId } = body;
 
     // Validate Input
-    if (!access_token) {
-      return NextResponse.json({ success: false, error: "Thiếu quyền truy cập Google Drive!" }, { status: 400 });
+    if (!access_token || !workspaceId) {
+      return NextResponse.json({ success: false, error: "Thiếu quyền truy cập Google Drive hoặc ID Tổ chức!" }, { status: 400 });
     }
 
     if (process.env.QSTASH_TOKEN === 'MISSING_TOKEN' || !process.env.QSTASH_TOKEN) {
@@ -30,22 +30,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Bạn cần đăng nhập để tạo khóa học ảo." }, { status: 401 });
     }
 
-    const { db } = await import('@/db');
-    const { profiles } = await import('@/db/schema');
-    const { eq, sql } = await import('drizzle-orm');
-
-    const profile = await db.query.profiles.findFirst({
-      where: eq(profiles.id, user.id)
-    });
-
-    if (!profile || profile.credits === null || profile.credits < 1) {
-      return NextResponse.json({ success: false, error: "Bạn đã hết Credit. Vui lòng nạp thêm!" }, { status: 403 });
+    const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
+    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, 1);
+    
+    if (!deductRes.success) {
+      return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
     }
-
-    // Deduct 1 credit
-    await db.update(profiles)
-      .set({ credits: sql`${profiles.credits} - 1` })
-      .where(eq(profiles.id, user.id));
 
     // Determine the host dynamically so QStash knows where to call back
     // This requires the site to be deployed to a public URL (e.g. Vercel/Netlify) or tunneled via ngrok

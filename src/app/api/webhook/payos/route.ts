@@ -60,8 +60,21 @@ export async function POST(request: Request) {
       const days = plan?.days ?? 30;
       const creditsToAdd = plan?.creditsOffered ?? 100;
 
-      const expirationDate = new Date();
-      expirationDate.setDate(expirationDate.getDate() + days);
+      const profile = await db.query.profiles.findFirst({
+        where: eq(profiles.id, payment.userId),
+      });
+
+      const now = new Date();
+      let expirationDate = new Date();
+      
+      if (profile?.subscriptionExpiresAt && new Date(profile.subscriptionExpiresAt) > now) {
+        // Đang còn hạn -> Cộng dồn từ ngày hết hạn cũ
+        expirationDate = new Date(profile.subscriptionExpiresAt);
+        expirationDate.setDate(expirationDate.getDate() + days);
+      } else {
+        // Đã hết hạn hoặc chưa có -> Tính từ hôm nay
+        expirationDate.setDate(expirationDate.getDate() + days);
+      }
 
       // 4. Update user subscription with correct expiry and plan info, and increment credits
       await db.update(profiles)
@@ -69,7 +82,7 @@ export async function POST(request: Request) {
           subscriptionStatus: 'active',
           subscriptionExpiresAt: expirationDate,
           subscriptionId: plan?.id ?? payment.plan,
-          credits: sql`${profiles.credits} + ${creditsToAdd}`,
+          paidCredits: sql`${profiles.paidCredits} + ${creditsToAdd}`,
         })
         .where(eq(profiles.id, payment.userId));
 

@@ -1,75 +1,132 @@
 import Link from 'next/link';
-import { ArrowRight, Shield, Zap, Sparkles } from 'lucide-react';
+import { Bot, Image as ImageIcon, FileText, Sparkles, Wand2 } from 'lucide-react';
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#0b1c30] selection:bg-[#059669]/30">
-      {/* Hero Section */}
-      <header className="relative overflow-hidden pt-16 pb-24 lg:pt-32">
-        <div className="absolute top-0 left-1/2 -z-10 h-[600px] w-full -translate-x-1/2 [background:radial-gradient(50%_50%_at_50%_0%,rgba(5,150,105,0.08)_0%,rgba(248,250,252,0)_100%)]" />
-        
-        <div className="mx-auto max-w-7xl px-4 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-[#059669]/20 bg-[#059669]/10 px-4 py-1.5 text-sm font-medium text-[#059669]">
-            <Sparkles className="h-4 w-4" />
-            <span>Đăng tin bằng AI siêu tốc</span>
+    <div className="min-h-screen bg-[#F2F4F5] text-[#2C3136] font-sans selection:bg-[#E03C31]/20">
+      {/* Header/Nav Section */}
+      <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
+          <div className="flex items-center gap-8">
+            <Link href="/" className="flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-[#E03C31] text-white">
+                <Bot className="h-5 w-5" />
+              </div>
+              <span className="text-xl font-bold tracking-tight text-[#E03C31]">DANGTIN<span className="text-gray-800">AI</span></span>
+            </Link>
+            
+            <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
+              <Link href="#" className="hover:text-[#E03C31]">Viết Content AI</Link>
+              <Link href="#" className="hover:text-[#E03C31]">Chỉnh Sửa Ảnh</Link>
+              <Link href="#" className="hover:text-[#E03C31]">Tạo Sale Kit</Link>
+              <Link href="#" className="hover:text-[#E03C31]">Bảng Giá</Link>
+            </nav>
           </div>
           
-          <h1 className="mt-8 text-5xl font-extrabold tracking-tight sm:text-7xl">
-             Trợ lý AI <span className="bg-gradient-to-r from-[#006948] to-[#059669] bg-clip-text text-transparent">Bất Động Sản</span>
-          </h1>
-          
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-600 sm:text-xl">
-            Tự động tạo nội dung tin đăng, tối ưu hóa hình ảnh và sắp xếp bài viết thẳng vào thư mục Google Drive của bạn dưới 10 giây.
-          </p>
-          
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Link
-              href="/login"
-              className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#006948] to-[#059669] px-8 py-4 text-lg font-bold text-white shadow-lg shadow-[#059669]/20 transition hover:opacity-90 active:scale-[0.98]"
-            >
-              Đăng nhập / Dùng thử
-              <ArrowRight className="h-5 w-5" />
+          <div className="flex items-center gap-4">
+            <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-[#E03C31]">
+              Đăng nhập / Đăng ký
+            </Link>
+            <Link href="/dashboard" className="hidden sm:flex items-center justify-center rounded-sm bg-[#E03C31] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700">
+              Dùng thử miễn phí
             </Link>
           </div>
         </div>
       </header>
 
-      {/* Features */}
-      <section className="py-24">
+      {/* Hero Section */}
+      <section className="bg-white py-16 border-b border-gray-200">
+        <div className="mx-auto max-w-5xl px-4 text-center">
+          <div className="inline-flex items-center gap-2 rounded-sm border border-red-100 bg-red-50 px-3 py-1 text-xs font-bold text-[#E03C31] mb-6 uppercase">
+            <Sparkles className="h-3 w-3" />
+            Giải pháp toàn diện cho Môi giới Bất động sản
+          </div>
+          
+          <h1 className="text-3xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+            Tự động hóa công việc bán hàng <br className="hidden md:block"/> với Trợ lý AI Thông minh
+          </h1>
+          
+          <p className="mx-auto max-w-2xl text-base md:text-lg text-gray-600 mb-10">
+            Ứng dụng web duy nhất bạn cần để viết bài đăng mạng xã hội, làm đẹp ảnh bất động sản, xóa vật thể thừa và thiết kế Sale Kit chuyên nghiệp xuất file PDF chỉ trong vài cú click.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+             <Link href="/login" className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-sm bg-[#E03C31] px-8 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700">
+                Bắt đầu ngay
+             </Link>
+             <Link href="#features" className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-sm border border-gray-300 bg-white px-8 py-3 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50">
+                Tìm hiểu thêm
+             </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section id="features" className="py-16">
         <div className="mx-auto max-w-7xl px-4">
-          <div className="grid gap-12 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600">
-                <Shield className="h-6 w-6" />
+          <div className="mb-12 text-center">
+            <h2 className="text-2xl font-bold uppercase text-gray-800">
+              Các tính năng nổi bật
+            </h2>
+            <div className="mx-auto mt-4 h-1 w-16 bg-[#E03C31]"></div>
+          </div>
+          
+          <div className="grid gap-6 md:grid-cols-3">
+            {/* Feature 1 */}
+            <div className="rounded-sm border border-gray-200 bg-white p-8 transition-all hover:border-[#E03C31] hover:shadow-md">
+              <div className="mb-6 inline-flex h-12 w-12 items-center justify-center bg-red-50 text-[#E03C31] rounded-sm">
+                <FileText className="h-6 w-6" />
               </div>
-              <h3 className="mt-6 text-xl font-bold">Lưu Trữ Tự Động</h3>
-              <p className="mt-2 text-slate-600 text-sm leading-relaxed">
-                Liên kết trực tiếp với Google Drive cá nhân của bạn. Dữ liệu tin đăng và hình ảnh luôn được cất giữ an toàn.
+              <h3 className="mb-3 text-lg font-bold text-gray-900">Viết Bài Tự Động bằng AI</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Chỉ cần cung cấp các thông số cơ bản của bất động sản. AI sẽ tự động tạo ra những bài đăng hấp dẫn, chuẩn SEO, tối ưu để bạn đăng tải ngay lên Facebook, Zalo, Tiktok...
               </p>
             </div>
-            
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#059669]/10 text-[#059669]">
-                <Zap className="h-6 w-6" />
+
+            {/* Feature 2 */}
+            <div className="rounded-sm border border-gray-200 bg-white p-8 transition-all hover:border-[#E03C31] hover:shadow-md">
+              <div className="mb-6 inline-flex h-12 w-12 items-center justify-center bg-red-50 text-[#E03C31] rounded-sm">
+                <Wand2 className="h-6 w-6" />
               </div>
-              <h3 className="mt-6 text-xl font-bold">Tốc Độ Phản Hồi</h3>
-              <p className="mt-2 text-slate-600 text-sm leading-relaxed">
-                Tạo 1 bài đăng chuẩn SEO kèm hình ảnh xóa rác chỉ trong tích tắc, giúp bạn ra hàng nhanh chóng.
+              <h3 className="mb-3 text-lg font-bold text-gray-900">Làm Đẹp Kể Cả Ảnh Xấu</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Tự động cân bằng sáng, căn chỉnh màu sắc, làm không gian sáng sủa hơn. Kèm theo công cụ xóa xe cộ dư thừa, dây điện rác trong ảnh cực kì thông minh.
               </p>
             </div>
-            
-            <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600">
-                <Sparkles className="h-6 w-6" />
+
+            {/* Feature 3 */}
+            <div className="rounded-sm border border-gray-200 bg-white p-8 transition-all hover:border-[#E03C31] hover:shadow-md">
+              <div className="mb-6 inline-flex h-12 w-12 items-center justify-center bg-red-50 text-[#E03C31] rounded-sm">
+                <ImageIcon className="h-6 w-6" />
               </div>
-              <h3 className="mt-6 text-xl font-bold">Thanh Toán Quét Mã</h3>
-              <p className="mt-2 text-slate-600 text-sm leading-relaxed">
-                Tích hợp PayOS cho phép nạp Credit bằng mã QR 24/7. Hết thẻ nạp vào ngay trong vòng 3 giây!
+              <h3 className="mb-3 text-lg font-bold text-gray-900">Tạo Sale Kit & Tờ rơi PDF</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
+                Lắp ráp hình ảnh chuẩn và thông tin tự động vào các template tờ rơi (Flyer) và Sale kit chuyên nghiệp. Hỗ trợ xuất file PDF độ phân giải cao sẵn sàng gửi cho khách.
               </p>
             </div>
           </div>
         </div>
       </section>
+
+      {/* Call to Action Section */}
+      <section className="bg-white py-16 border-t border-gray-200">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Sẵn sàng gia tăng hiệu suất chốt sale?
+          </h2>
+          <p className="text-sm text-gray-600 mb-8">
+            Trải nghiệm công cụ đắc lực nhất dành riêng cho nghề môi giới bất động sản.
+          </p>
+          <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-sm bg-[#E03C31] px-10 py-4 text-base font-bold text-white transition-colors hover:bg-red-700 shadow-md">
+            Trải nghiệm dịch vụ ngay
+          </Link>
+        </div>
+      </section>
+
+      {/* Simple Footer */}
+      <footer className="bg-gray-900 py-8 text-center text-sm text-gray-400">
+         <p>© {new Date().getFullYear()} DANGTINAI. UI Style by Batdongsan.</p>
+      </footer>
     </div>
   );
 }

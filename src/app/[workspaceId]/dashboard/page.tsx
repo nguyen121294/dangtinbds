@@ -1,10 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
-import { profiles } from '@/db/schema';
+import { workspaces } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { CreditCard, CheckCircle2, XCircle, FileType, Bot } from 'lucide-react';
-import { checkWorkspaceAccess, checkFeatureAccess, getWorkspacePlanDetails } from '@/lib/workspace-utils';
-import PropertyForm from '@/components/PropertyForm';
+import { ArrowLeft, Bot, FileText, ImageIcon, ChevronRight, Crown } from 'lucide-react';
+import Link from 'next/link';
 
 export default async function DashboardPage({
   params,
@@ -14,102 +13,59 @@ export default async function DashboardPage({
   const resolvedParams = await params;
   const workspaceId = resolvedParams.workspaceId;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-
-  let dbUser;
-  try {
-    const results = await db.select().from(profiles).where(eq(profiles.id, user!.id)).limit(1);
-    dbUser = results[0];
-  } catch (error) {}
-
-  // Thay vì check subscription cá nhân như cũ, check quyền VIP của Workspace hiện hành (dùng cho thông báo cấp độ)
-  const isVipWorkspace = await checkWorkspaceAccess(workspaceId);
-  const { planName: workspacePlanName } = await getWorkspacePlanDetails(workspaceId);
-
-  // [TÍNH NĂNG MỚI] Check chi tiết Từng Feature riêng biệt
-  const canExportPdf = await checkFeatureAccess(workspaceId, 'export_pdf');
-  const canUseAi = await checkFeatureAccess(workspaceId, 'ai_model');
-
-  // Xem thử tài khoản cá nhân của người dùng NÀY có phải VIP không (để hiện nút Mua gói)
-  const isPersonalVip = dbUser?.subscriptionStatus === 'active' &&
-    dbUser?.subscriptionExpiresAt &&
-    new Date(dbUser.subscriptionExpiresAt) > new Date();
+  // fetch workspace info
+  const workspaceDetails = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const currentWorkspace = workspaceDetails[0];
 
   return (
-    <>
-      <h1 className="text-4xl font-extrabold tracking-tight">Trang chủ không gian làm việc</h1>
-      <p className="mt-2 text-zinc-400">Bạn đang ở trong phòng làm việc. Các dữ liệu bên dưới là riêng biệt.</p>
-
-      <div className="mt-8 grid gap-6 md:grid-cols-2">
-        {/* Quyền lợi Workspace */}
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl relative overflow-hidden">
-          {isVipWorkspace && <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 blur-3xl rounded-full"></div>}
-          <div className="flex items-center justify-between relative z-10">
-            <h3 className="text-lg font-semibold text-zinc-300">Cấp độ Không Gian (Team)</h3>
-            {isVipWorkspace ? (
-              <CheckCircle2 className="h-6 w-6 text-emerald-500" />
-            ) : (
-              <XCircle className="h-6 w-6 text-rose-500" />
-            )}
+    <div className="w-full">
+       <main className="max-w-[1000px] mx-auto p-4 sm:p-8">
+          <div className="mb-8">
+             <h1 className="text-2xl font-bold text-gray-900 mb-2">Tiện ích & Ứng dụng</h1>
+             <p className="text-gray-500 text-sm">Bộ công cụ công nghệ tích hợp AI dành riêng cho người làm Môi Giới Bất Động Sản.</p>
           </div>
-          <div className="mt-4 relative z-10">
-            <div className={`text-3xl font-bold ${isVipWorkspace ? 'text-emerald-400 bg-emerald-500/10 p-2 rounded-lg inline-block' : 'text-rose-400'}`}>
-              {isVipWorkspace ? `🌟 ${workspacePlanName}` : 'Free Tier'}
-            </div>
-            <p className="mt-2 text-sm text-zinc-400">
-              {isVipWorkspace
-                ? 'Không gian này được kế thừa ĐẶC QUYỀN PRO từ gói cước của Chủ sở hữu. Tài nguyên không giới hạn!'
-                : 'Mọi tính năng nâng cao trong không gian này đang bị khóa. Hãy nói người tạo phòng nâng cấp gói.'}
-            </p>
-          </div>
-        </div>
 
-        {/* Trạng thái BẢN THÂN CÁ NHÂN */}
-        <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
-          <h3 className="text-lg font-semibold text-zinc-300">Ví Của Bạn (Personal Billing)</h3>
-          <div className="mt-4">
-             <div className="text-xl font-bold bg-zinc-800/50 p-2 rounded-xl text-zinc-300 border border-zinc-800">
-               {isPersonalVip ? 'Tài khoản Đã Nâng Cấp' : 'Tài khoản Miễn phí'}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+             {/* Thẻ Công cụ số 1 */}
+             <Link href={`/${workspaceId}/dashboard/tools/content`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-[#E03C31]/50 hover:shadow-md transition-all h-full">
+                <div className="p-5 flex-1">
+                   <div className="w-12 h-12 bg-blue-50 text-blue-600 flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
+                      <Bot className="w-6 h-6" />
+                   </div>
+                   <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-[#E03C31] transition-colors">Trợ lý Viết Bài Đăng AI</h3>
+                   <p className="text-sm text-gray-500 line-clamp-3">Công cụ tự động hóa sáng tạo nội dung mô tả bất động sản chuyên nghiệp, tự động định dạng và đề xuất Headline.</p>
+                </div>
+                <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-[#E03C31] transition-colors">
+                   <span>Truy cập ngay</span>
+                   <ChevronRight className="w-4 h-4" />
+                </div>
+             </Link>
+
+             {/* Thẻ Coming soon 1 */}
+             <div className="flex flex-col bg-gray-50 border border-gray-200 border-dashed rounded-sm h-full opacity-60">
+                <div className="p-5 flex-1 relative">
+                   <div className="absolute top-4 right-4 bg-gray-200 text-gray-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm">Sắp ra mắt</div>
+                   <div className="w-12 h-12 bg-gray-200 text-gray-400 flex items-center justify-center rounded-sm mb-4">
+                      <ImageIcon className="w-6 h-6" />
+                   </div>
+                   <h3 className="text-lg font-bold text-gray-500 mb-2">Chỉnh sửa Ảnh AI</h3>
+                   <p className="text-sm text-gray-500 line-clamp-3">Làm nét ảnh, xóa vật thể rác, rác trên nền nhà và đóng dấu watermark tự động với 1 lệnh bấm.</p>
+                </div>
              </div>
-             <p className="mt-6 text-emerald-400 font-bold text-3xl flex items-center gap-2">
-                💳 {dbUser?.credits ?? 0} <span className="text-lg text-emerald-500/70">Credits</span>
-             </p>
-             {dbUser?.subscriptionExpiresAt && (
-                <p className="mt-3 text-sm text-zinc-400 bg-zinc-950 px-3 py-2 rounded-lg inline-block border border-zinc-800">
-                   Hết hạn: {new Date(dbUser.subscriptionExpiresAt).toLocaleDateString('vi-VN')}
-                </p>
-             )}
-          </div>
-          <div className="mt-6">
-            {isPersonalVip ? (
-              <button
-                disabled
-                className="w-full rounded-xl bg-zinc-800 px-6 py-4 text-center font-bold text-zinc-500 cursor-not-allowed"
-              >
-                Bạn là Đại bàng
-              </button>
-            ) : (
-               <a
-                href="/pricing"
-                className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-center font-bold text-white transition hover:opacity-90 active:scale-[0.98]"
-              >
-                <CreditCard className="h-5 w-5" />
-                Nạp thêm Credit
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
 
-      {/* Tool Content Embedded */}
-      <div className="mt-12 mb-20 bg-[#F8FAFC] rounded-3xl p-6 md:p-12 shadow-2xl overflow-hidden border border-zinc-800">
-         <div className="mb-8 text-center">
-            <h2 className="text-3xl font-extrabold tracking-tight text-gray-900 mb-2">Công cụ Đăng tin AI Tốc độ cao</h2>
-            <p className="text-gray-500">Thông tin biên soạn sẽ lưu trực tiếp vào Drive của bạn.</p>
-         </div>
-         <PropertyForm />
-      </div>
-    </>
+             {/* Thẻ Coming soon 2 */}
+             <div className="flex flex-col bg-gray-50 border border-gray-200 border-dashed rounded-sm h-full opacity-60">
+                <div className="p-5 flex-1 relative">
+                   <div className="absolute top-4 right-4 bg-gray-200 text-gray-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm">Sắp ra mắt</div>
+                   <div className="w-12 h-12 bg-gray-200 text-gray-400 flex items-center justify-center rounded-sm mb-4">
+                      <FileText className="w-6 h-6" />
+                   </div>
+                   <h3 className="text-lg font-bold text-gray-500 mb-2">Xuất Sale Kit Thực Tế</h3>
+                   <p className="text-sm text-gray-500 line-clamp-3">Tự động bắt form và xuất tài liệu PDF thuyết trình căn hộ chuyên nghiệp dạng Slide.</p>
+                </div>
+             </div>
+          </div>
+       </main>
+    </div>
   );
 }
