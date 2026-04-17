@@ -13,6 +13,7 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
   const emptyPlan: Plan = {
     id: '',
     name: '',
+    category: 'personal',
     price: 0,
     days: 30,
     creditsOffered: 10,
