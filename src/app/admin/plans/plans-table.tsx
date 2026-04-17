@@ -76,6 +76,7 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
   };
 
   return (
+    <div className="space-y-6">
       <div className="flex gap-4 justify-end mb-6">
         <button 
           onClick={() => { setIsAdding(true); setEditingPlan(emptyPlan); }}
