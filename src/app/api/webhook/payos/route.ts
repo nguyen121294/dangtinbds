@@ -17,11 +17,13 @@ export async function POST(request: Request) {
   // Verify webhook signature (Crucial for production security)
   let verifiedData;
   try {
-    // PayOS SDK requires the body as-is for verification
-    verifiedData = payos.verifyPaymentWebhookData(body);
+    // PayOS SDK v2 requires the body as-is for verification
+    verifiedData = await payos.webhooks.verify(body);
     console.log('[Webhook] Signature verified successfully');
   } catch (err: any) {
-    console.error('[Webhook] Invalid signature verification failed:', err.message);
+    console.error('[Webhook] Signature verification failed:', err.message);
+    console.error('[Webhook] Received body:', JSON.stringify(body));
+    console.error('[Webhook] Checksum key available:', !!process.env.PAYOS_CHECKSUM_KEY);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
