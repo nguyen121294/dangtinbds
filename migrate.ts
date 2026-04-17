@@ -12,23 +12,23 @@ async function main() {
   try { 
     await db.execute(sql`ALTER TABLE profiles RENAME COLUMN credits TO trial_credits;`); 
     console.log("Renamed credits to trial_credits");
-  } catch(e) { console.log(e.message) } 
+  } catch(e: any) { console.log(e.message) } 
   try{ 
     await db.execute(sql`ALTER TABLE profiles ADD COLUMN trial_expires_at TIMESTAMP;`); 
     console.log("Added trial_expires_at");
-  } catch(e){ console.log(e.message) } 
+  } catch(e: any){ console.log(e.message) } 
   try{ 
     await db.execute(sql`ALTER TABLE profiles ADD COLUMN paid_credits INTEGER DEFAULT 0;`); 
     console.log("Added paid_credits");
-  } catch(e){ console.log(e.message) } 
+  } catch(e: any){ console.log(e.message) } 
   try{ 
     await db.execute(sql`ALTER TABLE workspace_members ADD COLUMN credit_limit INTEGER NOT NULL DEFAULT 0;`); 
     console.log("Added credit_limit");
-  } catch(e){ console.log(e.message) } 
+  } catch(e: any){ console.log(e.message) } 
   try{ 
     await db.execute(sql`ALTER TABLE workspace_members ADD COLUMN credits_used INTEGER NOT NULL DEFAULT 0;`); 
     console.log("Added credits_used");
-  } catch(e){ console.log(e.message) } 
+  } catch(e: any){ console.log(e.message) } 
   
   console.log('Done'); 
   process.exit(0); 
