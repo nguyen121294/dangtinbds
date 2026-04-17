@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { getPlans } from '@/lib/plans';
 import { MatrixPricingTable } from './MatrixPricingTable';
+import { Suspense } from 'react';
+import { PaymentStatusHandler } from './PaymentStatusHandler';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,6 +13,9 @@ export default async function PricingPage() {
 
   return (
     <div className="min-h-screen bg-[#F2F4F5] text-[#0b1c30] selection:bg-[#E03C31]/20 pb-20">
+      <Suspense fallback={null}>
+        <PaymentStatusHandler />
+      </Suspense>
       {/* Header */}
       <header className="pt-20 pb-12 text-center px-4">
         <div className="inline-flex items-center gap-2 rounded-sm border border-[#E03C31]/20 bg-[#E03C31]/10 px-4 py-1.5 text-sm font-bold text-[#E03C31] mb-6 shadow-sm">
