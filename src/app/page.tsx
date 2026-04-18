@@ -1,7 +1,16 @@
 import Link from 'next/link';
 import { Bot, Image as ImageIcon, FileText, Sparkles, Wand2 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/server';
+import { redirect } from 'next/navigation';
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (user) {
+    redirect('/dashboard');
+  }
+
   return (
     <div className="min-h-screen bg-[#F2F4F5] text-[#2C3136] font-sans selection:bg-[#E03C31]/20">
       {/* Header/Nav Section */}

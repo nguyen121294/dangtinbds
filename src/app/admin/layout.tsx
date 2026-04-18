@@ -29,14 +29,14 @@ export default async function AdminLayout({
   ];
 
   return (
-    <div className="flex h-screen overflow-hidden bg-zinc-950 text-zinc-100">
+    <div className="flex h-screen overflow-hidden bg-[#F2F4F5] text-gray-900 font-sans">
       {/* Sidebar */}
-      <aside className="w-64 bg-zinc-900 border-r border-zinc-800 flex flex-col">
-        <div className="p-6 border-b border-zinc-800 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shadow-sm">
+        <div className="p-6 border-b border-gray-200 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#E03C31] flex items-center justify-center">
             <CreditCard className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-lg tracking-tight">Admin CMS</span>
+          <span className="font-extrabold text-lg tracking-tight text-gray-900">Admin CMS</span>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -44,19 +44,19 @@ export default async function AdminLayout({
             <Link
               key={item.href}
               href={item.href}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition group"
+              className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:text-[#E03C31] hover:bg-red-50 transition font-medium group"
             >
-              <item.icon className="w-5 h-5 group-hover:text-indigo-400 transition" />
+              <item.icon className="w-5 h-5 group-hover:text-[#E03C31] transition" />
               <span>{item.label}</span>
             </Link>
           ))}
         </nav>
 
-        <div className="p-4 mt-auto space-y-2 border-t border-zinc-800">
+        <div className="p-4 mt-auto space-y-2 border-t border-gray-200 bg-gray-50/50">
           <Link
             href="/"
             target="_blank"
-            className="flex items-center gap-3 px-4 py-3 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+            className="flex items-center gap-3 px-4 py-3 rounded-lg text-gray-600 hover:text-[#E03C31] hover:bg-white border border-transparent hover:border-red-100 transition font-medium shadow-sm transition-all"
           >
             <ExternalLink className="w-5 h-5" />
             <span>Xem Website</span>

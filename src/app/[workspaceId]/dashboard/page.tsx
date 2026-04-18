@@ -27,7 +27,7 @@ export default async function DashboardPage({
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
              {/* Thẻ Công cụ số 1 */}
-             <Link href={`/${workspaceId}/dashboard/tools/content`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-[#E03C31]/50 hover:shadow-md transition-all h-full">
+             <Link href={`/${workspaceId}/tools/content`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-[#E03C31]/50 hover:shadow-md transition-all h-full">
                 <div className="p-5 flex-1">
                    <div className="w-12 h-12 bg-blue-50 text-blue-600 flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
                       <Bot className="w-6 h-6" />

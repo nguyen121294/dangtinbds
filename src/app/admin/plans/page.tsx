@@ -7,8 +7,8 @@ export default async function PlansPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold">Quản lý gói dịch vụ</h1>
-        <p className="text-zinc-400 mt-2">Thêm, sửa, xóa các gói dịch vụ và điều chỉnh giá</p>
+        <h1 className="text-3xl font-extrabold text-gray-900 tracking-tight">Quản lý gói dịch vụ</h1>
+        <p className="text-gray-500 mt-2 font-medium">Thêm, sửa, xóa các gói dịch vụ và điều chỉnh giá</p>
       </div>
 
       <PlansTable initialPlans={allPlans} />

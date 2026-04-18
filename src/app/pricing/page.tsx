@@ -16,8 +16,19 @@ export default async function PricingPage() {
       <Suspense fallback={null}>
         <PaymentStatusHandler />
       </Suspense>
+
+      {/* Top Nav */}
+      <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md shadow-sm">
+        <div className="mx-auto flex h-16 max-w-5xl items-center px-4">
+          <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-[#E03C31] transition-colors font-medium">
+             <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+             Quay lại Bảng điều khiển
+          </Link>
+        </div>
+      </nav>
+
       {/* Header */}
-      <header className="pt-20 pb-12 text-center px-4">
+      <header className="pt-12 pb-12 text-center px-4">
         <div className="inline-flex items-center gap-2 rounded-sm border border-[#E03C31]/20 bg-[#E03C31]/10 px-4 py-1.5 text-sm font-bold text-[#E03C31] mb-6 shadow-sm">
           <Sparkles className="h-4 w-4" />
           <span>Bảng giá chuẩn - 1 Workspace / 3 Thành viên</span>

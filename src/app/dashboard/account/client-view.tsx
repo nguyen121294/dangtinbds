@@ -82,33 +82,33 @@ export default function AccountClientView({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       
       {/* 1. Gói Cước Card */}
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400">
+      <section className="rounded-xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-50 text-[#E03C31]">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <h2 className="text-xl font-bold text-white">Trạng thái Gói (Plan)</h2>
+          <h2 className="text-lg font-bold text-gray-900">Trạng thái Gói (Plan)</h2>
         </div>
         
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl bg-zinc-950 border border-zinc-800">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-lg bg-gray-50 border border-gray-200">
           <div>
-            <div className="text-sm text-zinc-400 mb-1">Email tài khoản</div>
-            <div className="font-medium">{email}</div>
+            <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Email tài khoản</div>
+            <div className="font-bold text-gray-900">{email}</div>
           </div>
-          <div className="h-px w-full md:w-px md:h-12 bg-zinc-800"></div>
+          <div className="h-px w-full md:w-px md:h-12 bg-gray-200"></div>
           <div>
-            <div className="text-sm text-zinc-400 mb-1">Gói hiện tại</div>
-            <div className={`font-semibold ${isSubscribed ? 'text-emerald-400' : 'text-zinc-300'}`}>
+            <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Gói hiện tại</div>
+            <div className={`font-extrabold ${isSubscribed ? 'text-[#E03C31]' : 'text-gray-600'}`}>
               {isSubscribed ? planName : 'Free Tier'}
             </div>
           </div>
-          <div className="h-px w-full md:w-px md:h-12 bg-zinc-800"></div>
+          <div className="h-px w-full md:w-px md:h-12 bg-gray-200"></div>
           <div>
-            <div className="text-sm text-zinc-400 mb-1">Hết hạn</div>
-            <div className="font-medium text-zinc-300">
+            <div className="text-sm font-semibold text-gray-500 uppercase tracking-widest mb-1.5">Hết hạn</div>
+            <div className="font-bold text-gray-700">
               {isSubscribed && subscriptionExpiresAt 
                 ? new Date(subscriptionExpiresAt).toLocaleDateString()
                 : 'Không giới hạn'}
@@ -118,37 +118,37 @@ export default function AccountClientView({
       </section>
 
       {/* 2. Cập nhật Thông tin cá nhân */}
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
-        <h2 className="text-xl font-bold text-white mb-6">Thông tin cá nhân</h2>
+      <section className="rounded-xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
+        <h2 className="text-lg font-bold text-gray-900 mb-6 border-b border-gray-100 pb-4">Thông tin cá nhân</h2>
         
         {profileMsg && (
-          <div className={`mb-6 flex items-center gap-2 rounded-lg p-3 text-sm border ${profileMsg.type === 'error' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
-            {profileMsg.type === 'error' ? <AlertCircle className="h-4 w-4 shrink-0" /> : <CheckCircle2 className="h-4 w-4 shrink-0" />}
+          <div className={`mb-6 flex items-center gap-2 rounded-lg p-3 text-sm font-medium border ${profileMsg.type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+            {profileMsg.type === 'error' ? <AlertCircle className="h-5 w-5 shrink-0" /> : <CheckCircle2 className="h-5 w-5 shrink-0" />}
             <p>{profileMsg.text}</p>
           </div>
         )}
 
-        <form onSubmit={handleUpdateProfile} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Họ (First Name)</label>
+        <form onSubmit={handleUpdateProfile} className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Họ (First Name)</label>
               <input
                 type="text"
                 required
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className="block w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder-zinc-500 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition hover:border-gray-400 focus:border-[#E03C31] focus:outline-none focus:ring-1 focus:ring-[#E03C31]"
                 placeholder="Nguyễn Văn"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Tên (Last Name)</label>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Tên (Last Name)</label>
               <input
                 type="text"
                 required
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className="block w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder-zinc-500 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition hover:border-gray-400 focus:border-[#E03C31] focus:outline-none focus:ring-1 focus:ring-[#E03C31]"
                 placeholder="A"
               />
             </div>
@@ -158,9 +158,9 @@ export default function AccountClientView({
             <button
               type="submit"
               disabled={isPendingProfile}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50"
+              className="flex items-center gap-2 rounded-lg bg-[#E03C31] px-8 py-3 text-sm font-bold text-white transition-transform hover:bg-[#c9362c] hover:-translate-y-0.5 shadow-[0_4px_14px_0_rgba(224,60,49,0.39)] disabled:opacity-50 disabled:transform-none"
             >
-              {isPendingProfile ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isPendingProfile ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
               Lưu thay đổi
             </button>
           </div>
@@ -168,54 +168,54 @@ export default function AccountClientView({
       </section>
 
       {/* 3. Thay đổi mật khẩu */}
-      <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 shadow-xl">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-500/10 text-orange-400">
+      <section className="rounded-xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
+        <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
             <KeyRound className="h-5 w-5" />
           </div>
-          <h2 className="text-xl font-bold text-white">Đổi Mật khẩu</h2>
+          <h2 className="text-lg font-bold text-gray-900">Đổi Mật khẩu</h2>
         </div>
 
         {passwordMsg && (
-          <div className={`mb-6 flex items-center gap-2 rounded-lg p-3 text-sm border ${passwordMsg.type === 'error' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
-            {passwordMsg.type === 'error' ? <AlertCircle className="h-4 w-4 shrink-0" /> : <CheckCircle2 className="h-4 w-4 shrink-0" />}
+          <div className={`mb-6 flex items-center gap-2 rounded-lg p-3 text-sm font-medium border ${passwordMsg.type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+            {passwordMsg.type === 'error' ? <AlertCircle className="h-5 w-5 shrink-0" /> : <CheckCircle2 className="h-5 w-5 shrink-0" />}
             <p>{passwordMsg.text}</p>
           </div>
         )}
 
-        <form onSubmit={handleUpdatePassword} className="space-y-4">
-          <div className="space-y-1.5">
-            <label className="text-sm font-medium text-zinc-300">Mật khẩu hiện tại</label>
+        <form onSubmit={handleUpdatePassword} className="space-y-5">
+          <div className="space-y-2">
+            <label className="text-sm font-semibold text-gray-700">Mật khẩu hiện tại</label>
             <input
               type="password"
               required
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="block w-full max-w-md rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder-zinc-500 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="block w-full max-w-md rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition hover:border-gray-400 focus:border-[#E03C31] focus:outline-none focus:ring-1 focus:ring-[#E03C31]"
               placeholder="••••••••"
             />
           </div>
           
-          <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Mật khẩu mới</label>
+          <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Mật khẩu mới</label>
               <input
                 type="password"
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="block w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder-zinc-500 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition hover:border-gray-400 focus:border-[#E03C31] focus:outline-none focus:ring-1 focus:ring-[#E03C31]"
                 placeholder="Từ 6 ký tự trở lên"
               />
             </div>
-            <div className="space-y-1.5">
-              <label className="text-sm font-medium text-zinc-300">Xác nhận mật khẩu mới</label>
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-gray-700">Xác nhận mật khẩu mới</label>
               <input
                 type="password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="block w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-white placeholder-zinc-500 transition focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition hover:border-gray-400 focus:border-[#E03C31] focus:outline-none focus:ring-1 focus:ring-[#E03C31]"
                 placeholder="Nhập lại mật khẩu mới"
               />
             </div>
@@ -225,9 +225,9 @@ export default function AccountClientView({
             <button
               type="submit"
               disabled={isPendingPassword || newPassword !== confirmPassword || newPassword.length < 6}
-              className="flex items-center gap-2 rounded-lg bg-zinc-800 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-zinc-700 focus:outline-none focus:ring-2 focus:ring-zinc-500 focus:ring-offset-2 focus:ring-offset-zinc-900 disabled:opacity-50 border border-zinc-700 hover:border-zinc-600"
+              className="flex items-center gap-2 rounded-lg bg-gray-800 px-8 py-3 text-sm font-bold text-white transition-transform hover:bg-gray-900 hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none shadow-sm"
             >
-              {isPendingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              {isPendingPassword ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
               Cập nhật Mật khẩu
             </button>
           </div>
@@ -235,14 +235,14 @@ export default function AccountClientView({
       </section>
 
       {/* 4. Vùng nguy hiểm */}
-      <section className="rounded-2xl border border-red-900/30 bg-red-950/10 p-8 shadow-xl">
+      <section className="rounded-xl border border-red-200 bg-red-50/50 p-6 md:p-8 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-red-500/10 text-red-500">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600">
             <AlertCircle className="h-5 w-5" />
           </div>
-          <h2 className="text-xl font-bold text-red-500">Vùng Nguỵ Hiểm</h2>
+          <h2 className="text-lg font-bold text-red-600">Vùng nguy hiểm</h2>
         </div>
-        <p className="text-zinc-400 mb-6 text-sm">
+        <p className="text-gray-600 mb-6 text-sm">
           Vô hiệu hóa tài khoản sẽ đăng xuất bạn ra khỏi hệ thống và đóng băng mọi hoạt động. 
           Các hóa đơn và lịch sử của bạn vẫn được giữ nguyên. Cân nhắc kỹ trước khi thực hiện.
         </p>
@@ -254,7 +254,7 @@ export default function AccountClientView({
         }}>
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-lg bg-red-600/10 border border-red-500/30 px-6 py-3 text-sm font-bold text-red-500 transition hover:bg-red-600/20 active:scale-95"
+            className="flex items-center gap-2 rounded-lg bg-white border border-red-200 hover:border-red-600 hover:bg-red-50 text-red-600 px-6 py-3 text-sm font-bold transition-all active:scale-95 shadow-sm"
           >
             Vô hiệu hóa Tài khoản
           </button>
