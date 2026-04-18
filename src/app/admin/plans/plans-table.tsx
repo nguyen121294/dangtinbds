@@ -81,14 +81,15 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
       <div className="flex gap-4 justify-end mb-6">
         <button 
           onClick={() => { setIsAdding(true); setEditingPlan(emptyPlan); }}
-          className="bg-[#E03C31] hover:bg-red-700 text-white px-5 py-2.5 rounded-sm font-bold flex items-center gap-2 transition active:scale-95 shadow-sm"
+          className="bg-[#E03C31] hover:bg-red-700 text-white px-5 py-3 md:py-2.5 rounded-lg md:rounded-sm font-bold flex items-center justify-center w-full md:w-auto gap-2 transition active:scale-95 shadow-sm"
         >
-          <Plus className="w-4 h-4" />
-          Thêm Mốc Khác
+          <Plus className="w-5 h-5 md:w-4 md:h-4" />
+          Thêm Gói Mới
         </button>
       </div>
 
-      <div className="w-full overflow-x-auto shadow-sm rounded-sm border border-gray-200 bg-white">
+      {/* Desktop Matrix Table (Hidden on Mobile) */}
+      <div className="hidden md:block w-full overflow-x-auto shadow-sm rounded-sm border border-gray-200 bg-white">
         <table className="w-full text-left min-w-[700px]">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
@@ -156,22 +157,84 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
         </table>
       </div>
 
+      {/* Mobile Card Layout (Hidden on Desktop) */}
+      <div className="md:hidden space-y-4">
+        {plans.map((plan) => (
+          <div key={plan.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 space-y-4">
+            <div className="flex justify-between items-start border-b border-gray-100 pb-3">
+              <div>
+                <h4 className="font-bold text-gray-900 text-lg leading-tight">{plan.name || plan.id}</h4>
+                <div className="flex items-center gap-2 mt-1.5">
+                   <span className="text-[11px] font-bold px-2 py-0.5 bg-red-50 text-[#E03C31] border border-red-100 rounded-sm inline-block">
+                     {plan.days} Ngày
+                   </span>
+                   {plan.id && (
+                     <span className="text-[10px] uppercase font-semibold text-gray-400">ID: {plan.id}</span>
+                   )}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-xl font-extrabold text-[#E03C31]">
+                  {new Intl.NumberFormat('vi-VN').format(plan.price)}đ
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-2 text-sm text-gray-600">
+              <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100 flex flex-col items-center justify-center">
+                <span className="block text-[10px] uppercase text-gray-400 font-bold mb-0.5">Nạp Credits</span>
+                <span className="font-bold text-amber-600 text-lg">{new Intl.NumberFormat('vi-VN').format(plan.creditsOffered)}</span>
+              </div>
+              <div className="bg-gray-50 p-2.5 rounded-lg border border-gray-100 flex flex-col items-center justify-center">
+                <span className="block text-[10px] uppercase text-gray-400 font-bold mb-0.5">Tối đa Invites</span>
+                <span className="font-bold text-blue-600 text-lg">{plan.maxInvites || 0}</span>
+              </div>
+            </div>
+            
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => { setEditingPlan(plan); setIsAdding(false); }}
+                className="flex-1 bg-blue-50 text-blue-600 hover:bg-blue-100 py-3 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Edit2 className="w-4 h-4" />
+                Sửa gói
+              </button>
+              <button
+                onClick={() => handleDeletePlan(plan.id)}
+                className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 py-3 rounded-lg text-sm font-bold transition-colors flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                Xoá gói
+              </button>
+            </div>
+          </div>
+        ))}
+        {plans.length === 0 && (
+          <div className="text-center py-10 px-4 text-gray-500 bg-white border border-gray-200 rounded-xl border-dashed">
+            Chưa có gói nào được tạo.
+          </div>
+        )}
+      </div>
+
       {/* Edit/Add Modal */}
       {editingPlan && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/40 backdrop-blur-sm">
-          <div className="bg-white border border-gray-200 w-full max-w-2xl rounded-xl shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 z-50 flex md:items-center justify-center bg-gray-900/60 md:backdrop-blur-sm p-0 md:p-4">
+          <div className="bg-white border-0 md:border md:border-gray-200 w-full md:max-w-2xl h-[100dvh] md:h-auto md:max-h-[90vh] md:rounded-xl shadow-2xl flex flex-col animate-in slide-in-from-bottom border-t md:border-t-0 md:slide-in-from-bottom-4 duration-300">
+            {/* Header Sticky */}
+            <div className="flex items-center justify-between p-4 md:p-6 border-b border-gray-100 shrink-0 bg-white md:rounded-t-xl shadow-sm z-10">
               <h3 className="text-xl font-bold text-gray-900">{isAdding ? 'Thêm gói mới' : 'Chỉnh sửa gói'}</h3>
               <button 
                 onClick={() => setEditingPlan(null)}
-                className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 transition"
+                className="p-2 -mr-2 rounded-lg hover:bg-gray-100 text-gray-500 transition"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6 md:w-5 md:h-5 text-gray-600" />
               </button>
             </div>
             
-            <form onSubmit={handleSavePlan} className="p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto">
+              <form id="plan-form" onSubmit={handleSavePlan} className="p-4 md:p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">ID (Dùng để định danh gán cho user)</label>
                   <input 
@@ -279,26 +342,29 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
                   />
                   <p className="text-xs text-gray-500 mt-2">Dùng chữ thường như "export_pdf", "ai_bot" để dev có thể khóa/mở bằng code.</p>
                 </div>
-              </div>
+                </div>
+              </form>
+            </div>
 
-              <div className="flex gap-4 pt-4 sticky shadow-[0_-10px_10px_-5px_rgba(255,255,255,1)]">
-                <button
-                  type="button"
-                  onClick={() => setEditingPlan(null)}
-                  className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-bold py-3 rounded-lg transition"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="flex-1 bg-[#E03C31] hover:bg-[#c9362c] disabled:opacity-50 text-white font-bold py-3 rounded-lg transition shadow-md shadow-red-500/20 flex items-center justify-center gap-2"
-                >
-                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                  Lưu gói
-                </button>
-              </div>
-            </form>
+            {/* Sticky Actions Footer */}
+            <div className="flex gap-4 p-4 md:p-6 border-t border-gray-200 bg-gray-50 md:rounded-b-xl shrink-0 mt-auto">
+              <button
+                type="button"
+                onClick={() => setEditingPlan(null)}
+                className="flex-1 bg-white border border-gray-300 hover:bg-gray-100 text-gray-700 font-bold py-3.5 md:py-3 rounded-lg transition"
+              >
+                Hủy
+              </button>
+              <button
+                type="submit"
+                form="plan-form"
+                disabled={loading}
+                className="flex-1 bg-[#E03C31] hover:bg-[#c9362c] disabled:opacity-50 text-white font-bold py-3.5 md:py-3 rounded-lg transition shadow-md shadow-red-500/20 flex items-center justify-center gap-2"
+              >
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                Lưu gói
+              </button>
+            </div>
           </div>
         </div>
       )}

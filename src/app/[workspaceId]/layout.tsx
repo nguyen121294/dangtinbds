@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { db } from '@/db';
 import { profiles, workspaces, workspaceMembers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { XCircle, LogOut, Building2, Settings, Wallet, Clock, User as UserIcon } from 'lucide-react';
+import { XCircle, LogOut, Building2, Settings, Wallet, Clock, User as UserIcon, Menu } from 'lucide-react';
 import { reactivateAccount } from '@/app/dashboard/account/actions';
 import WorkspaceSwitcher from '@/components/workspace-switcher';
 import { checkWorkspaceAccess, getUserPlanDetails } from '@/lib/workspace-utils';
@@ -105,8 +105,27 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex min-h-screen bg-[#F2F4F5] text-gray-900 font-sans">
+      {/* CSS-only Mobile Sidebar Toggle state */}
+      <input type="checkbox" id="mobile-sidebar-toggle" className="peer hidden" />
+      
+      {/* Mobile Top Header */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4">
+         <Link href="/dashboard" className="flex items-center gap-2">
+            <Building2 className="w-5 h-5 text-[#E03C31]" />
+         </Link>
+         <div className="flex-1 px-4 overflow-hidden truncate font-medium text-gray-900">
+            {allowedWorkspaces.find(w => w.id === workspaceId)?.name || 'Môi Giới AI'}
+         </div>
+         <label htmlFor="mobile-sidebar-toggle" className="p-2 cursor-pointer text-gray-600 hover:text-[#E03C31] transition">
+            <Menu className="w-6 h-6" />
+         </label>
+      </div>
+
+      {/* Mobile Overlay Backdrop */}
+      <label htmlFor="mobile-sidebar-toggle" className="fixed inset-0 bg-gray-900/50 z-40 hidden peer-checked:block md:peer-checked:hidden cursor-pointer"></label>
+
       {/* SIDEBAR */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed inset-y-0 left-0 z-10 shrink-0">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col fixed inset-y-0 left-0 z-50 transform -translate-x-full peer-checked:translate-x-0 md:translate-x-0 transition-transform duration-300 shrink-0">
         <div className="h-16 flex items-center px-4 border-b border-gray-200 shrink-0">
           <Link href="/dashboard" className="flex items-center gap-2 mr-2">
             <Building2 className="w-6 h-6 text-[#E03C31]" />
@@ -120,7 +139,7 @@ export default async function DashboardLayout({
         </div>
 
         <div className="p-4 flex-1 flex flex-col gap-2">
-           <Link href={`/${workspaceId}/dashboard`} className="flex items-center justify-between px-3 py-2.5 rounded-sm bg-[#e03c3115] text-[#E03C31] font-medium text-sm border-r-2 border-[#E03C31]">
+           <Link href={`/${workspaceId}/dashboard`} className="flex items-center justify-between px-3 py-2.5 rounded-sm bg-red-50 text-[#E03C31] font-medium text-sm border-r-2 border-[#E03C31]">
               <div className="flex items-center gap-3">
                  <Building2 className="w-5 h-5" />
                  Bảng Công cụ
@@ -129,11 +148,11 @@ export default async function DashboardLayout({
                  <span className="text-[9px] bg-[#E03C31] text-white px-1.5 py-0.5 rounded-sm uppercase tracking-wider">PRO</span>
               )}
            </Link>
-           <Link href={`/${workspaceId}/dashboard/workspace-settings`} className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 font-medium text-sm transition-colors">
+           <Link href={`/${workspaceId}/dashboard/workspace-settings`} className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 hover:text-[#E03C31] font-medium text-sm transition-colors">
               <Settings className="w-5 h-5" />
               Quản lý Nhóm
            </Link>
-           <Link href="/dashboard/account" className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 font-medium text-sm transition-colors">
+           <Link href="/dashboard/account" className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 hover:text-[#E03C31] font-medium text-sm transition-colors">
               <UserIcon className="w-5 h-5" />
               Cài đặt Cá nhân
            </Link>
@@ -209,8 +228,8 @@ export default async function DashboardLayout({
       </aside>
 
       {/* MAIN CONTENT */}
-      <main className="flex-1 ml-64 flex flex-col min-h-screen">
-        <div className="h-16 border-b border-gray-200 bg-white flex items-center px-8 shrink-0">
+      <main className="flex-1 md:ml-64 flex flex-col min-h-screen pt-16 md:pt-0">
+        <div className="h-16 border-b border-gray-200 bg-white hidden md:flex items-center px-8 shrink-0">
            {/* Topbar trống nhường chỗ thiết kế */}
         </div>
         <div className="flex-1 w-full bg-[#F2F4F5]">

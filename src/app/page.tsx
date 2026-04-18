@@ -7,9 +7,7 @@ export default async function LandingPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  if (user) {
-    redirect('/dashboard');
-  }
+  const appLink = user ? '/dashboard' : '/login';
 
   return (
     <div className="min-h-screen bg-[#F2F4F5] text-[#2C3136] font-sans selection:bg-[#E03C31]/20">
@@ -25,20 +23,28 @@ export default async function LandingPage() {
             </Link>
             
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
-              <Link href="#" className="hover:text-[#E03C31]">Viết Content AI</Link>
-              <Link href="#" className="hover:text-[#E03C31]">Chỉnh Sửa Ảnh</Link>
-              <Link href="#" className="hover:text-[#E03C31]">Tạo Sale Kit</Link>
-              <Link href="#" className="hover:text-[#E03C31]">Bảng Giá</Link>
+              <Link href={appLink} className="hover:text-[#E03C31]">Viết Content AI</Link>
+              <Link href={appLink} className="hover:text-[#E03C31]">Chỉnh Sửa Ảnh</Link>
+              <Link href={appLink} className="hover:text-[#E03C31]">Tạo Sale Kit</Link>
+              <Link href="/pricing" className="hover:text-[#E03C31]">Bảng Giá</Link>
             </nav>
           </div>
           
           <div className="flex items-center gap-4">
-            <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-[#E03C31]">
-              Đăng nhập / Đăng ký
-            </Link>
-            <Link href="/dashboard" className="hidden sm:flex items-center justify-center rounded-sm bg-[#E03C31] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700">
-              Dùng thử miễn phí
-            </Link>
+            {user ? (
+              <Link href="/dashboard" className="hidden sm:flex items-center justify-center rounded-sm bg-[#E03C31] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700">
+                Bảng điều khiển
+              </Link>
+            ) : (
+              <>
+                <Link href="/login" className="text-sm font-medium text-gray-700 hover:text-[#E03C31]">
+                  Đăng nhập / Đăng ký
+                </Link>
+                <Link href="/login" className="hidden sm:flex items-center justify-center rounded-sm bg-[#E03C31] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700">
+                  Dùng thử miễn phí
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -60,8 +66,8 @@ export default async function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-             <Link href="/login" className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-sm bg-[#E03C31] px-8 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700">
-                Bắt đầu ngay
+             <Link href={appLink} className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-sm bg-[#E03C31] px-8 py-3 text-sm font-bold text-white transition-colors hover:bg-red-700">
+                {user ? 'Vào Bảng điều khiển' : 'Bắt đầu ngay'}
              </Link>
              <Link href="#features" className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-sm border border-gray-300 bg-white px-8 py-3 text-sm font-bold text-gray-700 transition-colors hover:bg-gray-50">
                 Tìm hiểu thêm
@@ -126,8 +132,8 @@ export default async function LandingPage() {
           <p className="text-sm text-gray-600 mb-8">
             Trải nghiệm công cụ đắc lực nhất dành riêng cho nghề môi giới bất động sản.
           </p>
-          <Link href="/login" className="inline-flex items-center justify-center gap-2 rounded-sm bg-[#E03C31] px-10 py-4 text-base font-bold text-white transition-colors hover:bg-red-700 shadow-md">
-            Trải nghiệm dịch vụ ngay
+          <Link href={appLink} className="inline-flex items-center justify-center gap-2 rounded-sm bg-[#E03C31] px-10 py-4 text-base font-bold text-white transition-colors hover:bg-red-700 shadow-md">
+            {user ? 'Vào Bảng điều khiển' : 'Trải nghiệm dịch vụ ngay'}
           </Link>
         </div>
       </section>
