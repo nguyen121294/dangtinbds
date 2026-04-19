@@ -37,9 +37,8 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
   const supabase = createClient();
 
   const totalUsableCredits = userCredits;
-  const totalCost = formData.imageProcessingEngine === 'replicate_banana' 
-      ? 40 
-      : (images.length > 0 ? images.length * 10 : 1);
+  const imageMultiplier = formData.imageProcessingEngine === 'replicate_banana' ? 40 : 10;
+  const totalCost = 1 + (images.length * imageMultiplier);
 
   const handleOpenPicker = () => {
     openPicker({
@@ -68,14 +67,14 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
         setAccessToken(session.provider_token);
       }
       if (session?.user) {
-        supabase.from('profiles').select('trialCredits, paidCredits, defaultDriveFolderId, defaultDriveFolderName, signatures').eq('id', session.user.id).single()
+        supabase.from('profiles').select('trial_credits, paid_credits, default_drive_folder_id, default_drive_folder_name, signatures').eq('id', session.user.id).single()
           .then(({ data }) => {
             if (data) {
-               setUserCredits((data.trialCredits || 0) + (data.paidCredits || 0));
-               if (data.defaultDriveFolderId) {
+               setUserCredits((data.trial_credits || 0) + (data.paid_credits || 0));
+               if (data.default_drive_folder_id) {
                   setSelectedDriveFolder({
-                     id: data.defaultDriveFolderId,
-                     name: data.defaultDriveFolderName || "Thư mục tùy chỉnh"
+                     id: data.default_drive_folder_id,
+                     name: data.default_drive_folder_name || "Thư mục tùy chỉnh"
                   });
                }
                if (data.signatures && data.signatures.length > 0) {
@@ -509,14 +508,12 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
             <div>
                 <h4 className="font-bold text-gray-800">Dự kiến chi phí (Credits)</h4>
                 <p className="text-sm text-gray-500 mt-0.5">
-                     {formData.imageProcessingEngine === 'replicate_banana' 
-                         ? 'Model Banana: Trọn gói 40 Credits' 
-                         : (images.length > 0 ? `${images.length} ảnh × 10 Credits` : 'Xử lý văn bản (Không kèm ảnh): 1 Credit')}
+                     {images.length > 0 ? `1 Bài đăng + ${images.length} ảnh × ${formData.imageProcessingEngine === 'replicate_banana' ? '40' : '10'} Credits` : 'Xử lý văn bản (Không kèm ảnh): 1 Credit'}
                 </p>
             </div>
             <div className="text-right">
                 <div className={`text-2xl font-black ${totalUsableCredits >= totalCost ? 'text-gray-900' : 'text-red-500'}`}>
-                    -{totalCost}
+                    {totalCost}
                 </div>
                 <div className="text-xs font-semibold text-gray-500">
                     Số dư: {totalUsableCredits} 
