@@ -4,12 +4,17 @@ import { getPlans } from '@/lib/plans';
 import { MatrixPricingTable } from './MatrixPricingTable';
 import { Suspense } from 'react';
 import { PaymentStatusHandler } from './PaymentStatusHandler';
+import { createClient } from '@/lib/supabase/server';
+import GlobalNavbar from '@/components/GlobalNavbar';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PricingPage() {
   const allPlans = await getPlans('personal');
   const plans = allPlans.filter(p => p.price > 0);
+  
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <div className="min-h-screen bg-[#F2F4F5] text-[#0b1c30] selection:bg-[#E03C31]/20 pb-20">
@@ -17,15 +22,7 @@ export default async function PricingPage() {
         <PaymentStatusHandler />
       </Suspense>
 
-      {/* Top Nav */}
-      <nav className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md shadow-sm">
-        <div className="mx-auto flex h-16 max-w-5xl items-center px-4">
-          <Link href="/dashboard" className="flex items-center text-gray-600 hover:text-[#E03C31] transition-colors font-medium">
-             <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-             Quay lại Bảng điều khiển
-          </Link>
-        </div>
-      </nav>
+      <GlobalNavbar />
 
       {/* Header */}
       <header className="pt-12 pb-12 text-center px-4">
@@ -43,7 +40,7 @@ export default async function PricingPage() {
 
       {/* Pricing Matrix */}
       <main className="mx-auto max-w-5xl px-4">
-        <MatrixPricingTable plans={plans} />
+        <MatrixPricingTable plans={plans} isLoggedIn={!!user} />
 
         {/* Footer note */}
         <p className="mt-12 text-center text-sm font-medium text-gray-500 bg-white border border-gray-200 py-3 rounded-sm shadow-sm">

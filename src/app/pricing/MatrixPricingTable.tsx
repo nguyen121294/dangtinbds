@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { CreditCard, Loader2, Info } from 'lucide-react';
 import type { Plan } from '@/lib/plans';
 
-export function MatrixPricingTable({ plans }: { plans: Plan[] }) {
+export function MatrixPricingTable({ plans, isLoggedIn }: { plans: Plan[], isLoggedIn: boolean }) {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   // Grouping logic
   const rowCredits = Array.from(new Set(plans.map(p => p.creditsOffered))).sort((a,b) => a - b);
@@ -18,6 +19,11 @@ export function MatrixPricingTable({ plans }: { plans: Plan[] }) {
 
   const handleCheckout = async () => {
     if (!selectedPlanId) return;
+    if (!isLoggedIn) {
+      setShowLoginModal(true);
+      return;
+    }
+    
     setLoading(true);
     try {
       const response = await fetch('/checkout', {
@@ -45,6 +51,30 @@ export function MatrixPricingTable({ plans }: { plans: Plan[] }) {
 
   return (
     <div className="flex flex-col items-center w-full">
+      {/* Login Prompt Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/50 backdrop-blur-sm px-4">
+          <div className="bg-white p-6 rounded-sm shadow-xl max-w-sm w-full border border-gray-200 text-center animate-in fade-in zoom-in-95 duration-200">
+            <Info className="w-12 h-12 text-[#E03C31] mx-auto mb-4" />
+            <h3 className="text-xl font-bold text-gray-900 mb-2">Bạn cần đăng nhập</h3>
+            <p className="text-gray-600 mb-6">Xin lỗi, bạn cần phải đăng nhập tài khoản trước khi có thể tiến hành mua gói tính phí.</p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowLoginModal(false)}
+                className="flex-1 py-2 px-4 rounded-sm border border-gray-300 font-medium text-gray-700 hover:bg-gray-50 transition"
+              >
+                Hủy
+              </button>
+              <a 
+                href="/login?returnTo=/pricing"
+                className="flex-1 py-2 px-4 rounded-sm bg-[#E03C31] text-white font-bold hover:bg-[#c9362c] transition"
+              >
+                Đăng nhập
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Scrollable container on mobile */}
       <div className="w-full overflow-x-auto shadow-xl rounded-sm border border-gray-200 bg-white">
         <table className="w-full text-left min-w-[700px]">

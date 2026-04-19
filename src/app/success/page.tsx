@@ -34,34 +34,34 @@ function SuccessContent() {
   }, [orderCode]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
-      <div className="w-full max-w-md text-center rounded-2xl border border-zinc-800 bg-zinc-900 p-12 shadow-2xl">
+    <div className="flex min-h-[80vh] items-center justify-center p-4">
+      <div className="w-full max-w-md text-center rounded-sm border border-gray-200 bg-white p-12 shadow-xl">
 
         {status === 'loading' && (
           <>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-blue-50 text-blue-500">
               <Loader2 className="h-12 w-12 animate-spin" />
             </div>
-            <h1 className="mt-8 text-2xl font-bold text-white">Đang xác nhận thanh toán...</h1>
-            <p className="mt-4 text-zinc-400">Vui lòng chờ trong giây lát.</p>
+            <h1 className="mt-8 text-2xl font-bold text-gray-900">Đang xác nhận thanh toán...</h1>
+            <p className="mt-4 text-gray-500">Vui lòng chờ trong giây lát.</p>
           </>
         )}
 
         {(status === 'success' || status === 'already_paid') && (
           <>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-500">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
               <CheckCircle className="h-12 w-12" />
             </div>
-            <h1 className="mt-8 text-3xl font-bold text-white">Thanh toán thành công!</h1>
-            <p className="mt-4 text-zinc-400">
+            <h1 className="mt-8 text-3xl font-bold text-gray-900">Thanh toán thành công!</h1>
+            <p className="mt-4 text-gray-600">
               {planName
-                ? <>Tài khoản của bạn đã được kích hoạt gói <span className="font-semibold text-white">{planName}</span>.</>
+                ? <>Tài khoản của bạn đã được kích hoạt gói <span className="font-semibold text-gray-900">{planName}</span>.</>
                 : 'Tài khoản của bạn đã được nâng cấp.'}
             </p>
             <div className="mt-10">
               <Link
                 href="/dashboard"
-                className="inline-block rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-4 text-center font-bold text-white transition hover:opacity-90 active:scale-[0.98]"
+                className="inline-block rounded-sm bg-[#E03C31] text-white px-8 py-4 text-center font-bold transition hover:bg-[#c9362c] active:scale-[0.98]"
               >
                 Vào Dashboard
               </Link>
@@ -71,23 +71,23 @@ function SuccessContent() {
 
         {status === 'failed' && (
           <>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-rose-500/10 text-rose-500">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-red-50 text-red-500">
               <XCircle className="h-12 w-12" />
             </div>
-            <h1 className="mt-8 text-2xl font-bold text-white">Không xác nhận được thanh toán</h1>
-            <p className="mt-4 text-zinc-400">
+            <h1 className="mt-8 text-2xl font-bold text-gray-900">Không xác nhận được thanh toán</h1>
+            <p className="mt-4 text-gray-600">
               Nếu bạn đã chuyển tiền thành công, vui lòng liên hệ hỗ trợ hoặc thử lại sau.
             </p>
             <div className="mt-10 flex flex-col gap-3">
               <Link
                 href="/dashboard"
-                className="inline-block rounded-xl bg-zinc-800 px-8 py-4 text-center font-semibold text-zinc-300 transition hover:bg-zinc-700"
+                className="inline-block rounded-sm bg-gray-100 px-8 py-4 text-center font-semibold text-gray-700 transition hover:bg-gray-200"
               >
                 Về Dashboard
               </Link>
               <Link
                 href="/pricing"
-                className="inline-block rounded-xl border border-zinc-700 px-8 py-4 text-center text-sm text-zinc-400 transition hover:border-zinc-500"
+                className="inline-block rounded-sm border border-gray-300 px-8 py-4 text-center text-sm font-medium text-gray-600 transition hover:border-gray-400 hover:bg-gray-50"
               >
                 Xem lại các gói
               </Link>
@@ -97,13 +97,13 @@ function SuccessContent() {
 
         {status === 'no_order' && (
           <>
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-zinc-700/30 text-zinc-500">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-gray-100 text-gray-500">
               <CheckCircle className="h-12 w-12" />
             </div>
-            <h1 className="mt-8 text-2xl font-bold text-white">Chào mừng!</h1>
-            <p className="mt-4 text-zinc-400">Trang thanh toán thành công.</p>
+            <h1 className="mt-8 text-2xl font-bold text-gray-900">Chào mừng!</h1>
+            <p className="mt-4 text-gray-500">Trang thanh toán thành công.</p>
             <div className="mt-10">
-              <Link href="/dashboard" className="inline-block rounded-xl bg-zinc-800 px-8 py-4 font-semibold text-white transition hover:bg-zinc-700">
+              <Link href="/dashboard" className="inline-block rounded-sm bg-[#E03C31] px-8 py-4 font-bold text-white transition hover:bg-[#c9362c]">
                 Vào Dashboard
               </Link>
             </div>
@@ -117,10 +117,10 @@ function SuccessContent() {
 export default function SuccessPage() {
   return (
     <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-4">
-        <div className="w-full max-w-md text-center rounded-2xl border border-zinc-800 bg-zinc-900 p-12 shadow-2xl">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-400" />
-          <h1 className="mt-8 text-2xl font-bold text-white">Đang tải...</h1>
+      <div className="flex min-h-[80vh] items-center justify-center p-4">
+        <div className="w-full max-w-md text-center rounded-sm border border-gray-200 bg-white p-12 shadow-xl">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-blue-500" />
+          <h1 className="mt-8 text-2xl font-bold text-gray-900">Đang tải...</h1>
         </div>
       </div>
     }>
