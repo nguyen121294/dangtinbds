@@ -10,7 +10,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function handler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token, images, objectsToRemoveStr, enhanceImage, imageProcessingEngine, driveFolderId, signature } = body;
+    const { type, area, price, location, condition, direction, purpose, highlights, style, headings, access_token, images, objectsToRemoveStr, enhanceImage, imageProcessingEngine, driveFolderId, signature } = body;
 
     // --- 1. VALIDATE OAUTH TOKEN ---
     if (!access_token) {
@@ -31,7 +31,6 @@ async function handler(req: NextRequest) {
 - Hướng: ${direction}
 - Mục đích: ${purpose}
 - Giá bán: ${price}
-- Liên hệ: ${contact}
 - Đặc điểm nổi bật: ${highlights}
 
 **YẾU TỐ BẮT BUỘC:** Rập khuôn theo phong cách "${style}" xuyên suốt bài.

@@ -16,14 +16,14 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
     condition: "",
     direction: "",
     purpose: "",
-    contact: "",
+    purpose: "",
     highlights: "",
     style: "Sang trọng & Đẳng cấp",
     headings: [] as string[],
     objectsToRemove: ["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"] as string[],
     customObjectsToRemove: "",
     enhanceImage: true,
-    imageProcessingEngine: "replicate",
+    imageProcessingEngine: "openai_gpt",
     signature: ""
   });
   const [loading, setLoading] = useState(false);
@@ -317,20 +317,8 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
             <input required type="text" placeholder="Vd: 3 Tỷ 500 (Thương lượng)" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition outline-none" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
           </div>
 
-           {/* 8. Liên hệ */}
+           {/* 8. Chữ ký */}
            <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Liên hệ</label>
-            <input required type="text" placeholder="Vd: 09xx xxx xxx (Gặp A.Nam)" className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition outline-none" value={formData.contact} onChange={e => setFormData({...formData, contact: e.target.value})} />
-          </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Đặc điểm nổi bật khác (Tiện ích, phong thuỷ...)</label>
-          <textarea rows={2} placeholder="Gần chợ, sát mặt tiền, sổ hồng riêng cất két..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition outline-none resize-none" value={formData.highlights} onChange={e => setFormData({...formData, highlights: e.target.value})}></textarea>
-        </div>
-
-        {availableSignatures.length > 0 && (
-          <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mẫu Chữ ký</label>
             <select 
               className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition" 
@@ -340,13 +328,18 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
               <option value="">-- Không đính kèm chữ ký --</option>
               {availableSignatures.map((sig, idx) => (
                 <option key={idx} value={sig}>
-                  {sig.length > 50 ? `${sig.substring(0, 50)}...` : sig}
+                  {sig.length > 30 ? `${sig.substring(0, 30)}...` : sig}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-gray-500 mt-1">Chữ ký sẽ được tự động nối vào cuối bài đăng.</p>
           </div>
-        )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Đặc điểm nổi bật khác (Tiện ích, phong thuỷ...)</label>
+          <textarea rows={2} placeholder="Gần chợ, sát mặt tiền, sổ hồng riêng cất két..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition outline-none resize-none" value={formData.highlights} onChange={e => setFormData({...formData, highlights: e.target.value})}></textarea>
+        </div>
+
       </div>
 
       <div className="pt-2 space-y-5 border-t border-gray-100">
@@ -430,37 +423,6 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
             <div className="pt-2 border-t border-blue-100 mt-2">
                <label className="block text-xs font-semibold text-gray-700 mb-2 mt-2">Công cụ AI xử lý ảnh:</label>
                <div className="flex flex-col space-y-2">
-                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'replicate' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
-                   <input type="radio" name="imageEngine" value="replicate" checked={formData.imageProcessingEngine === 'replicate'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
-                   <div className="ml-3">
-                     <span className="block text-sm font-semibold text-gray-900">⚡ Replicate (Pix2Pix)</span>
-                     <span className="block text-xs text-gray-500 mt-0.5">Xóa cơ bản bằng prompt AI, thích hợp ảnh đơn giản.</span>
-                   </div>
-                 </label>
-                 
-                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'vertex_ai' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
-                   <input type="radio" name="imageEngine" value="vertex_ai" checked={formData.imageProcessingEngine === 'vertex_ai'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
-                   <div className="ml-3">
-                     <span className="block text-sm font-semibold text-gray-900">✨ Vertex AI + Google Vision</span>
-                     <span className="block text-xs text-gray-500 mt-0.5">Khoanh vùng chính xác, sử dụng thuật toán Imagen 4.</span>
-                   </div>
-                 </label>
-                 
-                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'vision_lama' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
-                   <input type="radio" name="imageEngine" value="vision_lama" checked={formData.imageProcessingEngine === 'vision_lama'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
-                   <div className="ml-3">
-                     <span className="block text-sm font-semibold text-gray-900">🚀 Vision AI + Replicate LaMa</span>
-                     <span className="block text-xs text-gray-500 mt-0.5">Khoanh vùng xuất sắc và xoá vật thể tốc độ cao không tì vết.</span>
-                   </div>
-                 </label>
-                 
-                 <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'vision_flux' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
-                   <input type="radio" name="imageEngine" value="vision_flux" checked={formData.imageProcessingEngine === 'vision_flux'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
-                   <div className="ml-3">
-                     <span className="block text-sm font-semibold text-gray-900">⭐ Vision AI + Flux Fill (Cao cấp)</span>
-                     <span className="block text-xs text-gray-500 mt-0.5">Model Inpaint hàng đầu hiện nay. Hòa trộn tự nhiên, fill bối cảnh cực thực.</span>
-                   </div>
-                 </label>
 
                  <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${formData.imageProcessingEngine === 'replicate_banana' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
                    <input type="radio" name="imageEngine" value="replicate_banana" checked={formData.imageProcessingEngine === 'replicate_banana'} onChange={e => setFormData({...formData, imageProcessingEngine: e.target.value})} className="mt-0.5 text-blue-600 focus:ring-blue-500 cursor-pointer" />
