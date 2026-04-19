@@ -87,7 +87,7 @@ export default async function DashboardLayout({
            </div>
 
            <div className="flex flex-col gap-2">
-             {trialRemaining > 0 && (
+             {((dbUser?.trialCredits || 0) > 0) && (
                 <div className="flex flex-col gap-1 text-sm bg-white p-2 rounded-sm border border-gray-100 shadow-sm">
                    <div className="font-medium text-xs text-gray-500 uppercase">Ví Dùng Thử</div>
                    <div className="flex items-center justify-between">
@@ -97,7 +97,7 @@ export default async function DashboardLayout({
                      </div>
                      <div className="flex items-center gap-1.5 text-gray-600 text-xs">
                         <Clock className="w-3.5 h-3.5 text-orange-500" /> 
-                        <span className="font-medium text-gray-900">{trialRemaining}</span> ngày
+                        <span className="font-medium text-gray-900">{dbUser?.trialExpiresAt ? `${trialRemaining} ngày` : 'Vô hạn'}</span>
                      </div>
                    </div>
                 </div>
@@ -148,7 +148,22 @@ export default async function DashboardLayout({
 
       {/* MAIN CONTENT */}
       <main className="flex-1 md:ml-64 flex flex-col min-h-screen pt-16 md:pt-0">
-        {children}
+        <div className="h-16 border-b border-gray-200 bg-white hidden md:flex items-center justify-end px-8 shrink-0">
+           <div className="flex items-center gap-4">
+              <div className="flex flex-col items-end mr-2">
+                <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                  <Wallet className="w-4 h-4 text-[#E03C31]" />
+                  {(dbUser?.paidCredits || 0) + (dbUser?.trialCredits || 0)} Credits
+                </span>
+                <span className="text-xs text-gray-500">
+                  Hết hạn: {dbUser?.subscriptionExpiresAt ? new Date(dbUser.subscriptionExpiresAt).toLocaleDateString('vi-VN') : 'Vô hạn'}
+                </span>
+              </div>
+           </div>
+        </div>
+        <div className="flex-1 w-full bg-[#F2F4F5]">
+          {children}
+        </div>
       </main>
     </div>
   );

@@ -140,14 +140,29 @@ export function MatrixPricingTable({ plans, isLoggedIn }: { plans: Plan[], isLog
                 </div>
              </div>
              
-             <button
-               onClick={handleCheckout}
-               disabled={loading}
-               className="w-full flex items-center justify-center gap-2 rounded-sm bg-[#E03C31] hover:bg-[#c9362c] text-white px-8 py-4 text-xl font-bold shadow-lg transition disabled:opacity-50"
-             >
-               {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <CreditCard className="h-6 w-6" />}
-               Thanh toán {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(selectedPlan.price)}
-             </button>
+             {selectedPlan.id === 'free' ? (
+               <button
+                 onClick={() => {
+                   if (!isLoggedIn) {
+                     window.location.href = '/login?returnTo=/dashboard';
+                   } else {
+                     window.location.href = '/dashboard';
+                   }
+                 }}
+                 className="w-full flex items-center justify-center gap-2 rounded-sm bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 text-xl font-bold border border-gray-900 transition"
+               >
+                 {isLoggedIn ? 'Bắt đầu sử dụng ngay' : 'Đăng ký dùng thử MIỄN PHÍ'}
+               </button>
+             ) : (
+               <button
+                 onClick={handleCheckout}
+                 disabled={loading}
+                 className="w-full flex items-center justify-center gap-2 rounded-sm bg-[#E03C31] hover:bg-[#c9362c] text-white px-8 py-4 text-xl font-bold shadow-lg transition disabled:opacity-50"
+               >
+                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <CreditCard className="h-6 w-6" />}
+                 Thanh toán {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(selectedPlan.price)}
+               </button>
+             )}
            </div>
          ) : (
            <div className="text-center py-6 text-gray-400 flex flex-col items-center w-full">

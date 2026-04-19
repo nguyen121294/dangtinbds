@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function PricingPage() {
   const allPlans = await getPlans('personal');
-  const plans = allPlans.filter(p => p.price > 0);
+  const plans = allPlans;
   
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
