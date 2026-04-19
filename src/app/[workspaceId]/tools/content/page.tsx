@@ -19,7 +19,7 @@ export default async function ContentToolPage({
            </div>
            
            {/* Lưu ý: Nếu env NEXT_PUBLIC_GOOGLE_CLIENT_ID bị thiếu, Component này ở client có thể ném Exception */}
-           <PropertyForm />
+           <PropertyForm workspaceId={workspaceId} />
         </div>
      </main>
   );
