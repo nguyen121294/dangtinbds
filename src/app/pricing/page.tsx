@@ -36,6 +36,17 @@ export default async function PricingPage() {
         <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto font-medium">
           Ma trận cước linh hoạt, phù hợp nhu cầu mọi tổ chức. Chọn gói Credits và Thời hạn bạn mong muốn bên dưới.
         </p>
+
+        {!user && (
+          <div className="mt-8 flex justify-center">
+            <Link 
+              href="/login?returnTo=/dashboard"
+              className="inline-flex items-center gap-2 bg-gradient-to-r from-[#E03C31] to-[#b32e25] text-white px-8 py-4 rounded-sm font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-lg"
+            >
+              🚀 Đăng ký dùng thử miễn phí 200 Credits
+            </Link>
+          </div>
+        )}
       </header>
 
       {/* Pricing Matrix */}
