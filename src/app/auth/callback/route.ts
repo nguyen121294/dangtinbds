@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { profiles } from '@/db/schema';
+import { getTrialCredits, getTrialDays } from '@/lib/app-settings';
 
 import { type EmailOtpType } from '@supabase/supabase-js';
 
@@ -41,9 +42,12 @@ export async function GET(request: Request) {
 
   if (!authError && user) {
     try {
-      // Create user in our DB if not exists
+      // Read dynamic trial config from DB
+      const trialCreditsAmount = await getTrialCredits();
+      const trialDaysAmount = await getTrialDays();
+
       const trialExpiryDate = new Date();
-      trialExpiryDate.setDate(trialExpiryDate.getDate() + 15);
+      trialExpiryDate.setDate(trialExpiryDate.getDate() + trialDaysAmount);
 
       await db.insert(profiles)
         .values({
@@ -51,6 +55,7 @@ export async function GET(request: Request) {
           email: user.email!,
           firstName: user.user_metadata?.firstName || null,
           lastName: user.user_metadata?.lastName || null,
+          trialCredits: trialCreditsAmount,
           trialExpiresAt: trialExpiryDate,
         })
         .onConflictDoUpdate({

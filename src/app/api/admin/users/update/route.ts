@@ -11,10 +11,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, subscriptionId, subscriptionStatus, subscriptionExpiresAt, status } = await request.json();
+    const { id, trialCredits, trialExpiresAt, paidCredits, subscriptionId, subscriptionStatus, subscriptionExpiresAt, status } = await request.json();
 
     await db.update(profiles)
       .set({
+        trialCredits: trialCredits ?? 0,
+        trialExpiresAt: trialExpiresAt ? new Date(trialExpiresAt) : null,
+        paidCredits: paidCredits ?? 0,
         subscriptionId,
         subscriptionStatus,
         subscriptionExpiresAt: subscriptionExpiresAt ? new Date(subscriptionExpiresAt) : null,

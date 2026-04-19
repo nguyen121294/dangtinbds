@@ -8,6 +8,9 @@ interface Props {
   email: string;
   firstName: string;
   lastName: string;
+  trialCredits: number;
+  trialExpiresAt: Date | null;
+  paidCredits: number;
   subscriptionStatus: string;
   subscriptionExpiresAt: Date | null;
   subscriptionId: string;
@@ -18,6 +21,9 @@ export default function AccountClientView({
   email,
   firstName: initialFirstName,
   lastName: initialLastName,
+  trialCredits,
+  trialExpiresAt,
+  paidCredits,
   subscriptionStatus,
   subscriptionExpiresAt,
   subscriptionId,
@@ -115,6 +121,41 @@ export default function AccountClientView({
             </div>
           </div>
         </div>
+
+        {/* Credit Balance */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+          <div className="p-4 rounded-lg border border-orange-200 bg-orange-50">
+            <div className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-1">Trial Credits</div>
+            <div className="text-2xl font-extrabold text-gray-900">{trialCredits}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              {trialExpiresAt
+                ? new Date(trialExpiresAt) > new Date()
+                  ? `Hết hạn: ${new Date(trialExpiresAt).toLocaleDateString('vi-VN')}`
+                  : '⚠️ Đã hết hạn'
+                : 'Vô hạn'}
+            </div>
+          </div>
+          <div className="p-4 rounded-lg border border-emerald-200 bg-emerald-50">
+            <div className="text-xs font-bold text-emerald-600 uppercase tracking-wider mb-1">Paid Credits</div>
+            <div className="text-2xl font-extrabold text-gray-900">{paidCredits}</div>
+            <div className="text-xs text-gray-500 mt-1">
+              {isSubscribed && subscriptionExpiresAt
+                ? `Hết hạn: ${new Date(subscriptionExpiresAt).toLocaleDateString('vi-VN')}`
+                : 'Chưa mua gói'}
+            </div>
+          </div>
+        </div>
+
+        {!isSubscribed && (
+          <div className="mt-5">
+            <a
+              href="/pricing"
+              className="inline-flex items-center gap-2 bg-[#E03C31] hover:bg-[#c9362c] text-white px-6 py-3 rounded-lg font-bold transition-all hover:-translate-y-0.5 shadow-md text-sm"
+            >
+              🚀 Nâng cấp tài khoản
+            </a>
+          </div>
+        )}
       </section>
 
       {/* 2. Cập nhật Thông tin cá nhân */}

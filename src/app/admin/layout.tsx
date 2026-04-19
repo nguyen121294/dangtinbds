@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { verifyAdminSession, removeAdminSession } from '@/lib/admin-auth';
-import { LayoutDashboard, Users, CreditCard, LogOut, ExternalLink, Folders } from 'lucide-react';
+import { LayoutDashboard, Users, CreditCard, LogOut, ExternalLink, Folders, Settings } from 'lucide-react';
 import LogoutAdminButton from './logout-button';
 
 export default async function AdminLayout({
@@ -26,6 +26,7 @@ export default async function AdminLayout({
     { label: 'Người dùng', href: `/admin/users`, icon: Users },
     { label: 'Gói dịch vụ', href: `/admin/plans`, icon: CreditCard },
     { label: 'Không gian (Rooms)', href: `/admin/workspaces`, icon: Folders },
+    { label: 'Cài đặt Hệ thống', href: `/admin/settings`, icon: Settings },
   ];
 
   return (

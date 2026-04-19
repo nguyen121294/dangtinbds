@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { CreditCard, Loader2, Info } from 'lucide-react';
 import type { Plan } from '@/lib/plans';
+import { useToast } from '@/components/toast';
 
 export function MatrixPricingTable({ plans, isLoggedIn }: { plans: Plan[], isLoggedIn: boolean }) {
   const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const { showToast } = useToast();
 
   // Grouping logic
   const rowCredits = Array.from(new Set(plans.map(p => p.creditsOffered))).sort((a,b) => a - b);
@@ -37,11 +39,11 @@ export function MatrixPricingTable({ plans, isLoggedIn }: { plans: Plan[], isLog
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
       } else {
-        alert('Có lỗi xảy ra khi tạo link thanh toán. Vui lòng thử lại.');
+        showToast('error', 'Có lỗi xảy ra khi tạo link thanh toán. Vui lòng thử lại.');
       }
     } catch (error) {
       console.error('Checkout error:', error);
-      alert('Không thể kết nối với máy chủ thanh toán.');
+      showToast('error', 'Không thể kết nối với máy chủ thanh toán.');
     } finally {
       setLoading(false);
     }
@@ -140,29 +142,14 @@ export function MatrixPricingTable({ plans, isLoggedIn }: { plans: Plan[], isLog
                 </div>
              </div>
              
-             {selectedPlan.id === 'free' ? (
-               <button
-                 onClick={() => {
-                   if (!isLoggedIn) {
-                     window.location.href = '/login?returnTo=/dashboard';
-                   } else {
-                     window.location.href = '/dashboard';
-                   }
-                 }}
-                 className="w-full flex items-center justify-center gap-2 rounded-sm bg-gray-900 hover:bg-gray-800 text-white px-8 py-4 text-xl font-bold border border-gray-900 transition"
-               >
-                 {isLoggedIn ? 'Bắt đầu sử dụng ngay' : 'Đăng ký dùng thử MIỄN PHÍ'}
-               </button>
-             ) : (
-               <button
-                 onClick={handleCheckout}
-                 disabled={loading}
-                 className="w-full flex items-center justify-center gap-2 rounded-sm bg-[#E03C31] hover:bg-[#c9362c] text-white px-8 py-4 text-xl font-bold shadow-lg transition disabled:opacity-50"
-               >
-                 {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <CreditCard className="h-6 w-6" />}
-                 Thanh toán {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(selectedPlan.price)}
-               </button>
-             )}
+             <button
+               onClick={handleCheckout}
+               disabled={loading}
+               className="w-full flex items-center justify-center gap-2 rounded-sm bg-[#E03C31] hover:bg-[#c9362c] text-white px-8 py-4 text-xl font-bold shadow-lg transition disabled:opacity-50"
+             >
+               {loading ? <Loader2 className="h-6 w-6 animate-spin" /> : <CreditCard className="h-6 w-6" />}
+               Thanh toán {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(selectedPlan.price)}
+             </button>
            </div>
          ) : (
            <div className="text-center py-6 text-gray-400 flex flex-col items-center w-full">

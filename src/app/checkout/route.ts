@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const paymentLinkData = {
     orderCode: orderCode,
     amount: plan.price,
-    description: `Don hang ${orderCode}`,
+    description: `${plan.name} ${plan.creditsOffered}Cr`.slice(0, 25),
     cancelUrl: `${appUrl}/pricing?cancelOrder=${orderCode}`,
     returnUrl: `${appUrl}/success`,
   };

@@ -2,10 +2,12 @@
 
 import { useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { useToast } from '@/components/toast';
 
 export function PaymentStatusHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { showToast } = useToast();
 
   useEffect(() => {
     const cancel = searchParams.get('cancel');
@@ -14,18 +16,17 @@ export function PaymentStatusHandler() {
     
     // If we have payOS params indicating cancellation
     if (cancel === 'true' || status === 'CANCELLED') {
-      alert(`Thanh toán đã bị huỷ. Phiên giao dịch ${orderCode || ''} vừa bị huỷ.`);
-      // Clean up the URL
+      showToast('warning', `Thanh toán đã bị huỷ. Phiên giao dịch #${orderCode || ''} vừa bị huỷ.`);
       router.replace('/pricing');
       return;
     }
     
     // If success
     if (status === 'PAID') {
-      alert('Thanh toán thành công! Tài khoản của bạn đã được cập nhật.');
+      showToast('success', 'Thanh toán thành công! Tài khoản của bạn đã được cập nhật.');
       router.replace('/dashboard');
     }
-  }, [searchParams, router]);
+  }, [searchParams, router, showToast]);
 
   return null;
 }

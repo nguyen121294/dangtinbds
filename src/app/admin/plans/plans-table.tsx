@@ -9,6 +9,10 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
   const [editingPlan, setEditingPlan] = useState<Plan | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<string>('all');
+
+  const categories = Array.from(new Set(plans.map(p => p.category)));
+  const filteredPlans = categoryFilter === 'all' ? plans : plans.filter(p => p.category === categoryFilter);
 
   const emptyPlan: Plan = {
     id: '',
@@ -78,10 +82,27 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
 
   return (
     <div className="space-y-6">
-      <div className="flex gap-4 justify-end mb-6">
+      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center mb-6">
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-lg">
+          <button
+            onClick={() => setCategoryFilter('all')}
+            className={`px-4 py-2 text-sm font-bold rounded-md transition ${categoryFilter === 'all' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Tất cả ({plans.length})
+          </button>
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`px-4 py-2 text-sm font-bold rounded-md transition capitalize ${categoryFilter === cat ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              {cat === 'personal' ? 'Cá nhân' : cat === 'business' ? 'Doanh nghiệp' : cat} ({plans.filter(p => p.category === cat).length})
+            </button>
+          ))}
+        </div>
         <button 
           onClick={() => { setIsAdding(true); setEditingPlan(emptyPlan); }}
-          className="bg-[#E03C31] hover:bg-red-700 text-white px-5 py-3 md:py-2.5 rounded-lg md:rounded-sm font-bold flex items-center justify-center w-full md:w-auto gap-2 transition active:scale-95 shadow-sm"
+          className="bg-[#E03C31] hover:bg-red-700 text-white px-5 py-3 md:py-2.5 rounded-lg md:rounded-sm font-bold flex items-center justify-center w-full sm:w-auto gap-2 transition active:scale-95 shadow-sm"
         >
           <Plus className="w-5 h-5 md:w-4 md:h-4" />
           Thêm Gói Mới
@@ -96,7 +117,7 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
               <th className="py-4 px-6 font-extrabold text-gray-900 text-lg border-r border-gray-200 w-1/4">
                 Credits \ Thời gian
               </th>
-              {Array.from(new Set(plans.map(p => p.days))).sort((a,b) => a - b).map(days => (
+              {Array.from(new Set(filteredPlans.map(p => p.days))).sort((a,b) => a - b).map(days => (
                 <th key={days} className="py-4 px-6 font-bold text-[#E03C31] text-lg text-center border-r border-gray-200 last:border-r-0 w-1/4">
                   {days} Ngày
                 </th>
@@ -104,13 +125,13 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
             </tr>
           </thead>
           <tbody>
-            {Array.from(new Set(plans.map(p => p.creditsOffered))).sort((a,b) => a - b).map((credits) => (
+            {Array.from(new Set(filteredPlans.map(p => p.creditsOffered))).sort((a,b) => a - b).map((credits) => (
               <tr key={credits} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/50 transition-colors">
                 <td className="py-4 px-6 font-bold text-gray-900 text-lg border-r border-gray-200">
                   {new Intl.NumberFormat('vi-VN').format(credits)} Credits
                 </td>
-                {Array.from(new Set(plans.map(p => p.days))).sort((a,b) => a - b).map(days => {
-                  const plan = plans.find(p => p.creditsOffered === credits && p.days === days);
+                {Array.from(new Set(filteredPlans.map(p => p.days))).sort((a,b) => a - b).map(days => {
+                  const plan = filteredPlans.find(p => p.creditsOffered === credits && p.days === days);
                   
                   return (
                     <td 
@@ -159,7 +180,7 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
 
       {/* Mobile Card Layout (Hidden on Desktop) */}
       <div className="md:hidden space-y-4">
-        {plans.map((plan) => (
+        {filteredPlans.map((plan) => (
           <div key={plan.id} className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 space-y-4">
             <div className="flex justify-between items-start border-b border-gray-100 pb-3">
               <div>
@@ -209,7 +230,7 @@ export default function PlansTable({ initialPlans }: { initialPlans: Plan[] }) {
             </div>
           </div>
         ))}
-        {plans.length === 0 && (
+        {filteredPlans.length === 0 && (
           <div className="text-center py-10 px-4 text-gray-500 bg-white border border-gray-200 rounded-xl border-dashed">
             Chưa có gói nào được tạo.
           </div>

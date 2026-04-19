@@ -28,13 +28,27 @@ export default async function GlobalNavbar() {
           {user && profile ? (
             <div className="flex items-center gap-3">
               <div className="hidden sm:flex flex-col items-end mr-2">
-                <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                  <Coins className="w-4 h-4 text-amber-500" />
-                  {(profile.paidCredits || 0) + (profile.trialCredits || 0)} Credits
-                </span>
-                <span className="text-xs text-gray-500">
-                  Hết hạn: {profile.subscriptionExpiresAt ? new Date(profile.subscriptionExpiresAt).toLocaleDateString('vi-VN') : 'Vô hạn'}
-                </span>
+                {(() => {
+                  const now = Date.now();
+                  const trialValid = profile.trialExpiresAt ? new Date(profile.trialExpiresAt).getTime() > now : true;
+                  const trialCredits = trialValid ? (profile.trialCredits || 0) : 0;
+                  const totalCredits = trialCredits + (profile.paidCredits || 0);
+                  return (
+                    <>
+                      <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
+                        <Coins className="w-4 h-4 text-amber-500" />
+                        {totalCredits} Credits
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {profile.subscriptionExpiresAt 
+                          ? `Hết hạn: ${new Date(profile.subscriptionExpiresAt).toLocaleDateString('vi-VN')}`
+                          : trialValid && trialCredits > 0
+                            ? `Trial: ${trialCredits}`
+                            : 'Chưa mua gói'}
+                      </span>
+                    </>
+                  );
+                })()}
               </div>
               <Link 
                 href="/dashboard" 

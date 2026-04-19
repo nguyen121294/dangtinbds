@@ -36,6 +36,21 @@ export const getPlans = cache(async (categoryFilter: string = 'personal'): Promi
   }
 });
 
+export const getAllPlans = cache(async (): Promise<Plan[]> => {
+  try {
+    const allPlans = await db.select().from(plansTable);
+    return allPlans
+      .sort((a, b) => a.creditsOffered === b.creditsOffered ? a.days - b.days : a.creditsOffered - b.creditsOffered)
+      .map(p => ({
+        ...p,
+        features: (p.features as string[]) || [],
+      }));
+  } catch (error) {
+    console.error('Error fetching all plans:', error);
+    return [];
+  }
+});
+
 export const getPlan = cache(async (planId: string): Promise<Plan | null> => {
   try {
     const plan = await db.query.plans.findFirst({
@@ -52,7 +67,3 @@ export const getPlan = cache(async (planId: string): Promise<Plan | null> => {
   }
 });
 
-// For backward compatibility during refactoring if needed, but we should update callers
-export const PLANS_PLACEHOLDER = {
-  free: { id: 'free', name: 'Free', price: 0, days: 0, creditsOffered: 10, description: 'Dùng thử miễn phí', features: [], maxWorkspaces: 1, maxInvites: 0 },
-};

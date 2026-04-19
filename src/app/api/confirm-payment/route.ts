@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { payos } from '@/lib/payos';
 import { db } from '@/db';
 import { profiles, payments } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { getPlan } from '@/lib/plans';
 
@@ -78,20 +78,33 @@ export async function POST(request: Request) {
     // 4. Calculate subscription expiry from plan
     const plan = await getPlan(payment.plan ?? 'plus');
     const days = plan?.days ?? 30;
+    const creditsToAdd = plan?.creditsOffered ?? 100;
 
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + days);
+    // Check if subscription is still active to stack days
+    const currentProfile = await db.query.profiles.findFirst({
+      where: eq(profiles.id, user.id),
+    });
 
-    // 5. Activate subscription
+    const now = new Date();
+    let expirationDate = new Date();
+    if (currentProfile?.subscriptionExpiresAt && new Date(currentProfile.subscriptionExpiresAt) > now) {
+      expirationDate = new Date(currentProfile.subscriptionExpiresAt);
+      expirationDate.setDate(expirationDate.getDate() + days);
+    } else {
+      expirationDate.setDate(expirationDate.getDate() + days);
+    }
+
+    // 5. Activate subscription + add credits
     await db.update(profiles)
       .set({
         subscriptionStatus: 'active',
         subscriptionExpiresAt: expirationDate,
         subscriptionId: plan?.id ?? payment.plan,
+        paidCredits: sql`${profiles.paidCredits} + ${creditsToAdd}`,
       })
       .where(eq(profiles.id, user.id));
 
-    console.log(`[ConfirmPayment] SUCCESS: User ${user.id} activated "${plan?.name || payment.plan}" for ${days} days.`);
+    console.log(`[ConfirmPayment] SUCCESS: User ${user.id} activated "${plan?.name || payment.plan}" +${creditsToAdd} credits, expires ${expirationDate.toISOString()}`);
 
     return NextResponse.json({
       success: true,

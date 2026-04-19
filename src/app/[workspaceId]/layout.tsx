@@ -158,58 +158,6 @@ export default async function DashboardLayout({
            </Link>
         </div>
 
-        {/* THÔNG TIN GÓI HIỆN TẠI */}
-        <div className="mx-4 mb-4 p-4 border border-gray-200 bg-gray-50 rounded-sm shadow-sm flex flex-col gap-3">
-           <div>
-              <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Gói cước của bạn</p>
-              <div className="font-bold text-gray-900 flex items-center gap-2">
-                 <span>{planName}</span>
-              </div>
-           </div>
-
-           <div className="flex flex-col gap-2">
-             {((dbUser?.trialCredits || 0) > 0) && (
-                <div className="flex flex-col gap-1 text-sm bg-white p-2 rounded-sm border border-gray-100 shadow-sm">
-                   <div className="font-medium text-xs text-gray-500 uppercase">Ví Dùng Thử</div>
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-2 text-gray-600">
-                        <Wallet className="w-4 h-4 text-[#E03C31]" /> 
-                        <span className="font-medium text-gray-900">{dbUser?.trialCredits || 0}</span>
-                     </div>
-                     <div className="flex items-center gap-1.5 text-gray-600 text-xs">
-                        <Clock className="w-3.5 h-3.5 text-orange-500" /> 
-                        <span className="font-medium text-gray-900">{dbUser?.trialExpiresAt ? `${trialRemaining} ngày` : 'Vô hạn'}</span>
-                     </div>
-                   </div>
-                </div>
-             )}
-
-             {paidRemaining > 0 && (
-                <div className="flex flex-col gap-1 text-sm bg-emerald-50 p-2 rounded-sm border border-emerald-100 shadow-sm">
-                   <div className="font-medium text-xs text-emerald-700 uppercase">Ví PRO</div>
-                   <div className="flex items-center justify-between">
-                     <div className="flex items-center gap-2 text-gray-600">
-                        <Wallet className="w-4 h-4 text-emerald-600" /> 
-                        <span className="font-medium text-gray-900">{dbUser?.paidCredits || 0}</span>
-                     </div>
-                     <div className="flex items-center gap-1.5 text-gray-600 text-xs">
-                        <Clock className="w-3.5 h-3.5 text-emerald-600" /> 
-                        <span className="font-medium text-gray-900">{paidRemaining}</span> ngày
-                     </div>
-                   </div>
-                </div>
-             )}
-           </div>
-
-           <Link href="/pricing" className={`w-full py-2 flex justify-center items-center text-sm font-semibold rounded-sm transition-colors border ${
-              isFree 
-                ? 'bg-[#E03C31] text-white hover:bg-[#c9362c] border-[#E03C31]' 
-                : 'bg-white text-gray-700 hover:bg-gray-100 border-gray-300'
-           }`}>
-              {isFree ? 'Nâng cấp / Dùng thử ngay' : 'Mua thêm tín dụng'}
-           </Link>
-        </div>
-
         <div className="p-4 border-t border-gray-200 bg-gray-50 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3 overflow-hidden">
              <div className="w-10 h-10 rounded-full bg-gray-200 flex flex-shrink-0 items-center justify-center text-gray-600 font-bold uppercase">
@@ -229,20 +177,76 @@ export default async function DashboardLayout({
 
       {/* MAIN CONTENT */}
       <main className="flex-1 md:ml-64 flex flex-col min-h-screen pt-16 md:pt-0">
-        <div className="h-16 border-b border-gray-200 bg-white hidden md:flex items-center justify-end px-8 shrink-0">
-           <div className="flex items-center gap-4">
-              <div className="flex flex-col items-end mr-2">
-                <span className="text-sm font-bold text-gray-900 flex items-center gap-1">
-                  <Wallet className="w-4 h-4 text-[#E03C31]" />
-                  {(dbUser?.paidCredits || 0) + (dbUser?.trialCredits || 0)} Credits
-                </span>
-                <span className="text-xs text-gray-500">
-                  Hết hạn: {dbUser?.subscriptionExpiresAt ? new Date(dbUser.subscriptionExpiresAt).toLocaleDateString('vi-VN') : 'Vô hạn'}
-                </span>
+        <div className="h-auto min-h-[56px] border-b border-gray-200 bg-white hidden md:flex items-center justify-between px-6 py-2 shrink-0">
+           <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2">
+                 <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Gói:</span>
+                 <span className="text-sm font-bold text-gray-900">{planName}</span>
               </div>
+
+              <div className="h-6 w-px bg-gray-200" />
+
+              {((dbUser?.trialCredits || 0) > 0) && (trialRemaining > 0 || !dbUser?.trialExpiresAt) && (
+                 <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-sm">
+                    <Wallet className="w-3.5 h-3.5 text-[#E03C31]" />
+                    <span className="text-xs font-bold text-gray-900">{dbUser?.trialCredits || 0}</span>
+                    <span className="text-[10px] text-gray-500">Dùng thử</span>
+                    <span className="text-[10px] text-gray-400">·</span>
+                    <Clock className="w-3 h-3 text-orange-500" />
+                    <span className="text-[10px] font-medium text-gray-600">{dbUser?.trialExpiresAt ? `${trialRemaining}d` : 'Vô hạn'}</span>
+                 </div>
+              )}
+
+              {paidRemaining > 0 && (
+                 <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-sm">
+                    <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-xs font-bold text-gray-900">{dbUser?.paidCredits || 0}</span>
+                    <span className="text-[10px] text-gray-500">PRO</span>
+                    <span className="text-[10px] text-gray-400">·</span>
+                    <Clock className="w-3 h-3 text-emerald-600" />
+                    <span className="text-[10px] font-medium text-gray-600">{paidRemaining}d</span>
+                 </div>
+              )}
            </div>
+
+           <Link href="/pricing" className={`text-xs font-bold px-4 py-2 rounded-sm transition-colors border ${
+              isFree
+                ? 'bg-[#E03C31] text-white hover:bg-[#c9362c] border-[#E03C31]'
+                : 'bg-white text-gray-700 hover:bg-gray-100 border-gray-300'
+           }`}>
+              {isFree ? 'Nâng cấp' : 'Mua thêm'}
+           </Link>
         </div>
         <div className="flex-1 w-full bg-[#F2F4F5]">
+           {(() => {
+             const usableTrialCredits = (trialRemaining > 0 || !dbUser?.trialExpiresAt) ? (dbUser?.trialCredits || 0) : 0;
+             const totalUsable = usableTrialCredits + (dbUser?.paidCredits || 0);
+             if (totalUsable > 0 && totalUsable <= 10) {
+               return (
+                 <div className="bg-amber-50 border-b border-amber-200 px-4 py-2.5 flex items-center justify-between gap-3">
+                   <p className="text-sm font-medium text-amber-800">
+                     ⚠️ Bạn chỉ còn <strong>{totalUsable}</strong> credits. Hãy nâng cấp để tiếp tục sử dụng.
+                   </p>
+                   <a href="/pricing" className="text-xs font-bold bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded-sm transition shrink-0">
+                     Mua thêm
+                   </a>
+                 </div>
+               );
+             }
+             if (totalUsable === 0) {
+               return (
+                 <div className="bg-red-50 border-b border-red-200 px-4 py-2.5 flex items-center justify-between gap-3">
+                   <p className="text-sm font-medium text-red-800">
+                     🚫 Bạn đã hết credits. Vui lòng mua gói để tiếp tục sử dụng công cụ AI.
+                   </p>
+                   <a href="/pricing" className="text-xs font-bold bg-[#E03C31] hover:bg-[#c9362c] text-white px-3 py-1.5 rounded-sm transition shrink-0">
+                     Nâng cấp ngay
+                   </a>
+                 </div>
+               );
+             }
+             return null;
+           })()}
            {children}
         </div>
       </main>

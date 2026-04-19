@@ -5,7 +5,7 @@ export const profiles = table('profiles', {
   email: text('email').notNull(),
   firstName: text('first_name'),
   lastName: text('last_name'),
-  trialCredits: integer('trial_credits').default(200), // Trial gets 200 credits
+  trialCredits: integer('trial_credits').default(0), // Set dynamically by auth callback from app_settings
   trialExpiresAt: timestamp('trial_expires_at'), 
   paidCredits: integer('paid_credits').default(0), // VIP paid credits
   subscriptionId: text('subscription_id'),
@@ -55,4 +55,10 @@ export const workspaceMembers = table('workspace_members', {
   creditLimit: integer('credit_limit').notNull().default(0), // Number of credits owner allows this member to use. 0 = cannot use.
   creditsUsed: integer('credits_used').notNull().default(0), // Number of credits this member has actively used
   joinedAt: timestamp('joined_at').defaultNow(),
+});
+
+export const appSettings = table('app_settings', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });

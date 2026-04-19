@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Sparkles } from 'lucide-react';
 import { getPlans } from '@/lib/plans';
+import { getTrialCredits } from '@/lib/app-settings';
 import { MatrixPricingTable } from './MatrixPricingTable';
 import { Suspense } from 'react';
 import { PaymentStatusHandler } from './PaymentStatusHandler';
@@ -11,7 +12,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function PricingPage() {
   const allPlans = await getPlans('personal');
-  const plans = allPlans;
+  const plans = allPlans.filter(p => p.price > 0 && p.days > 0);
+  const trialCredits = await getTrialCredits();
   
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -28,7 +30,7 @@ export default async function PricingPage() {
       <header className="pt-12 pb-12 text-center px-4">
         <div className="inline-flex items-center gap-2 rounded-sm border border-[#E03C31]/20 bg-[#E03C31]/10 px-4 py-1.5 text-sm font-bold text-[#E03C31] mb-6 shadow-sm">
           <Sparkles className="h-4 w-4" />
-          <span>Bảng giá chuẩn - 1 Workspace / 3 Thành viên</span>
+          <span>Định giá linh hoạt theo nhu cầu</span>
         </div>
         <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight">
           Các Gói Khách Hàng <span className="text-[#E03C31]">Cá Nhân</span>
@@ -43,7 +45,7 @@ export default async function PricingPage() {
               href="/login?returnTo=/dashboard"
               className="inline-flex items-center gap-2 bg-gradient-to-r from-[#E03C31] to-[#b32e25] text-white px-8 py-4 rounded-sm font-bold shadow-lg hover:shadow-xl transition-all hover:-translate-y-0.5 text-lg"
             >
-              🚀 Đăng ký dùng thử miễn phí 200 Credits
+              🚀 Đăng ký dùng thử miễn phí {trialCredits} Credits
             </Link>
           </div>
         )}

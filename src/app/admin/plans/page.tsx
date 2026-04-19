@@ -1,8 +1,8 @@
-import { getPlans } from '@/lib/plans';
+import { getAllPlans } from '@/lib/plans';
 import PlansTable from './plans-table';
 
 export default async function PlansPage() {
-  const allPlans = await getPlans();
+  const allPlans = await getAllPlans();
 
   return (
     <div className="space-y-8">

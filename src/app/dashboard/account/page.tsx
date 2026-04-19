@@ -38,6 +38,9 @@ export default async function AccountPage() {
           email={user.email!}
           firstName={dbUser?.firstName || ''}
           lastName={dbUser?.lastName || ''}
+          trialCredits={dbUser?.trialCredits || 0}
+          trialExpiresAt={dbUser?.trialExpiresAt || null}
+          paidCredits={dbUser?.paidCredits || 0}
           subscriptionStatus={dbUser?.subscriptionStatus || 'inactive'}
           subscriptionExpiresAt={dbUser?.subscriptionExpiresAt || null}
           subscriptionId={dbUser?.subscriptionId || 'free'}

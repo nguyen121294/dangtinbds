@@ -8,6 +8,9 @@ import { Plan } from '@/lib/plans';
 type UserProfile = {
   id: string;
   email: string;
+  trialCredits: number | null;
+  trialExpiresAt: Date | null;
+  paidCredits: number | null;
   subscriptionId: string | null;
   subscriptionStatus: string | null;
   subscriptionExpiresAt: Date | null;
@@ -18,6 +21,9 @@ type UserProfile = {
 export default function UsersTable({ initialUsers, plans }: { initialUsers: any[], plans: Plan[] }) {
   const [users, setUsers] = useState<UserProfile[]>(initialUsers.map(u => ({
     ...u,
+    trialCredits: u.trialCredits ?? null,
+    trialExpiresAt: u.trialExpiresAt ? new Date(u.trialExpiresAt) : null,
+    paidCredits: u.paidCredits ?? null,
     subscriptionExpiresAt: u.subscriptionExpiresAt ? new Date(u.subscriptionExpiresAt) : null,
     createdAt: u.createdAt ? new Date(u.createdAt) : null
   })));
@@ -41,6 +47,9 @@ export default function UsersTable({ initialUsers, plans }: { initialUsers: any[
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: editingUser.id,
+          trialCredits: editingUser.trialCredits,
+          trialExpiresAt: editingUser.trialExpiresAt?.toISOString() || null,
+          paidCredits: editingUser.paidCredits,
           subscriptionId: editingUser.subscriptionId,
           subscriptionStatus: editingUser.subscriptionStatus,
           subscriptionExpiresAt: editingUser.subscriptionExpiresAt?.toISOString() || null,
@@ -265,8 +274,47 @@ export default function UsersTable({ initialUsers, plans }: { initialUsers: any[
                   </select>
                 </div>
 
-                <div className="col-span-2">
-                  <label className="block text-sm font-medium text-zinc-400 mb-2">Ngày hết hạn</label>
+                <div className="col-span-2 border-t border-zinc-800 pt-4 mt-2">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">Ví tín dụng</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">Trial Credits</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editingUser.trialCredits ?? 0}
+                    onChange={(e) => setEditingUser({...editingUser, trialCredits: parseInt(e.target.value) || 0})}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">Paid Credits</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={editingUser.paidCredits ?? 0}
+                    onChange={(e) => setEditingUser({...editingUser, paidCredits: parseInt(e.target.value) || 0})}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">Hạn Trial</label>
+                  <input
+                    type="date"
+                    value={editingUser.trialExpiresAt ? format(editingUser.trialExpiresAt, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => setEditingUser({
+                      ...editingUser,
+                      trialExpiresAt: e.target.value ? new Date(e.target.value) : null
+                    })}
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">Hạn Subscription</label>
                   <input 
                     type="date"
                     value={editingUser.subscriptionExpiresAt ? format(editingUser.subscriptionExpiresAt, 'yyyy-MM-dd') : ''}
