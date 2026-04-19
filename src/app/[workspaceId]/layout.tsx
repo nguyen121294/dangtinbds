@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { db } from '@/db';
 import { profiles, workspaces, workspaceMembers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { XCircle, LogOut, Building2, Settings, Wallet, Clock, User as UserIcon, Menu } from 'lucide-react';
+import { XCircle, LogOut, Building2, Settings, Wallet, Clock, User as UserIcon, Menu, Wrench } from 'lucide-react';
 import { reactivateAccount } from '@/app/dashboard/account/actions';
 import WorkspaceSwitcher from '@/components/workspace-switcher';
 import { checkWorkspaceAccess, getUserPlanDetails } from '@/lib/workspace-utils';
@@ -151,6 +151,10 @@ export default async function DashboardLayout({
            <Link href={`/${workspaceId}/dashboard/workspace-settings`} className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 hover:text-[#E03C31] font-medium text-sm transition-colors">
               <Settings className="w-5 h-5" />
               Quản lý Nhóm
+           </Link>
+           <Link href={`/${workspaceId}/dashboard/tool-settings`} className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 hover:text-[#E03C31] font-medium text-sm transition-colors">
+              <Wrench className="w-5 h-5" />
+              Cài đặt Công cụ
            </Link>
            <Link href="/dashboard/account" target="_blank" className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 hover:text-[#E03C31] font-medium text-sm transition-colors">
               <UserIcon className="w-5 h-5" />

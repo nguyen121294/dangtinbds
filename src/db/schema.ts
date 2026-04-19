@@ -12,6 +12,9 @@ export const profiles = table('profiles', {
   subscriptionStatus: text('subscription_status').default('inactive'), // active, inactive, past_due
   subscriptionExpiresAt: timestamp('subscription_expires_at'), // This serves as Paid expires at
   status: text('status').default('active'), // active, locked
+  defaultDriveFolderId: text('default_drive_folder_id'),
+  defaultDriveFolderName: text('default_drive_folder_name'),
+  signatures: text('signatures').array(), // List of signature names/texts
   createdAt: timestamp('created_at').defaultNow(),
 });
 

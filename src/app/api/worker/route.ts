@@ -10,7 +10,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 async function handler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token, images, objectsToRemoveStr, enhanceImage, imageProcessingEngine } = body;
+    const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings, access_token, images, objectsToRemoveStr, enhanceImage, imageProcessingEngine, driveFolderId, signature } = body;
 
     // --- 1. VALIDATE OAUTH TOKEN ---
     if (!access_token) {
@@ -37,6 +37,9 @@ async function handler(req: NextRequest) {
 **YẾU TỐ BẮT BUỘC:** Rập khuôn theo phong cách "${style}" xuyên suốt bài.
 Đầu mục cần nhấn mạnh:
 ${selectedHeadings}
+
+${signature ? `LƯU Ý CUỐI BÀI: Phải đính kèm nguyên văn chữ ký sau vào vị trí cuối cùng của bài đăng. Không tự ý sửa đổi chữ ký:
+${signature}` : ''}
 
 Viết bài thật hấp dẫn, không vòng vo.`;
 
@@ -68,10 +71,13 @@ Viết bài thật hấp dẫn, không vòng vo.`;
 
     // 3.1. Tạo thư mục con (dd-mm-yyyy hh-mm-ss)
     const folderName = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }).replace(/[\/:]/g, '-');
-    const folderMetadata = {
+    const folderMetadata: any = {
       name: `[${folderName}] ${type}`,
       mimeType: 'application/vnd.google-apps.folder',
     };
+    if (driveFolderId) {
+      folderMetadata.parents = [driveFolderId];
+    }
 
     const folderRes = await drive.files.create({
       requestBody: folderMetadata,

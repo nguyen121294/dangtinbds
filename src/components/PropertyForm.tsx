@@ -1,10 +1,11 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import { Loader2, Sparkles, ImagePlus, X } from "lucide-react"; 
+import { Loader2, Sparkles, ImagePlus, X, FolderOpen } from "lucide-react"; 
 import { useGoogleLogin } from '@react-oauth/google';
 import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
 import { createClient } from '@/lib/supabase/client';
+import useDrivePicker from 'react-google-drive-picker';
 
 export default function PropertyForm({ workspaceId }: { workspaceId?: string }) {
   const [formData, setFormData] = useState({
@@ -22,18 +23,67 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
     objectsToRemove: ["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"] as string[],
     customObjectsToRemove: "",
     enhanceImage: true,
-    imageProcessingEngine: "replicate"
+    imageProcessingEngine: "replicate",
+    signature: ""
   });
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [accessToken, setAccessToken] = useState("");
   const [images, setImages] = useState<{file: File, preview: string, base64: string}[]>([]);
+  const [userCredits, setUserCredits] = useState<number>(0);
+  const [selectedDriveFolder, setSelectedDriveFolder] = useState<{id: string, name: string} | null>(null);
+  const [availableSignatures, setAvailableSignatures] = useState<string[]>([]);
+  const [openPicker, authResponse] = useDrivePicker();
   const supabase = createClient();
+
+  const totalUsableCredits = userCredits;
+  const totalCost = formData.imageProcessingEngine === 'replicate_banana' 
+      ? 40 
+      : (images.length > 0 ? images.length * 10 : 1);
+
+  const handleOpenPicker = () => {
+    openPicker({
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+      developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '',
+      viewId: 'DOCS',
+      token: accessToken,
+      showUploadView: false,
+      showUploadFolders: false,
+      supportDrives: true,
+      multiselect: false,
+      setIncludeFolders: true,
+      setSelectFolderEnabled: true,
+      callbackFunction: (data) => {
+        if (data.action === 'picked') {
+          const doc = data.docs[0];
+          setSelectedDriveFolder({ id: doc.id, name: doc.name });
+        }
+      },
+    });
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.provider_token) {
         setAccessToken(session.provider_token);
+      }
+      if (session?.user) {
+        supabase.from('profiles').select('trialCredits, paidCredits, defaultDriveFolderId, defaultDriveFolderName, signatures').eq('id', session.user.id).single()
+          .then(({ data }) => {
+            if (data) {
+               setUserCredits((data.trialCredits || 0) + (data.paidCredits || 0));
+               if (data.defaultDriveFolderId) {
+                  setSelectedDriveFolder({
+                     id: data.defaultDriveFolderId,
+                     name: data.defaultDriveFolderName || "Thư mục tùy chỉnh"
+                  });
+               }
+               if (data.signatures && data.signatures.length > 0) {
+                  setAvailableSignatures(data.signatures);
+                  setFormData(prev => ({ ...prev, signature: data.signatures[0] }));
+               }
+            }
+          });
       }
     });
 
@@ -51,7 +101,7 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
   const login = useGoogleLogin({
     onSuccess: (codeResponse) => setAccessToken(codeResponse.access_token),
     onError: (error) => console.log('Login Failed:', error),
-    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents',
+    scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/documents https://www.googleapis.com/auth/drive.readonly',
   });
 
   const styleOptions = [
@@ -190,7 +240,9 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
          access_token: accessToken,
          images: uploadedDriveIds,
          objectsToRemoveStr: objectsStr,
-         workspaceId: workspaceId
+         workspaceId: workspaceId,
+         driveFolderId: selectedDriveFolder?.id || null,
+         estimatedCost: totalCost
       };
 
       const res = await fetch("/api/generate-async", {
@@ -277,6 +329,25 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
           <label className="block text-sm font-semibold text-gray-700 mb-1.5">Đặc điểm nổi bật khác (Tiện ích, phong thuỷ...)</label>
           <textarea rows={2} placeholder="Gần chợ, sát mặt tiền, sổ hồng riêng cất két..." className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition outline-none resize-none" value={formData.highlights} onChange={e => setFormData({...formData, highlights: e.target.value})}></textarea>
         </div>
+
+        {availableSignatures.length > 0 && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Mẫu Chữ ký</label>
+            <select 
+              className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition" 
+              value={formData.signature} 
+              onChange={e => setFormData({...formData, signature: e.target.value})}
+            >
+              <option value="">-- Không đính kèm chữ ký --</option>
+              {availableSignatures.map((sig, idx) => (
+                <option key={idx} value={sig}>
+                  {sig.length > 50 ? `${sig.substring(0, 50)}...` : sig}
+                </option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Chữ ký sẽ được tự động nối vào cuối bài đăng.</p>
+          </div>
+        )}
       </div>
 
       <div className="pt-2 space-y-5 border-t border-gray-100">
@@ -414,9 +485,44 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
       </div>
 
       <div className="pt-2 space-y-5 border-t border-gray-100">
-        <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Tự động lưu Google Drive</h2>
+        <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Lưu trữ & Chi phí</h2>
         <div>
-          <p className="text-sm text-gray-700 mb-2">Hệ thống sẽ tự động tạo thư mục và tài liệu trên Google Drive của bạn mà không lo giới hạn server.</p>
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Thư mục trên Google Drive (Tuỳ chọn)</label>
+          <div className="flex items-center space-x-3">
+             <button type="button" onClick={() => handleOpenPicker()} className="flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 transition shadow-sm">
+                <FolderOpen className="w-4 h-4 mr-2 text-gray-500" />
+                {selectedDriveFolder ? 'Thay đổi thư mục' : 'Chọn thư mục lưu'}
+             </button>
+             {selectedDriveFolder && (
+                <div className="flex items-center bg-blue-50 text-blue-700 px-3 py-1.5 rounded-lg border border-blue-100 text-sm">
+                   <span className="truncate max-w-[200px] font-medium">{selectedDriveFolder.name}</span>
+                   <button type="button" onClick={() => setSelectedDriveFolder(null)} className="ml-2 hover:bg-blue-100 rounded-full p-0.5">
+                     <X className="w-3.5 h-3.5" />
+                   </button>
+                </div>
+             )}
+          </div>
+          <p className="text-xs text-gray-500 mt-2">Mặc định hệ thống sẽ tự động tạo thư mục Gốc mới nếu bạn không chọn.</p>
+        </div>
+
+        <div className="mt-6 bg-gray-50 border border-gray-200 p-4 rounded-xl flex justify-between items-center">
+            <div>
+                <h4 className="font-bold text-gray-800">Dự kiến chi phí (Credits)</h4>
+                <p className="text-sm text-gray-500 mt-0.5">
+                     {formData.imageProcessingEngine === 'replicate_banana' 
+                         ? 'Model Banana: Trọn gói 40 Credits' 
+                         : (images.length > 0 ? `${images.length} ảnh × 10 Credits` : 'Xử lý văn bản (Không kèm ảnh): 1 Credit')}
+                </p>
+            </div>
+            <div className="text-right">
+                <div className={`text-2xl font-black ${totalUsableCredits >= totalCost ? 'text-gray-900' : 'text-red-500'}`}>
+                    -{totalCost}
+                </div>
+                <div className="text-xs font-semibold text-gray-500">
+                    Số dư: {totalUsableCredits} 
+                    {totalUsableCredits < totalCost && <span className="text-red-500 ml-1">(Không đủ)</span>}
+                </div>
+            </div>
         </div>
       </div>
 
@@ -430,9 +536,9 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
             </div>
           </div>
         ) : (
-          <button disabled={loading} type="submit" className={`w-full text-white font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-75 disabled:shadow-none disabled:transform-none ${accessToken ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:-translate-y-0.5'}`}>
+          <button disabled={loading || (accessToken.length > 0 && totalUsableCredits < totalCost)} type="submit" className={`w-full text-white font-bold py-3.5 px-4 rounded-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-75 disabled:shadow-none disabled:transform-none ${accessToken && totalUsableCredits >= totalCost ? 'bg-blue-600 hover:bg-blue-700 active:bg-blue-800 shadow-[0_4px_14px_0_rgba(37,99,235,0.39)] hover:shadow-[0_6px_20px_rgba(37,99,235,0.23)] hover:-translate-y-0.5' : 'bg-red-600 hover:bg-red-700 active:bg-red-800 shadow-md hover:-translate-y-0.5 disabled:bg-gray-400'}`}>
             {loading ? <Loader2 className="animate-spin" /> : <Sparkles size={20} />}
-            <span>{loading ? "Đang xử lý..." : (!accessToken ? "Uỷ quyền Google Drive để Tiếp tục" : "Tạo bài & Lưu ẩn vào Drive 🪄")}</span>
+            <span>{loading ? "Đang xử lý..." : (!accessToken ? "Uỷ quyền Google Drive để Tiếp tục" : (totalUsableCredits < totalCost ? "Không đủ Credit" : "Tạo bài & Lưu ẩn vào Drive 🪄"))}</span>
           </button>
         )}
       </div>

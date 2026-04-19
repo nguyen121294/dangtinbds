@@ -11,7 +11,7 @@ const qstashClient = new Client({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { access_token, workspaceId } = body;
+    const { access_token, workspaceId, imageProcessingEngine, images, signature } = body;
 
     // Validate Input
     if (!access_token || !workspaceId) {
@@ -27,15 +27,26 @@ export async function POST(req: NextRequest) {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ success: false, error: "Bạn cần đăng nhập để tạo khóa học ảo." }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Bạn cần đăng nhập để tạo bài viết." }, { status: 401 });
     }
 
+    // Dynamic Cost Calculation to prevent client-side spoofing
+    const isBanana = imageProcessingEngine === 'replicate_banana';
+    const imageCount = images && Array.isArray(images) ? images.length : 0;
+    const requiredCredits = isBanana ? 40 : (imageCount > 0 ? imageCount * 10 : 1);
+
     const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
-    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, 1);
+    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
     
     if (!deductRes.success) {
       return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
     }
+
+    // Pass everything to QStash Worker
+    const workerPayload = {
+      ...body,
+      signature
+    };
 
     // Determine the host dynamically so QStash knows where to call back
     // This requires the site to be deployed to a public URL (e.g. Vercel/Netlify) or tunneled via ngrok
@@ -49,7 +60,7 @@ export async function POST(req: NextRequest) {
     // Send payload to Upstash Queue
     const res = await qstashClient.publishJSON({
       url: workerUrl,
-      body: body, // Forward all form fields to the background worker
+      body: workerPayload, // Forward all form fields to the background worker
       retries: 3, // Automatically retry 3 times if something fails (e.g. Gemini 503 error)
     });
 
