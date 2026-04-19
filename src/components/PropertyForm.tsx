@@ -16,7 +16,6 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
     condition: "",
     direction: "",
     purpose: "",
-    purpose: "",
     highlights: "",
     style: "Sang trọng & Đẳng cấp",
     headings: [] as string[],
