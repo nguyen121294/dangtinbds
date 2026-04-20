@@ -35,3 +35,15 @@ export async function getTrialDays(): Promise<number> {
   const val = await getAppSetting('trial_days');
   return parseInt(val, 10) || 15;
 }
+
+/**
+ * Chuẩn hóa ngày hết hạn → 23:59:59 giờ Việt Nam (UTC+7)
+ * Đảm bảo user được dùng trọn ngày cuối cùng.
+ * VD: date = 21/04 bất kỳ giờ → 21/04 23:59:59 VN = 21/04 16:59:59 UTC
+ */
+export function endOfDayVN(date: Date): Date {
+  const d = new Date(date);
+  // Set to 16:59:59 UTC = 23:59:59 UTC+7 (Vietnam)
+  d.setUTCHours(16, 59, 59, 0);
+  return d;
+}

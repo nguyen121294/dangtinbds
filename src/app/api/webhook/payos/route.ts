@@ -5,6 +5,7 @@ import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { getPlan } from '@/lib/plans';
 import { createPendingCommissions } from '@/lib/referral-utils';
+import { endOfDayVN } from '@/lib/app-settings';
 
 export async function POST(request: Request) {
   let body;
@@ -75,6 +76,9 @@ export async function POST(request: Request) {
         // Đã hết hạn hoặc chưa có -> Tính từ hôm nay
         expirationDate.setDate(expirationDate.getDate() + days);
       }
+
+      // Chuẩn hóa: hết hạn lúc 23:59:59 VN
+      expirationDate = endOfDayVN(expirationDate);
 
       // 4. Update user subscription with correct expiry and plan info, and increment credits
       await db.update(profiles)

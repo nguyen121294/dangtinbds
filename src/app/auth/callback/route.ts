@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { profiles } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { getTrialCredits, getTrialDays } from '@/lib/app-settings';
+import { getTrialCredits, getTrialDays, endOfDayVN } from '@/lib/app-settings';
 import { findUserByReferralCode, ensureReferralCode } from '@/lib/referral-utils';
 import { cookies } from 'next/headers';
 
@@ -54,6 +54,7 @@ export async function GET(request: Request) {
 
         const trialExpiryDate = new Date();
         trialExpiryDate.setDate(trialExpiryDate.getDate() + trialDaysAmount);
+        const normalizedTrialExpiry = endOfDayVN(trialExpiryDate); // 23:59:59 VN
 
         // Xử lý mã giới thiệu (từ cookie hoặc URL)
         const cookieStore = await cookies();
@@ -72,7 +73,7 @@ export async function GET(request: Request) {
         await db.update(profiles)
           .set({
             trialCredits: trialCreditsAmount,
-            trialExpiresAt: trialExpiryDate,
+            trialExpiresAt: normalizedTrialExpiry,
             firstName: user.user_metadata?.firstName || null,
             lastName: user.user_metadata?.lastName || null,
             ...(referredById ? { referredBy: referredById } : {}),
