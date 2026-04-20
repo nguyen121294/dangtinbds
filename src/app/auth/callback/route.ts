@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { profiles } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 import { getTrialCredits, getTrialDays } from '@/lib/app-settings';
 
 import { type EmailOtpType } from '@supabase/supabase-js';
@@ -42,26 +43,30 @@ export async function GET(request: Request) {
 
   if (!authError && user) {
     try {
-      // Read dynamic trial config from DB
-      const trialCreditsAmount = await getTrialCredits();
-      const trialDaysAmount = await getTrialDays();
+      const isNewUser = new Date().getTime() - new Date(user.created_at).getTime() < 60000;
 
-      const trialExpiryDate = new Date();
-      trialExpiryDate.setDate(trialExpiryDate.getDate() + trialDaysAmount);
+      if (isNewUser) {
+        // Read dynamic trial config from DB
+        const trialCreditsAmount = await getTrialCredits();
+        const trialDaysAmount = await getTrialDays();
 
-      await db.insert(profiles)
-        .values({
-          id: user.id,
-          email: user.email!,
-          firstName: user.user_metadata?.firstName || null,
-          lastName: user.user_metadata?.lastName || null,
-          trialCredits: trialCreditsAmount,
-          trialExpiresAt: trialExpiryDate,
-        })
-        .onConflictDoUpdate({
-          target: profiles.id,
-          set: { email: user.email! }
-        });
+        const trialExpiryDate = new Date();
+        trialExpiryDate.setDate(trialExpiryDate.getDate() + trialDaysAmount);
+
+        await db.update(profiles)
+          .set({
+            trialCredits: trialCreditsAmount,
+            trialExpiresAt: trialExpiryDate,
+            firstName: user.user_metadata?.firstName || null,
+            lastName: user.user_metadata?.lastName || null,
+          })
+          .where(eq(profiles.id, user.id));
+      } else {
+        // Just update email if needed for existing users
+        await db.update(profiles)
+          .set({ email: user.email! })
+          .where(eq(profiles.id, user.id));
+      }
     } catch (dbError) {
       console.error('Database insertion failed:', dbError);
     }

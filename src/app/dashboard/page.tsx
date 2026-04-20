@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { db } from '@/db';
 import { workspaces, workspaceMembers, profiles } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, inArray, sql } from 'drizzle-orm';
 import { Building2, Settings, LogOut, Wallet, Clock, User as UserIcon } from 'lucide-react';
 import CreateWorkspaceModal from '@/components/create-workspace-modal';
 import { checkWorkspaceCreationQuota, getUserPlanDetails } from '@/lib/workspace-utils';
@@ -29,31 +29,28 @@ export default async function DashboardHub() {
   const allowedWorkspaces = workspaceListObj
     .filter(ws => userMemberships.some(m => m.workspaceId === ws.id))
     .map(ws => {
+       const membership = userMemberships.find(m => m.workspaceId === ws.id);
        const isOwner = ws.ownerId === user.id;
        return {
          id: ws.id,
          name: ws.name,
-         role: isOwner ? 'owner' : 'member'
+         role: membership?.role || 'member',
+         creditLimit: membership?.creditLimit || 0,
+         creditsUsed: membership?.creditsUsed || 0,
+         ownerId: ws.ownerId
        };
     });
+
+  const ownerIds = Array.from(new Set(allowedWorkspaces.map(ws => ws.ownerId)));
+  const ownerProfiles = ownerIds.length > 0 
+    ? await db.select().from(profiles).where(inArray(profiles.id, ownerIds))
+    : [];
 
   const profileDetails = await db.select().from(profiles).where(eq(profiles.id, user.id)).limit(1);
   const dbUser = profileDetails[0];
 
   const quota = await checkWorkspaceCreationQuota(user.id);
-  const { isVip, planName } = await getUserPlanDetails(user.id);
-  
-  const isFree = dbUser?.subscriptionStatus !== 'active';
   const now = Date.now();
-  let trialRemaining = 0;
-  if (dbUser?.trialExpiresAt) {
-     trialRemaining = Math.max(0, Math.ceil((new Date(dbUser.trialExpiresAt).getTime() - now) / (1000 * 60 * 60 * 24)));
-  }
-
-  let paidRemaining = 0;
-  if (dbUser?.subscriptionExpiresAt) {
-     paidRemaining = Math.max(0, Math.ceil((new Date(dbUser.subscriptionExpiresAt).getTime() - now) / (1000 * 60 * 60 * 24)));
-  }
 
   return (
     <>
@@ -73,7 +70,26 @@ export default async function DashboardHub() {
          <div className="bg-white border border-gray-200 rounded-sm shadow-sm space-y-0">
            {allowedWorkspaces.length > 0 ? (
               <div className="divide-y divide-gray-200">
-                {allowedWorkspaces.map(ws => (
+                {allowedWorkspaces.map(ws => {
+                  const owner = ownerProfiles.find(p => p.id === ws.ownerId);
+                  
+                  let trialRemaining = 0;
+                  if (owner?.trialExpiresAt) {
+                     trialRemaining = Math.max(0, Math.ceil((new Date(owner.trialExpiresAt).getTime() - now) / (1000 * 60 * 60 * 24)));
+                  }
+                  const validTrial = trialRemaining > 0 ? (owner?.trialCredits || 0) : 0;
+
+                  let paidRemaining = 0;
+                  if (owner?.subscriptionExpiresAt) {
+                     paidRemaining = Math.max(0, Math.ceil((new Date(owner.subscriptionExpiresAt).getTime() - now) / (1000 * 60 * 60 * 24)));
+                  }
+                  const validPaid = paidRemaining > 0 ? (owner?.paidCredits || 0) : 0;
+                  const ownerTotalUsable = validTrial + validPaid;
+
+                  const remainingLimit = Math.max(0, ws.creditLimit - ws.creditsUsed);
+                  const memberUsable = Math.min(remainingLimit, ownerTotalUsable);
+
+                  return (
                   <a
                     key={ws.id}
                     href={`/${ws.id}/dashboard`}
@@ -89,24 +105,31 @@ export default async function DashboardHub() {
                      </div>
                      
                      <div className="mt-4 sm:mt-0 flex flex-wrap items-center sm:justify-end gap-x-6 gap-y-2 text-sm text-gray-600">
-                        {ws.role === 'owner' && (
-                           <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-sm font-medium border border-gray-200">
-                             Chủ sở hữu
+                        {ws.role === 'owner' ? (
+                           <>
+                             <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-sm font-medium border border-gray-200">
+                               Chủ sở hữu
+                             </span>
+                             {trialRemaining > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                   Trial: <strong className="text-gray-900">{validTrial}</strong> ({trialRemaining}n)
+                                </span>
+                             )}
+                             {paidRemaining > 0 && (
+                                <span className="flex items-center gap-1.5 text-emerald-700">
+                                   PRO: <strong className="text-emerald-700">{validPaid}</strong> ({paidRemaining}n)
+                                </span>
+                             )}
+                           </>
+                        ) : (
+                           <span className="flex items-center gap-1.5">
+                              Hạn mức cấp phép: <strong className="text-blue-600">{memberUsable} Credits</strong> 
+                              <span className="text-gray-400 text-xs">(Đã dùng: {ws.creditsUsed}/{ws.creditLimit})</span>
                            </span>
-                        )}
-                        {ws.role === 'owner' && trialRemaining > 0 && (
-                              <span className="flex items-center gap-1.5">
-                                 Trial: <strong className="text-gray-900">{dbUser?.trialCredits || 0}</strong> ({trialRemaining}n)
-                              </span>
-                        )}
-                        {ws.role === 'owner' && paidRemaining > 0 && (
-                              <span className="flex items-center gap-1.5 text-emerald-700">
-                                 PRO: <strong className="text-emerald-700">{dbUser?.paidCredits || 0}</strong> ({paidRemaining}n)
-                              </span>
                         )}
                      </div>
                   </a>
-                ))}
+                )})}
               </div>
            ) : (
               <div className="py-16 text-center text-gray-500">

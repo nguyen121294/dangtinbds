@@ -334,33 +334,39 @@ export async function deductWorkspaceCredit(workspaceId: string, userId: string,
   const owner = ownerProfile[0];
   const now = new Date();
 
-  // Xác định ví nào sẽ bị trừ
-  let trialValid = false;
+  // Xác định ví dư hợp lệ
   const isTrialExpired = owner.trialExpiresAt ? new Date(owner.trialExpiresAt) <= now : false;
-  if (owner.trialCredits !== null && owner.trialCredits >= amount && !isTrialExpired) {
-    trialValid = true;
-  }
+  const validTrial = !isTrialExpired ? (owner.trialCredits || 0) : 0;
 
-  let paidValid = false;
-  if (owner.paidCredits !== null && owner.paidCredits >= amount && owner.subscriptionExpiresAt && new Date(owner.subscriptionExpiresAt) > now) {
-    paidValid = true;
-  }
+  const isPaidExpired = owner.subscriptionExpiresAt ? new Date(owner.subscriptionExpiresAt) <= now : false;
+  const validPaid = !isPaidExpired ? (owner.paidCredits || 0) : 0;
 
-  if (!trialValid && !paidValid) {
+  if (validTrial + validPaid < amount) {
     return { success: false, error: 'Tài khoản của Tổ chức chủ quản đã hết hạn/hết credit. Vui lòng liên hệ Admin.' };
   }
 
-  // Thực hiện trừ tiền
+  // Thực hiện trừ tiền tuần tự (ưu tiên Trial trước, thiếu bao nhiêu trừ vào Paid)
+  let remainingAmount = amount;
+  let newTrialCredits = owner.trialCredits || 0;
+  let newPaidCredits = owner.paidCredits || 0;
+
+  if (validTrial > 0) {
+    const deductFromTrial = Math.min(validTrial, remainingAmount);
+    newTrialCredits -= deductFromTrial;
+    remainingAmount -= deductFromTrial;
+  }
+
+  if (remainingAmount > 0 && validPaid > 0) {
+    const deductFromPaid = Math.min(validPaid, remainingAmount);
+    newPaidCredits -= deductFromPaid;
+    remainingAmount -= deductFromPaid;
+  }
+
   try {
-    if (trialValid) {
-      await db.update(profiles)
-        .set({ trialCredits: sql`${profiles.trialCredits} - ${amount}` })
-        .where(eq(profiles.id, ownerId));
-    } else if (paidValid) {
-      await db.update(profiles)
-        .set({ paidCredits: sql`${profiles.paidCredits} - ${amount}` })
-        .where(eq(profiles.id, ownerId));
-    }
+    // Ghi nhận trừ tiền ở ví Owner
+    await db.update(profiles)
+      .set({ trialCredits: newTrialCredits, paidCredits: newPaidCredits })
+      .where(eq(profiles.id, ownerId));
 
     // Nếu không phải là owner thì cộng số "used" lên
     if (role !== 'owner') {
