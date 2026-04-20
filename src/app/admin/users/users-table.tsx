@@ -305,10 +305,14 @@ export default function UsersTable({ initialUsers, plans }: { initialUsers: any[
                   <input
                     type="date"
                     value={editingUser.trialExpiresAt ? format(editingUser.trialExpiresAt, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => setEditingUser({
-                      ...editingUser,
-                      trialExpiresAt: e.target.value ? new Date(e.target.value) : null
-                    })}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const d = new Date(e.target.value + 'T23:59:59');
+                        setEditingUser({ ...editingUser, trialExpiresAt: d });
+                      } else {
+                        setEditingUser({ ...editingUser, trialExpiresAt: null });
+                      }
+                    }}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                   />
                 </div>
@@ -318,10 +322,14 @@ export default function UsersTable({ initialUsers, plans }: { initialUsers: any[
                   <input 
                     type="date"
                     value={editingUser.subscriptionExpiresAt ? format(editingUser.subscriptionExpiresAt, 'yyyy-MM-dd') : ''}
-                    onChange={(e) => setEditingUser({
-                      ...editingUser, 
-                      subscriptionExpiresAt: e.target.value ? new Date(e.target.value) : null
-                    })}
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        const d = new Date(e.target.value + 'T23:59:59');
+                        setEditingUser({ ...editingUser, subscriptionExpiresAt: d });
+                      } else {
+                        setEditingUser({ ...editingUser, subscriptionExpiresAt: null });
+                      }
+                    }}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                   />
                 </div>
