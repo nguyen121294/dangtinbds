@@ -336,7 +336,8 @@ export async function deductWorkspaceCredit(workspaceId: string, userId: string,
 
   // Xác định ví nào sẽ bị trừ
   let trialValid = false;
-  if (owner.trialCredits !== null && owner.trialCredits >= amount && owner.trialExpiresAt && new Date(owner.trialExpiresAt) > now) {
+  const isTrialExpired = owner.trialExpiresAt ? new Date(owner.trialExpiresAt) <= now : false;
+  if (owner.trialCredits !== null && owner.trialCredits >= amount && !isTrialExpired) {
     trialValid = true;
   }
 

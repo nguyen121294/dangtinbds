@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     // Dynamic Cost Calculation to prevent client-side spoofing
     const isBanana = imageProcessingEngine === 'replicate_banana';
     const imageCount = images && Array.isArray(images) ? images.length : 0;
-    const requiredCredits = isBanana ? 40 : (imageCount > 0 ? imageCount * 10 : 1);
+    const requiredCredits = 1 + (imageCount * (isBanana ? 40 : 10));
 
     const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
     const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);

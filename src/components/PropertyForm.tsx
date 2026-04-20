@@ -69,7 +69,6 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
         supabase.from('profiles').select('trial_credits, paid_credits, default_drive_folder_id, default_drive_folder_name, signatures').eq('id', session.user.id).single()
           .then(({ data }) => {
             if (data) {
-               setUserCredits((data.trial_credits || 0) + (data.paid_credits || 0));
                if (data.default_drive_folder_id) {
                   setSelectedDriveFolder({
                      id: data.default_drive_folder_id,
@@ -79,6 +78,21 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
                if (data.signatures && data.signatures.length > 0) {
                   setAvailableSignatures(data.signatures);
                   setFormData(prev => ({ ...prev, signature: data.signatures[0] }));
+               }
+
+               if (workspaceId) {
+                  fetch(`/api/workspace-credits?workspaceId=${workspaceId}`)
+                    .then(res => res.json())
+                    .then(resData => {
+                        if (resData.success) {
+                            setUserCredits(resData.credits);
+                        } else {
+                            setUserCredits((data.trial_credits || 0) + (data.paid_credits || 0));
+                        }
+                    })
+                    .catch(() => setUserCredits((data.trial_credits || 0) + (data.paid_credits || 0)));
+               } else {
+                  setUserCredits((data.trial_credits || 0) + (data.paid_credits || 0));
                }
             }
           });
