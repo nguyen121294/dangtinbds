@@ -53,7 +53,7 @@ export async function POST(req: NextRequest) {
     const base64Original = `data:image/jpeg;base64,${originalBuffer.toString('base64')}`;
 
     const customObjects = objectsToRemove || "cars, motorbikes, trash cans, house numbers, people";
-    const bananaPrompt = `xóa các vật thể sau nếu có trong hình: ${customObjects}`;
+    const bananaPrompt = `Remove the following objects if they appear in the image: ${customObjects}. Also remove cars covered by cloths/tarps, remove any obstacles or obstructions. If there are license plates visible, white them out completely.`;
 
     console.log("[Worker-Banana] Đang gọi Nano-Banana qua cơ chế create() webhook:", webhookUrl);
     await replicate.predictions.create({

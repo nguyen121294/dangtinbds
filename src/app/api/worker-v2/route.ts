@@ -1,46 +1,66 @@
-
 import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 import { Client } from '@upstash/qstash';
 import { google } from 'googleapis';
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+const DEFAULT_SYSTEM_PROMPT = `Bạn là một chuyên gia môi giới bất động sản cực kỳ xuất sắc tại Việt Nam. 
+Nhiệm vụ của bạn là viết một bài đăng Facebook (hoặc Zalo) rao bán/cho thuê bất động sản để chốt sale, độ dài 1/2 trang A4.
+Ngôn từ thôi miên, cuốn hút, chuẩn SEO. Bạn phải tuân thủ nghiêm ngặt các nguyên tắc sau:
+1. Luôn sử dụng emoji hợp lý, vừa phải để tạo điểm nhấn.
+2. Bố cục bài đăng phải rõ ràng (Tiêu đề, Thân bài, Kêu gọi hành động).
+3. Nhấn mạnh vào LỢI ÍCH (không gian sống, tiềm năng) chứ không chỉ liệt kê TÍNH NĂNG.
+4. Trình bày tự nhiên, tạo cảm giác thân tín chứ không giống văn máy.
+5. TUYỆT ĐỐI KHÔNG sử dụng ký hiệu markdown như **, ##, ~~. Chỉ dùng text thuần và emoji.`;
+
 async function handler(req: NextRequest) {
   try {
     const body = await req.json();
-    const { type, area, price, location, condition, direction, purpose, highlights, style, headings, access_token, images, objectsToRemoveStr, enhanceImage, imageProcessingEngine, driveFolderId, signature } = body;
+    const { rawInfo, style, customPrompt, access_token, images, objectsToRemoveStr, enhanceImage, imageProcessingEngine, driveFolderId, signature } = body;
 
-    // --- 1. VALIDATE OAUTH TOKEN ---
     if (!access_token) {
       console.error("Missing User Access Token");
       return NextResponse.json({ success: false, error: "Thiếu quyền truy cập vào Drive của người dùng" }, { status: 400 });
     }
 
-    // --- 2. GENERATE AI CONTENT ---
-    const systemPrompt = `Bạn là một chuyên gia môi giới bất động sản xuất sắc. Nhiệm vụ của bạn là viết một bài đăng facebook/zalo để chốt sale. Trình bày đẹp mắt, dùng emoji hiệu quả. TUYỆT ĐỐI KHÔNG sử dụng ký hiệu markdown như **, ##, ~~. Chỉ dùng text thuần và emoji.`;
+    // --- SYSTEM PROMPT ---
+    const systemPrompt = (customPrompt && customPrompt.trim().length > 0) ? customPrompt.trim() : DEFAULT_SYSTEM_PROMPT;
+    const styleInstruction = style ? `\n\n**PHONG CÁCH BẮT BUỘC:** Bài viết PHẢI viết theo phong cách "${style}". Giữ vững 100% phong cách này xuyên suốt bài.` : '';
 
-    const selectedHeadings = headings && headings.length > 0 ? headings.map((h: string) => `[x] ${h}`).join('\n') : 'Cung cấp đầy đủ thông tin';
+    // --- USER PROMPT ---
+    const userPrompt = `Dưới đây là thông tin bất động sản do người dùng cung cấp. Hãy đọc kỹ và tạo ra 2 phần OUTPUT riêng biệt:
 
-    const userPrompt = `ĐĂNG TIN BẤT ĐỘNG SẢN:
-- Loại hình: ${type}
-- Vị trí: ${location}
-- Thông số: ${area}
-- Hiện trạng/Kết cấu: ${condition}
-- Hướng: ${direction}
-- Mục đích: ${purpose}
-- Giá bán: ${price}
-- Đặc điểm nổi bật: ${highlights}
+=== THÔNG TIN ĐẦU VÀO ===
+${rawInfo}
+=========================${styleInstruction}
 
-**YẾU TỐ BẮT BUỘC:** Rập khuôn theo phong cách "${style}" xuyên suốt bài.
-Đầu mục cần nhấn mạnh:
-${selectedHeadings}
+=== YÊU CẦU OUTPUT ===
 
-${signature ? `LƯU Ý CUỐI BÀI: Phải đính kèm nguyên văn chữ ký sau vào vị trí cuối cùng của bài đăng. Không tự ý sửa đổi chữ ký:
+**PHẦN 1 - BÀI ĐĂNG DÀI:**
+Viết bài đăng bán/cho thuê BĐS hoàn chỉnh dựa trên thông tin trên. Bài viết khoảng 1/2 trang A4, hấp dẫn, không vòng vo.
+
+${signature ? `LƯU Ý CUỐI BÀI: Phải đính kèm nguyên văn chữ ký sau vào vị trí cuối cùng của bài đăng dài. Không tự ý sửa đổi chữ ký:
 ${signature}` : ''}
 
-Viết bài thật hấp dẫn, không vòng vo.`;
+**PHẦN 2 - BÀI ĐĂNG NGẮN:**
+Trích xuất thông tin từ đoạn raw text và TRÌNH BÀY ĐÚNG theo format sau. Nếu thông tin KHÔNG CÓ trong raw text thì ghi "Chưa có thông tin". TUYỆT ĐỐI KHÔNG BỊA ĐẶT thêm bớt.
+
+📌 Tiêu đề: {ngắn gọn xúc tích, dễ nhớ, ví dụ: "Đất nền Nguyễn Duy Trinh", "Biệt thự Thảo Điền"}
+🏠 Loại BĐS: {loại bất động sản}
+📍 Vị trí: {địa chỉ / khu vực}
+📐 Diện tích, kích thước: {diện tích / ngang x dài}
+🏗 Hiện trạng: {hiện trạng / kết cấu}
+🧭 Hướng: {hướng nhà / đất}
+🎯 Phù hợp: {mục đích sử dụng, ví dụ: xây nhà, cho thuê, đầu tư...}
+💰 Giá bán: {giá}
+✅ Điểm mạnh: {pháp lý, tiện ích, ưu điểm nổi bật...}
+${signature ? `\n${signature}` : ''}
+
+=== FORMAT OUTPUT ===
+Bắt đầu PHẦN 1 bằng dòng: ===BÀI ĐĂNG DÀI===
+Bắt đầu PHẦN 2 bằng dòng: ===BÀI ĐĂNG NGẮN===
+Viết liên tục, KHÔNG giải thích gì thêm.`;
 
     let responseText = "";
 
@@ -61,17 +81,17 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       responseText = fallbackResponse.text || "";
     }
 
-    // --- 3. GOOGLE DRIVE/DOCS INTEGRATION ---
+    // --- GOOGLE DRIVE/DOCS ---
     const oAuth2Client = new google.auth.OAuth2();
     oAuth2Client.setCredentials({ access_token });
 
     const drive = google.drive({ version: 'v3', auth: oAuth2Client });
     const docs = google.docs({ version: 'v1', auth: oAuth2Client });
 
-    // 3.1. Tạo thư mục con (dd-mm-yyyy hh-mm-ss)
+    // Tạo thư mục con
     const folderName = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }).replace(/[\/:]/g, '-');
     const folderMetadata: any = {
-      name: `[${folderName}] ${type}`,
+      name: `[V2] [${folderName}]`,
       mimeType: 'application/vnd.google-apps.folder',
     };
     if (driveFolderId) {
@@ -83,26 +103,23 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       fields: 'id'
     });
     const subFolderId = folderRes.data?.id;
-
     if (!subFolderId) throw new Error("Không thể tạo thư mục con trên Drive");
 
-    // 3.2. Tạo Google Doc (Tài liệu trắng)
-    const documentName = `Bài đăng gốc - ${location}`;
-    const fileMetadata = {
-      name: documentName,
-      mimeType: 'application/vnd.google-apps.document',
-      parents: [subFolderId]
-    };
-
+    // Tạo 1 Google Doc chứa cả 2 bài
+    const documentName = `Bài đăng AI V2 - ${folderName}`;
     const fileRes = await drive.files.create({
-      requestBody: fileMetadata,
+      requestBody: {
+        name: documentName,
+        mimeType: 'application/vnd.google-apps.document',
+        parents: [subFolderId]
+      },
       fields: 'id'
     });
 
     const documentId = fileRes.data?.id;
     if (!documentId) throw new Error("Không thể tạo file Google Docs");
 
-    // 3.3. Đổ chữ vào file Docs vừa tạo
+    // Đổ nội dung vào Docs
     await docs.documents.batchUpdate({
       documentId: documentId,
       requestBody: {
@@ -117,31 +134,28 @@ Viết bài thật hấp dẫn, không vòng vo.`;
       }
     });
 
-    // --- 4. KÍCH HOẠT QUÁ TRÌNH XỬ LÝ ẢNH (FAN-OUT QSTASH) ---
+    // --- FAN-OUT IMAGE PROCESSING (giống V1) ---
     if (images && Array.isArray(images) && images.length > 0) {
-      console.log(`Bắt đầu xử lý và gom ${images.length} ảnh từ Temp Drive...`);
+      console.log(`[V2] Bắt đầu xử lý ${images.length} ảnh...`);
 
-      // Tạo thư mục "Anh Goc"
-      const anhGocMetadata = {
-        name: 'Anh Goc',
-        mimeType: 'application/vnd.google-apps.folder',
-        parents: [subFolderId]
-      };
       const anhGocRes = await drive.files.create({
-        requestBody: anhGocMetadata,
+        requestBody: {
+          name: 'Anh Goc',
+          mimeType: 'application/vnd.google-apps.folder',
+          parents: [subFolderId]
+        },
         fields: 'id'
       });
       const anhGocFolderId = anhGocRes.data.id;
 
       let maskFolderId = undefined;
       if (imageProcessingEngine === 'vertex_ai' || imageProcessingEngine === 'vision_lama' || imageProcessingEngine === 'vision_flux') {
-        const maskMetadata = {
-          name: 'Anh Mask',
-          mimeType: 'application/vnd.google-apps.folder',
-          parents: [subFolderId]
-        };
         const maskRes = await drive.files.create({
-          requestBody: maskMetadata,
+          requestBody: {
+            name: 'Anh Mask',
+            mimeType: 'application/vnd.google-apps.folder',
+            parents: [subFolderId]
+          },
           fields: 'id'
         });
         maskFolderId = maskRes.data.id;
@@ -165,30 +179,24 @@ Viết bài thật hấp dẫn, không vòng vo.`;
 
       const publishPromises = images.map(async (fileId: string, index: number) => {
         try {
-          // Lấy thư mục gốc hiện tại để chuẩn bị dời đi
           const file = await drive.files.get({ fileId: fileId, fields: 'parents' });
           const previousParents = file.data.parents?.join(',') || '';
 
-          // Chia sẻ public View Link để Replicate AI có thể tải được ảnh về xử lý
           await drive.permissions.create({
             fileId: fileId,
             requestBody: { role: 'reader', type: 'anyone' }
           });
 
-          // Tiến hành dời file từ Thư mục gốc / Temp Drive => "Anh Goc"
-          const movedFile = await drive.files.update({
+          await drive.files.update({
             fileId: fileId,
             addParents: anhGocFolderId!,
             removeParents: previousParents,
             fields: 'id, webContentLink, webViewLink'
           });
 
-          // Sử dụng Google Drive Direct Download Link (uc?id=...)
           const imageUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
-
-          // Bắn tín hiệu sang image-worker (kèm thời gian Delay giãn cách)
-          // Thay vì dùng string `${index * 25}s` bị TypeScript bắt lỗi type, ta dùng số giây trực tiếp (number)
           const delayTime = index > 0 ? index * 25 : undefined;
+
           return qstashClient.publishJSON({
             url: workerImageUrl,
             body: {
@@ -202,18 +210,18 @@ Viết bài thật hấp dẫn, không vòng vo.`;
             delay: delayTime
           });
         } catch (e: any) {
-          console.error(`Lỗi gom/di chuyển file ${fileId}:`, e.message);
+          console.error(`[V2] Lỗi gom file ${fileId}:`, e.message);
         }
       });
 
       await Promise.allSettled(publishPromises);
-      console.log(`🚀 Đã bắn ${images.length} message sang QStash (Image Worker). Đang chờ xử lý ngầm...`);
+      console.log(`[V2] 🚀 Đã bắn ${images.length} message sang Image Worker.`);
     }
 
-    console.log("✅ Successfully generated and saved to Drive ID:", documentId);
+    console.log("[V2] ✅ Done. Document ID:", documentId);
     return NextResponse.json({ success: true, documentId });
   } catch (error: any) {
-    console.error("Worker Error:", error.message || error);
+    console.error("Worker V2 Error:", error.message || error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }

@@ -79,7 +79,7 @@ export async function POST(req: NextRequest) {
     // Field đúng là "input_images" (array) — KHÔNG phải "image" hay "files"
     // Replicate SDK tự động upload Blob trước khi gửi tới model
     const customObjects = objectsToRemove || "cars, motorbikes, trash cans, house numbers, people";
-    const gptPrompt = `xóa các vật thể sau nếu có trong hình: ${customObjects}`;
+    const gptPrompt = `Remove the following objects if they appear in the image: ${customObjects}. Also remove cars covered by cloths/tarps, remove any obstacles or obstructions. If there are license plates visible, white them out completely.`;
 
     console.log("[Worker-GPT] 4. Gọi OpenAI GPT Image qua webhook:", webhookUrl);
     const prediction = await replicate.predictions.create({

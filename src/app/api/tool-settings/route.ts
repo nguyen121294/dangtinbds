@@ -20,13 +20,14 @@ export async function GET(req: NextRequest) {
        return NextResponse.json({ success: false, error: "Profile not found" }, { status: 404 });
     }
 
-    const { defaultDriveFolderId, defaultDriveFolderName, signatures } = profileRecords[0];
+    const { defaultDriveFolderId, defaultDriveFolderName, signatures, customPromptV2 } = profileRecords[0];
 
     return NextResponse.json({ 
       success: true, 
       defaultDriveFolderId, 
       defaultDriveFolderName, 
-      signatures: signatures || []
+      signatures: signatures || [],
+      customPromptV2: customPromptV2 || ''
     });
   } catch (error: any) {
     console.error("Error fetching tool settings:", error);
@@ -45,13 +46,14 @@ export async function POST(req: NextRequest) {
 
     const userId = session.user.id;
     const body = await req.json();
-    const { defaultDriveFolderId, defaultDriveFolderName, signatures } = body;
+    const { defaultDriveFolderId, defaultDriveFolderName, signatures, customPromptV2 } = body;
 
     await db.update(profiles)
       .set({
          defaultDriveFolderId: defaultDriveFolderId !== undefined ? defaultDriveFolderId : undefined,
          defaultDriveFolderName: defaultDriveFolderName !== undefined ? defaultDriveFolderName : undefined,
          signatures: signatures !== undefined ? signatures : undefined,
+         customPromptV2: customPromptV2 !== undefined ? customPromptV2 : undefined,
       })
       .where(eq(profiles.id, userId));
 

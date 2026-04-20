@@ -18,6 +18,7 @@ export const profiles = table('profiles', {
   referralCode: text('referral_code').unique(),             // Mã giới thiệu duy nhất (auto-gen)
   referredBy: text('referred_by'),                          // User ID người giới thiệu
   commissionBalance: doublePrecision('commission_balance').default(0), // Ví hoa hồng (VNĐ)
+  customPromptV2: text('custom_prompt_v2'),                            // Prompt tùy chỉnh cho Tool V2
   createdAt: timestamp('created_at').defaultNow(),
 });
 
