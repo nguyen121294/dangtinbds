@@ -4,6 +4,10 @@ import SettingsForm from './settings-form';
 export default async function AdminSettingsPage() {
   const trialCredits = await getAppSetting('trial_credits') || '200';
   const trialDays = await getAppSetting('trial_days') || '15';
+  const commTier1 = await getAppSetting('commission_tier1') || '10';
+  const commTier2 = await getAppSetting('commission_tier2') || '5';
+  const commTier3 = await getAppSetting('commission_tier3') || '1';
+  const minWithdrawal = await getAppSetting('min_withdrawal') || '5000000';
 
   return (
     <div className="space-y-8">
@@ -12,7 +16,14 @@ export default async function AdminSettingsPage() {
         <p className="text-zinc-400 mt-2">Quản lý cấu hình hệ thống, trial mặc định và các thông số khác</p>
       </div>
 
-      <SettingsForm initialTrialCredits={trialCredits} initialTrialDays={trialDays} />
+      <SettingsForm 
+        initialTrialCredits={trialCredits} 
+        initialTrialDays={trialDays}
+        initialCommTier1={commTier1}
+        initialCommTier2={commTier2}
+        initialCommTier3={commTier3}
+        initialMinWithdrawal={minWithdrawal}
+      />
     </div>
   );
 }

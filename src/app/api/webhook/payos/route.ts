@@ -4,6 +4,7 @@ import { profiles, payments } from '@/db/schema';
 import { eq, sql } from 'drizzle-orm';
 import { NextResponse } from 'next/server';
 import { getPlan } from '@/lib/plans';
+import { createPendingCommissions } from '@/lib/referral-utils';
 
 export async function POST(request: Request) {
   let body;
@@ -86,6 +87,14 @@ export async function POST(request: Request) {
         .where(eq(profiles.id, payment.userId));
 
       console.log(`[Webhook] SUCCESS: User ${payment.userId} subscribed to "${plan?.name || payment.plan}". Added ${creditsToAdd} credits. Expires: ${expirationDate.toISOString()}`);
+
+      // Tạo bản ghi hoa hồng pending cho chuỗi giới thiệu
+      try {
+        await createPendingCommissions(String(orderCode), payment.userId, payment.amount);
+      } catch (commErr) {
+        console.error(`[Webhook] Commission creation failed for order ${orderCode}:`, commErr);
+        // Không ảnh hưởng đến giao dịch chính
+      }
     } catch (dbError) {
       console.error(`[Webhook] Database error processing order ${orderCode}:`, dbError);
       // We return 500 so PayOS might retry the webhook later

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { db } from '@/db';
 import { profiles } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { Building2, LogOut, Wallet, Clock, User as UserIcon, Menu, Receipt } from 'lucide-react';
+import { Building2, LogOut, Wallet, Clock, User as UserIcon, Menu, Receipt, Gift } from 'lucide-react';
 import { getUserPlanDetails } from '@/lib/workspace-utils';
 import Link from 'next/link';
 
@@ -78,6 +78,10 @@ export default async function DashboardLayout({
            <Link href="/dashboard/payments" className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-red-50 hover:text-[#E03C31] text-gray-600 font-medium text-sm transition-colors">
               <Receipt className="w-5 h-5" />
               Lịch sử Thanh toán
+           </Link>
+           <Link href="/dashboard/referral" className="flex items-center gap-3 px-3 py-2.5 rounded-sm hover:bg-red-50 hover:text-[#E03C31] text-gray-600 font-medium text-sm transition-colors">
+              <Gift className="w-5 h-5" />
+              Hoa hồng Giới thiệu
            </Link>
         </div>
 

@@ -41,6 +41,16 @@ export default function LoginPage() {
     };
   }, [router, supabase.auth]);
 
+  // Capture referral code from URL and store in cookie
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get('ref');
+    if (ref) {
+      document.cookie = `ref_code=${ref}; path=/; max-age=604800; SameSite=Lax`; // 7 days
+      setMode('sign_up'); // Auto-switch to signup mode when coming from referral link
+    }
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);

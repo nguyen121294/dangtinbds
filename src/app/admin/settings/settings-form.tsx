@@ -1,11 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Save, Loader2, Gift, Clock, CheckCircle } from 'lucide-react';
+import { Save, Loader2, Gift, Clock, CheckCircle, DollarSign, Wallet } from 'lucide-react';
 
-export default function SettingsForm({ initialTrialCredits, initialTrialDays }: { initialTrialCredits: string; initialTrialDays: string }) {
+interface Props {
+  initialTrialCredits: string;
+  initialTrialDays: string;
+  initialCommTier1: string;
+  initialCommTier2: string;
+  initialCommTier3: string;
+  initialMinWithdrawal: string;
+}
+
+export default function SettingsForm({ 
+  initialTrialCredits, initialTrialDays,
+  initialCommTier1, initialCommTier2, initialCommTier3, initialMinWithdrawal
+}: Props) {
   const [trialCredits, setTrialCredits] = useState(initialTrialCredits);
   const [trialDays, setTrialDays] = useState(initialTrialDays);
+  const [commTier1, setCommTier1] = useState(initialCommTier1);
+  const [commTier2, setCommTier2] = useState(initialCommTier2);
+  const [commTier3, setCommTier3] = useState(initialCommTier3);
+  const [minWithdrawal, setMinWithdrawal] = useState(initialMinWithdrawal);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -18,7 +34,14 @@ export default function SettingsForm({ initialTrialCredits, initialTrialDays }: 
       const res = await fetch('/api/admin/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trial_credits: trialCredits, trial_days: trialDays }),
+        body: JSON.stringify({ 
+          trial_credits: trialCredits, 
+          trial_days: trialDays,
+          commission_tier1: commTier1,
+          commission_tier2: commTier2,
+          commission_tier3: commTier3,
+          min_withdrawal: minWithdrawal,
+        }),
       });
 
       if (res.ok) {
@@ -76,6 +99,85 @@ export default function SettingsForm({ initialTrialCredits, initialTrialDays }: 
               className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-[#E03C31]/30 focus:border-[#E03C31] transition"
             />
             <p className="mt-1 text-xs text-gray-400">Hiện tại: {initialTrialDays} ngày / user mới</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Commission Settings */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+          <DollarSign className="w-5 h-5 text-emerald-600" />
+          Cấu hình Hoa hồng Giới thiệu
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">
+          Tỷ lệ % hoa hồng cho từng tầng giới thiệu. Áp dụng cho <strong>giao dịch mới</strong> kể từ khi lưu.
+        </p>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tầng 1 (F1) %
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={commTier1}
+                onChange={(e) => setCommTier1(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Trực tiếp</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tầng 2 (F2) %
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={commTier2}
+                onChange={(e) => setCommTier2(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Gián tiếp</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Tầng 3 (F3) %
+              </label>
+              <input
+                type="number"
+                min="0"
+                max="100"
+                step="0.1"
+                value={commTier3}
+                onChange={(e) => setCommTier3(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Tầng 3</p>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <Wallet className="w-4 h-4 inline mr-1 text-amber-500" />
+              Ngưỡng rút tối thiểu (VNĐ)
+            </label>
+            <input
+              type="number"
+              min="0"
+              step="100000"
+              value={minWithdrawal}
+              onChange={(e) => setMinWithdrawal(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500 transition"
+            />
+            <p className="mt-1 text-xs text-gray-400">
+              Hiện tại: {parseInt(initialMinWithdrawal).toLocaleString('vi-VN')}đ
+            </p>
           </div>
         </div>
       </div>

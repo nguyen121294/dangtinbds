@@ -17,6 +17,18 @@ export async function POST(request: Request) {
     if (body.trial_days !== undefined) {
       await setAppSetting('trial_days', String(body.trial_days));
     }
+    if (body.commission_tier1 !== undefined) {
+      await setAppSetting('commission_tier1', String(body.commission_tier1));
+    }
+    if (body.commission_tier2 !== undefined) {
+      await setAppSetting('commission_tier2', String(body.commission_tier2));
+    }
+    if (body.commission_tier3 !== undefined) {
+      await setAppSetting('commission_tier3', String(body.commission_tier3));
+    }
+    if (body.min_withdrawal !== undefined) {
+      await setAppSetting('min_withdrawal', String(body.min_withdrawal));
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

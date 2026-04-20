@@ -15,6 +15,9 @@ export const profiles = table('profiles', {
   defaultDriveFolderId: text('default_drive_folder_id'),
   defaultDriveFolderName: text('default_drive_folder_name'),
   signatures: text('signatures').array(), // List of signature names/texts
+  referralCode: text('referral_code').unique(),             // Mã giới thiệu duy nhất (auto-gen)
+  referredBy: text('referred_by'),                          // User ID người giới thiệu
+  commissionBalance: doublePrecision('commission_balance').default(0), // Ví hoa hồng (VNĐ)
   createdAt: timestamp('created_at').defaultNow(),
 });
 
@@ -64,4 +67,32 @@ export const appSettings = table('app_settings', {
   key: text('key').primaryKey(),
   value: text('value').notNull(),
   updatedAt: timestamp('updated_at').defaultNow(),
+});
+
+// Lịch sử hoa hồng giới thiệu
+export const referralCommissions = table('referral_commissions', {
+  id: text('id').primaryKey(),
+  beneficiaryId: text('beneficiary_id').references(() => profiles.id).notNull(), // Người NHẬN hoa hồng
+  sourceUserId: text('source_user_id').references(() => profiles.id).notNull(),  // Người MUA gói (gốc phát sinh)
+  paymentId: text('payment_id').references(() => payments.id).notNull(),         // Giao dịch phát sinh
+  tier: integer('tier').notNull(),                           // 1, 2, hoặc 3
+  rate: doublePrecision('rate').notNull(),                   // % tại thời điểm tính (snapshot)
+  amount: doublePrecision('amount').notNull(),               // Số tiền VNĐ hoa hồng
+  status: text('status').default('pending').notNull(),       // pending → approved | rejected
+  approvedAt: timestamp('approved_at'),
+  createdAt: timestamp('created_at').defaultNow(),
+});
+
+// Yêu cầu rút tiền hoa hồng
+export const withdrawalRequests = table('withdrawal_requests', {
+  id: text('id').primaryKey(),
+  userId: text('user_id').references(() => profiles.id).notNull(),
+  amount: doublePrecision('amount').notNull(),               // Số tiền yêu cầu rút (VNĐ)
+  phone: text('phone').notNull(),
+  bankAccount: text('bank_account').notNull(),
+  bankName: text('bank_name').notNull(),
+  status: text('status').default('pending').notNull(),       // pending → completed | rejected
+  userSubStatusAtRequest: text('user_sub_status_at_request'), // Snapshot trạng thái gói lúc tạo
+  completedAt: timestamp('completed_at'),
+  createdAt: timestamp('created_at').defaultNow(),
 });

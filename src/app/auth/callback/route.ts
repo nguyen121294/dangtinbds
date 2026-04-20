@@ -4,6 +4,8 @@ import { db } from '@/db';
 import { profiles } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { getTrialCredits, getTrialDays } from '@/lib/app-settings';
+import { findUserByReferralCode, ensureReferralCode } from '@/lib/referral-utils';
+import { cookies } from 'next/headers';
 
 import { type EmailOtpType } from '@supabase/supabase-js';
 
@@ -53,12 +55,27 @@ export async function GET(request: Request) {
         const trialExpiryDate = new Date();
         trialExpiryDate.setDate(trialExpiryDate.getDate() + trialDaysAmount);
 
+        // Xử lý mã giới thiệu (từ cookie hoặc URL)
+        const cookieStore = await cookies();
+        const refCode = cookieStore.get('ref_code')?.value || searchParams.get('ref') || null;
+        let referredById: string | null = null;
+
+        if (refCode) {
+          referredById = await findUserByReferralCode(refCode);
+          // Xoá cookie sau khi xử lý
+          cookieStore.delete('ref_code');
+        }
+
+        // Generate referral code cho user mới
+        const newReferralCode = await ensureReferralCode(user.id);
+
         await db.update(profiles)
           .set({
             trialCredits: trialCreditsAmount,
             trialExpiresAt: trialExpiryDate,
             firstName: user.user_metadata?.firstName || null,
             lastName: user.user_metadata?.lastName || null,
+            ...(referredById ? { referredBy: referredById } : {}),
           })
           .where(eq(profiles.id, user.id));
       } else {
