@@ -52,8 +52,8 @@ export async function POST(req: NextRequest) {
     // Sử dụng DATA URIs để truyền buff ảnh 
     const base64Original = `data:image/jpeg;base64,${originalBuffer.toString('base64')}`;
 
-    const customObjects = objectsToRemove || "cars, motorbikes, trash cans, house numbers, people";
-    const bananaPrompt = `Remove the following objects if they appear in the image: ${customObjects}. Also remove cars covered by cloths/tarps, remove any obstacles or obstructions. If there are license plates visible, white them out completely.`;
+    const customObjects = objectsToRemove || "Xe máy, xe hơi, xe hơi che phủ bởi vải/bạt, xe tải, thùng rác, biển số nhà";
+    const bananaPrompt = `Nếu có các vật thể sau xuất hiện trong ảnh, hãy loại bỏ chúng: ${customObjects}, loại bỏ mọi chướng ngại vật.`;
 
     console.log("[Worker-Banana] Đang gọi Nano-Banana qua cơ chế create() webhook:", webhookUrl);
     await replicate.predictions.create({

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Client } from '@upstash/qstash';
 import { createClient } from '@/lib/supabase/server';
 import { google } from 'googleapis';
+import { db } from '@/db';
+import { usageLogs } from '@/db/schema';
+import { randomUUID } from 'crypto';
+import { eq } from 'drizzle-orm';
 
 const qstashClient = new Client({
   token: process.env.QSTASH_TOKEN || 'MISSING_TOKEN',
@@ -36,6 +40,20 @@ export async function POST(req: NextRequest) {
     if (!deductRes.success) {
       return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
     }
+
+    // Usage log for image processing
+    const jobId = randomUUID();
+    await db.insert(usageLogs).values({
+      id: randomUUID(),
+      jobId,
+      workspaceId,
+      userId: user.id,
+      tool: `image_editor_${imageProcessingEngine || 'default'}`,
+      creditsCharged: requiredCredits,
+      status: 'success',
+      modelUsed: imageProcessingEngine || 'openai_gpt',
+      inputSummary: `${images.length} ảnh | Engine: ${imageProcessingEngine} | Objects: ${objectsToRemoveStr || 'mặc định'}`.substring(0, 200),
+    });
 
     // Create Drive folder + fan-out via worker-image-editor
     const oAuth2Client = new google.auth.OAuth2();

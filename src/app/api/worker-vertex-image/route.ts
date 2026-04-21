@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const localizedObjects = annotateRes.data.responses?.[0]?.localizedObjectAnnotations || [];
     
     // Convert danh sách từ khóa user yêu cầu thành mảng lowercase
-    const customPromptKeywords = (objectsToRemove || "car, motorbike, trash can, house number")
+    const customPromptKeywords = (objectsToRemove || "xe máy, xe hơi, xe hơi che phủ bởi vải/bạt, xe tải, thùng rác, biển số nhà, chướng ngại vật")
         .toLowerCase()
         .split(',')
         .map((s: string) => s.trim());

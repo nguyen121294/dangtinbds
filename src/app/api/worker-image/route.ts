@@ -29,8 +29,8 @@ async function handler(req: NextRequest) {
     console.log(`[ImageWorker] Bắt đầu xử lý xóa vật thể cho ảnh: ${imageUrl}`);
 
     // --- 1. Gọi Replicate API ---
-    const customPrompt = objectsToRemove ? objectsToRemove : "car, motorbike, trash can, house number";
-    const instructionPrompt = `Remove ${customPrompt} and blend the background naturally`;
+    const customPrompt = objectsToRemove ? objectsToRemove : "Xe máy, xe hơi, xe hơi che phủ bởi vải/bạt, xe tải, thùng rác, biển số nhà";
+    const instructionPrompt = `Nếu có các vật thể sau xuất hiện trong ảnh, hãy loại bỏ chúng: ${customPrompt}, loại bỏ mọi chướng ngại vật.`;
     
     // Replicate API Configuration for Async Webhook
     const protocol = req.headers.get("x-forwarded-proto") || "http";

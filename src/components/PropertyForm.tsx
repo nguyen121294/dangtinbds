@@ -19,7 +19,7 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
     highlights: "",
     style: "Sang trọng & Đẳng cấp",
     headings: [] as string[],
-    objectsToRemove: ["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"] as string[],
+    objectsToRemove: ["Xe máy, xe hơi", "Xe hơi che phủ bởi vải/bạt", "Xe tải", "Thùng rác", "Biển số nhà", "Mọi chướng ngại vật"] as string[],
     customObjectsToRemove: "",
     enhanceImage: true,
     imageProcessingEngine: "openai_gpt",
@@ -142,7 +142,7 @@ export default function PropertyForm({ workspaceId }: { workspaceId?: string }) 
     });
   };
 
-  const defaultObjectsToRemove = ["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"];
+  const defaultObjectsToRemove = ["Xe máy, xe hơi", "Xe hơi che phủ bởi vải/bạt", "Xe tải", "Thùng rác", "Biển số nhà", "Mọi chướng ngại vật"];
   const handleObjectCheckboxChange = (obj: string) => {
     setFormData((prev) => {
       if (prev.objectsToRemove.includes(obj)) {

@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
 
     const localizedObjects = annotateRes.data.responses?.[0]?.localizedObjectAnnotations || [];
     
-    const customPromptKeywords = (objectsToRemove || "car, motorbike, trash can, house number, person")
+    const customPromptKeywords = (objectsToRemove || "xe máy, xe hơi, xe hơi che phủ bởi vải/bạt, xe tải, thùng rác, biển số nhà, chướng ngại vật")
         .toLowerCase()
         .split(',')
         .map((s: string) => s.trim());

@@ -28,7 +28,7 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
 
   // Image state (reuse from V1)
   const [images, setImages] = useState<{file: File, preview: string, base64: string}[]>([]);
-  const [objectsToRemove, setObjectsToRemove] = useState<string[]>(["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"]);
+  const [objectsToRemove, setObjectsToRemove] = useState<string[]>(["Xe máy, xe hơi", "Xe hơi che phủ bởi vải/bạt", "Xe tải", "Thùng rác", "Biển số nhà", "Mọi chướng ngại vật"]);
   const [customObjectsToRemove, setCustomObjectsToRemove] = useState("");
   const [enhanceImage, setEnhanceImage] = useState(true);
   const [imageProcessingEngine, setImageProcessingEngine] = useState("openai_gpt");
@@ -177,7 +177,7 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const defaultObjectsToRemove = ["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"];
+  const defaultObjectsToRemove = ["Xe máy, xe hơi", "Xe hơi che phủ bởi vải/bạt", "Xe tải", "Thùng rác", "Biển số nhà", "Mọi chướng ngại vật"];
   const handleObjectCheckboxChange = (obj: string) => {
     setObjectsToRemove((prev) => {
       if (prev.includes(obj)) {

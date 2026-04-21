@@ -42,6 +42,18 @@ const toolLabels: Record<string, string> = {
   v1_assistant: 'V1 — Form cơ bản',
   v2_assistant: 'V2 — AI + Ảnh',
   v3_assistant: 'V3 — AI nhanh',
+  image_editor_openai_gpt: '🖼️ Ảnh — GPT Image',
+  image_editor_replicate_banana: '🖼️ Ảnh — Nano-Banana',
+  image_editor_vertex_ai: '🖼️ Ảnh — Vertex AI',
+  image_editor_vision_lama: '🖼️ Ảnh — Vision LaMa',
+  image_editor_vision_flux: '🖼️ Ảnh — Vision Flux',
+  image_editor_default: '🖼️ Ảnh — Mặc định',
+};
+
+const getToolLabel = (tool: string) => {
+  if (toolLabels[tool]) return toolLabels[tool];
+  if (tool.startsWith('image_editor')) return '🖼️ Ảnh — ' + tool.replace('image_editor_', '');
+  return tool;
 };
 
 export default function UsageLogsTable() {
@@ -198,7 +210,7 @@ export default function UsageLogsTable() {
 
                           {/* Tool */}
                           <div className="text-xs text-gray-600">
-                            {toolLabels[log.tool] || log.tool}
+                            {getToolLabel(log.tool)}
                           </div>
 
                           {/* Credits */}
