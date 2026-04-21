@@ -16,7 +16,9 @@ async function handler(req: NextRequest) {
     }
 
     // --- 2. GENERATE AI CONTENT ---
-    const systemPrompt = `Bạn là một chuyên gia môi giới bất động sản xuất sắc. Nhiệm vụ của bạn là viết một bài đăng facebook/zalo để chốt sale. Trình bày đẹp mắt, dùng emoji hiệu quả. TUYỆT ĐỐI KHÔNG sử dụng ký hiệu markdown như **, ##, ~~. Chỉ dùng text thuần và emoji.`;
+    const systemPrompt = `Bạn là chuyên gia môi giới BĐS hàng đầu Việt Nam. Viết bài đăng Facebook/Zalo rao bán/cho thuê BĐS để chốt sale.
+NGUYÊN TẮC: Dùng emoji NHIỀU và PHONG PHÚ xuyên suốt. KHÔNG BAO GIỜ viết nhãn cấu trúc (Tiêu đề:, Thân bài:, Kêu gọi hành động:). Bài viết tự nhiên, copy-paste trực tiếp lên Facebook. TUYỆT ĐỐI KHÔNG dùng markdown (**, ##, ~~, --). Chỉ dùng text thuần và emoji.
+HASHTAG BẮT BUỘC: Cuối bài PHẢI có 15-25 hashtag viral (vị trí + loại BĐS + giá + hành động). Viết liền không dấu.`;
 
     const selectedHeadings = headings && headings.length > 0 ? headings.map((h: string) => `[x] ${h}`).join('\n') : 'Cung cấp đầy đủ thông tin';
 

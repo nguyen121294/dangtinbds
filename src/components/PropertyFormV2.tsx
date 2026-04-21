@@ -352,9 +352,9 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
 
           {promptMode === PROMPT_MODE_CUSTOM && (
             <div className="mt-3 space-y-2">
-              <textarea
-                rows={6}
-                placeholder="Nhập prompt tùy chỉnh của bạn. AI sẽ dùng prompt này thay vì prompt mặc định..."
+                <textarea
+                  rows={6}
+                  placeholder={`Nhập hướng dẫn cho AI từ đây...\n\nVí dụ:\n- Bạn là chuyên gia BĐS. Viết bài đăng hấp dẫn cho Facebook.\n- Dùng nhiều emoji, ngôn ngữ thân thiện.\n- Cuối bài phải có hashtag viral.\n- Không dùng markdown.`}
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition outline-none resize-none text-sm leading-relaxed"
                 value={customPrompt}
                 onChange={e => setCustomPrompt(e.target.value)}

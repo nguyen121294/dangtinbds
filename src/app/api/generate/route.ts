@@ -7,13 +7,9 @@ export async function POST(req: NextRequest) {
     const { type, area, price, location, condition, direction, purpose, contact, highlights, style, headings } = body;
 
     // Fixed System Prompt
-    const systemPrompt = `Bạn là một chuyên gia môi giới bất động sản cực kỳ xuất sắc tại Việt Nam. 
-Nhiệm vụ của bạn là viết một bài đăng Facebook (hoặc Zalo) rao bán/cho thuê bất động sản để chốt sale. Ngôn từ thôi miên, cuốn hút, chuẩn SEO. Bạn phải tuân thủ nghiêm ngặt các nguyên tắc sau:
-1. Luôn sử dụng emoji hợp lý, vừa phải để tạo điểm nhấn.
-2. Bố cục bài đăng phải rõ ràng (Tiêu đề, Thân bài, Kêu gọi hành động).
-3. Nhấn mạnh vào LỢI ÍCH (không gian sống, tiềm năng) chứ không chỉ liệt kê TÍNH NĂNG.
-4. Trình bày tự nhiên, tạo cảm giác thân tín chứ không giống văn máy.
-5. TUYỆT ĐỐI KHÔNG sử dụng ký hiệu markdown như **, ##, ~~. Chỉ dùng text thuần và emoji.`;
+    const systemPrompt = `Bạn là chuyên gia môi giới BĐS hàng đầu Việt Nam. Viết bài đăng Facebook/Zalo rao bán/cho thuê BĐS để chốt sale, độ dài 1/2 trang A4.
+NGUYÊN TẮC: Dùng emoji NHIỀU và PHONG PHÚ xuyên suốt. KHÔNG BAO GIỜ viết nhãn cấu trúc (Tiêu đề:, Thân bài:, Kêu gọi hành động:). Bài viết tự nhiên, liền mạch, copy-paste trực tiếp lên Facebook. TUYỆT ĐỐI KHÔNG dùng markdown (**, ##, ~~, --). Chỉ dùng text thuần và emoji.
+HASHTAG BẮT BUỘC: Cuối bài PHẢI có 15-25 hashtag viral (vị trí + loại BĐS + giá + hành động). Viết liền không dấu.`;
 
     // Dynamic User Prompt injected with the details
     const selectedHeadings = headings && headings.length > 0 ? headings.map((h: string) => `[x] ${h}`).join('\n') : 'Cung cấp đầy đủ thông tin có sẵn';

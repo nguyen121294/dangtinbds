@@ -153,7 +153,7 @@ export default async function DashboardLayout({
           <Link href="/dashboard" className="flex items-center gap-2 mr-2">
             <Building2 className="w-6 h-6 text-[#E03C31]" />
           </Link>
-          <div className="flex-1 w-full overflow-hidden">
+          <div className="flex-1 w-full min-w-0">
              <WorkspaceSwitcher 
                currentWorkspaceId={workspaceId} 
                workspaces={allowedWorkspaces} 
