@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Client } from '@upstash/qstash';
 import { createClient } from '@/lib/supabase/server';
+import { db } from '@/db';
+import { usageLogs } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 
 const qstashClient = new Client({
   token: process.env.QSTASH_TOKEN || 'MISSING_TOKEN',
@@ -32,18 +36,38 @@ export async function POST(req: NextRequest) {
     const imageCount = images && Array.isArray(images) ? images.length : 0;
     const requiredCredits = 2 + (imageCount * (isBanana ? 40 : 10));
 
-    // 3. Check credit balance BEFORE publishing (pre-flight validation only, no deduction yet)
-    const { checkCreditBalance, deductWorkspaceCredit } = await import('@/lib/workspace-utils');
+    // 3. Check credit balance (pre-flight only — NO deduction here)
+    const { checkCreditBalance } = await import('@/lib/workspace-utils');
     const balanceCheck = await checkCreditBalance(workspaceId, user.id, requiredCredits);
     if (!balanceCheck.success) {
       return NextResponse.json({ success: false, error: balanceCheck.error }, { status: 403 });
     }
 
-    // 4. Build payload and publish to QStash FIRST
+    // 4. Generate unique jobId for idempotency + create usage log
+    const jobId = randomUUID();
+    const inputSummary = body.rawInfo ? String(body.rawInfo).substring(0, 200) : null;
+
+    await db.insert(usageLogs).values({
+      id: randomUUID(),
+      jobId,
+      workspaceId,
+      userId: user.id,
+      tool: 'v2_assistant',
+      creditsCharged: 0, // Will be updated by worker on success
+      status: 'pending',
+      inputSummary,
+    });
+
+    // 5. Build payload and publish to QStash (no credit deduction!)
     const workerPayload = {
       ...body,
       signature,
       toolVersion: 'v2',
+      // Pass job metadata so worker can deduct + update log
+      jobId,
+      requiredCredits,
+      workspaceId,
+      userId: user.id,
     };
 
     const host = req.headers.get('x-forwarded-host') || req.headers.get('host');
@@ -54,18 +78,20 @@ export async function POST(req: NextRequest) {
     const res = await qstashClient.publishJSON({
       url: workerUrl,
       body: workerPayload,
-      retries: 3,
+      retries: 2,
     });
 
-    // 5. Only deduct credits AFTER QStash publish is confirmed successful
-    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
-    if (!deductRes.success) {
-      // Job is already queued — log the error but don't fail the request.
-      // This edge case is extremely rare (publish ok, DB write fails).
-      console.error(`[V2] Credit deduction failed after successful publish. User: ${user.id}, Workspace: ${workspaceId}, Credits: ${requiredCredits}`, deductRes.error);
-    }
+    // 6. Update log with QStash message ID
+    await db.update(usageLogs)
+      .set({ qstashMessageId: res.messageId })
+      .where(eq(usageLogs.jobId, jobId));
 
-    return NextResponse.json({ success: true, messageId: res.messageId, workerUrl });
+    return NextResponse.json({
+      success: true,
+      messageId: res.messageId,
+      jobId,
+      message: "Yêu cầu đã được gửi. Credit sẽ chỉ bị trừ khi xử lý hoàn thành thành công."
+    });
   } catch (error: any) {
     console.error("QStash Publish Error (V2):", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

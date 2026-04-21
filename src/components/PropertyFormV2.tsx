@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import { Loader2, Sparkles, ImagePlus, X, FolderOpen, ChevronDown, ChevronUp } from "lucide-react"; 
+import { Loader2, Sparkles, ImagePlus, X, FolderOpen, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from "lucide-react"; 
 import { useGoogleLogin } from '@react-oauth/google';
 import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
@@ -40,6 +40,8 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
 
   // General state
   const [loading, setLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
   const [isSuccess, setIsSuccess] = useState(false);
   const [accessToken, setAccessToken] = useState("");
   const [userCredits, setUserCredits] = useState<number>(0);
@@ -254,11 +256,15 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
       const data = await res.json();
       if (data.success) {
         setIsSuccess(true);
+        setToastType('success');
+        setToastMessage(data.message || 'Yêu cầu đã được gửi. Credit sẽ chỉ bị trừ khi xử lý hoàn thành.');
       } else {
-        alert("Lỗi gửi yêu cầu: " + (data.error || ""));
+        setToastType('error');
+        setToastMessage('Lỗi: ' + (data.error || 'Không rõ nguyên nhân. Không trừ credit.'));
       }
     } catch (err) {
-      alert("Lỗi kết nối máy chủ. Vui lòng thử lại.");
+      setToastType('error');
+      setToastMessage('Lỗi kết nối máy chủ. Không trừ credit. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -502,6 +508,22 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
         </div>
       </div>
 
+      {/* --- TOAST NOTIFICATION --- */}
+      {toastMessage && (
+        <div className={`px-4 py-3 rounded-xl flex items-start space-x-3 shadow-sm border ${
+          toastType === 'success' ? 'bg-green-50 border-green-300 text-green-800' :
+          toastType === 'warning' ? 'bg-amber-50 border-amber-300 text-amber-800' :
+          'bg-red-50 border-red-300 text-red-800'
+        }`}>
+          {toastType === 'success' ? <CheckCircle2 className="w-5 h-5 mt-0.5 flex-shrink-0" /> :
+           <AlertTriangle className="w-5 h-5 mt-0.5 flex-shrink-0" />}
+          <p className="text-sm flex-1">{toastMessage}</p>
+          <button type="button" onClick={() => setToastMessage(null)} className="text-current opacity-50 hover:opacity-100">
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
       {/* --- 5. SUBMIT --- */}
       <div className="pt-4">
         {isSuccess ? (
@@ -509,7 +531,7 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
             <svg className="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             <div>
               <p className="font-bold">Đã tiếp nhận yêu cầu!</p>
-              <p className="text-sm mt-0.5">Hệ thống đang chạy ngầm và sẽ tự động tạo 1 file Google Docs chứa cả bài dài + bài ngắn trên Drive của bạn.</p>
+              <p className="text-sm mt-0.5">Hệ thống đang xử lý. Credit sẽ chỉ bị trừ khi hoàn thành thành công. File sẽ xuất hiện trên Drive của bạn.</p>
             </div>
           </div>
         ) : (

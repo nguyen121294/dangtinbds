@@ -97,3 +97,21 @@ export const withdrawalRequests = table('withdrawal_requests', {
   completedAt: timestamp('completed_at'),
   createdAt: timestamp('created_at').defaultNow(),
 });
+
+// Lịch sử sử dụng AI tool theo Workspace
+export const usageLogs = table('usage_logs', {
+  id: text('id').primaryKey(),
+  jobId: text('job_id').notNull().unique(),                // Idempotency key — ngăn trừ credit 2 lần khi QStash retry
+  workspaceId: text('workspace_id').references(() => workspaces.id).notNull(),
+  userId: text('user_id').references(() => profiles.id).notNull(),
+  tool: text('tool').notNull(),                            // 'v2_assistant', 'v1_assistant'
+  creditsCharged: integer('credits_charged').default(0),   // 0 cho đến khi worker xác nhận thành công
+  status: text('status').default('pending').notNull(),     // pending → success | partial | failed
+  modelUsed: text('model_used'),                           // 'gpt-5-nano', 'gpt-4.1-nano'
+  errorMessage: text('error_message'),                     // Chi tiết lỗi (admin view)
+  inputSummary: text('input_summary'),                     // Tóm tắt 200 ký tự đầu
+  durationMs: integer('duration_ms'),
+  qstashMessageId: text('qstash_message_id'),
+  createdAt: timestamp('created_at').defaultNow(),
+  completedAt: timestamp('completed_at'),
+});
