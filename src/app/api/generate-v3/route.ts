@@ -1,20 +1,38 @@
-import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { google } from 'googleapis';
+import Replicate from 'replicate';
+import { db } from '@/db';
+import { usageLogs } from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { randomUUID } from 'crypto';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+const DEFAULT_SYSTEM_PROMPT = `Bạn là chuyên gia môi giới bất động sản hàng đầu Việt Nam, đồng thời là chuyên gia SEO và Content Marketing trên Facebook/Zalo.
+Nhiệm vụ: Viết bài đăng rao bán/cho thuê BĐS cực kỳ hấp dẫn, độ dài 1/2 trang A4, có khả năng viral cao.
 
-const DEFAULT_SYSTEM_PROMPT = `Bạn là một chuyên gia môi giới bất động sản cực kỳ xuất sắc tại Việt Nam. 
-Nhiệm vụ của bạn là viết một bài đăng Facebook (hoặc Zalo) rao bán/cho thuê bất động sản để chốt sale, độ dài 1/2 trang A4.
-Ngôn từ thôi miên, cuốn hút, chuẩn SEO. Bạn phải tuân thủ nghiêm ngặt các nguyên tắc sau:
-1. Luôn sử dụng emoji hợp lý, vừa phải để tạo điểm nhấn.
-2. Bố cục bài đăng phải rõ ràng (Tiêu đề, Thân bài, Kêu gọi hành động).
-3. Nhấn mạnh vào LỢI ÍCH (không gian sống, tiềm năng) chứ không chỉ liệt kê TÍNH NĂNG.
-4. Trình bày tự nhiên, tạo cảm giác thân tín chứ không giống văn máy.
-5. TUYỆT ĐỐI KHÔNG sử dụng ký hiệu markdown như **, ##, ~~. Chỉ dùng text thuần và emoji.`;
+NGUYÊN TẮC BẮT BUỘC:
+1. Sử dụng emoji hợp lý tạo điểm nhấn thị giác (đầu mỗi mục, tiêu đề).
+2. Bố cục rõ ràng: Tiêu đề gây tò mò → Thân bài (lợi ích + cảm xúc) → CTA mạnh.
+3. Nhấn mạnh LỢI ÍCH + CẢM XÚC (hình dung không gian sống, tiềm năng tăng giá) thay vì chỉ liệt kê tính năng.
+4. Ngôn ngữ tự nhiên, thân thiện như tư vấn 1-1, KHÔNG giống văn máy.
+5. TUYỆT ĐỐI KHÔNG dùng markdown (**, ##, ~~). Chỉ dùng text thuần và emoji.
+6. Tạo cảm giác KHAN HIẾM và URGENCY phù hợp (số lượng giới hạn, giá ưu đãi có thời hạn...).
+
+QUY TẮC HASHTAG VIRAL (RẤT QUAN TRỌNG):
+Cuối MỖI bài đăng (cả bài dài và bài ngắn), PHẢI thêm khối hashtag theo cấu trúc sau:
+- Dòng 1: Hashtag VỊ TRÍ (tỉnh/thành, quận/huyện, phường/xã, đường) — Ví dụ: #BatDongSanQuangNgai #DatNenSonTinh
+- Dòng 2: Hashtag LOẠI BĐS — Ví dụ: #DatNen #NhaPho #CanHo #BietThu #DatVuon #NhaXuong
+- Dòng 3: Hashtag MỨC GIÁ + DIỆN TÍCH — Ví dụ: #Duoi1Ty #Duoi500Trieu #100m2 #DatRe
+- Dòng 4: Hashtag HÀNH ĐỘNG + VIRAL — Ví dụ: #MuaBanNhadat #DauTuBDS #batdongsanvietnam #nhadatviet #moigioibds
+- Tổng tối thiểu 15 hashtag, tối đa 25 hashtag.
+- Hashtag viết liền không dấu, CamelCase hoặc lowercase, KHÔNG có khoảng trắng trong hashtag.
+- Ưu tiên hashtag có volume tìm kiếm cao trên Facebook/Zalo.`;
 
 export async function POST(req: NextRequest) {
+  const startTime = Date.now();
+  let jobId: string | null = null;
+  let modelUsed = '';
+
   try {
     const body = await req.json();
     const { rawInfo, style, customPrompt, signature, access_token, workspaceId, driveFolderId } = body;
@@ -30,12 +48,25 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Bạn cần đăng nhập." }, { status: 401 });
     }
 
-    // Deduct 2 credits
-    const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
-    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, 2);
-    if (!deductRes.success) {
-      return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
+    // Check credit balance (pre-flight, NO deduction)
+    const { checkCreditBalance } = await import('@/lib/workspace-utils');
+    const balanceCheck = await checkCreditBalance(workspaceId, user.id, 2);
+    if (!balanceCheck.success) {
+      return NextResponse.json({ success: false, error: balanceCheck.error }, { status: 403 });
     }
+
+    // Create usage log
+    jobId = randomUUID();
+    await db.insert(usageLogs).values({
+      id: randomUUID(),
+      jobId,
+      workspaceId,
+      userId: user.id,
+      tool: 'v3_quick',
+      creditsCharged: 0,
+      status: 'pending',
+      inputSummary: rawInfo.substring(0, 200),
+    });
 
     // Build prompt
     const systemPrompt = (customPrompt && customPrompt.trim().length > 0) ? customPrompt.trim() : DEFAULT_SYSTEM_PROMPT;
@@ -52,8 +83,7 @@ ${rawInfo}
 **PHẦN 1 - BÀI ĐĂNG DÀI:**
 Viết bài đăng bán/cho thuê BĐS hoàn chỉnh dựa trên thông tin trên. Bài viết khoảng 1/2 trang A4, hấp dẫn, không vòng vo.
 
-${signature ? `LƯU Ý CUỐI BÀI: Phải đính kèm nguyên văn chữ ký sau vào vị trí cuối cùng của bài đăng dài. Không tự ý sửa đổi chữ ký:
-${signature}` : ''}
+${signature ? `LƯU Ý CUỐI BÀI: Phải đính kèm nguyên văn chữ ký sau vào vị trí cuối cùng của bài đăng dài. Không tự ý sửa đổi chữ ký:\n${signature}` : ''}
 
 **PHẦN 2 - BÀI ĐĂNG NGẮN:**
 Trích xuất thông tin từ đoạn raw text và TRÌNH BÀY ĐÚNG theo format sau. Nếu thông tin KHÔNG CÓ trong raw text thì ghi "Chưa có thông tin". TUYỆT ĐỐI KHÔNG BỊA ĐẶT thêm bớt.
@@ -74,22 +104,35 @@ Bắt đầu PHẦN 1 bằng dòng: ===BÀI ĐĂNG DÀI===
 Bắt đầu PHẦN 2 bằng dòng: ===BÀI ĐĂNG NGẮN===
 Viết liên tục, KHÔNG giải thích gì thêm.`;
 
-    // Generate
+    // Generate with Replicate (sync — V3 returns text directly)
+    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+    const fullPrompt = `${systemPrompt}\n\n---\n\n${userPrompt}`;
     let responseText = "";
+
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: userPrompt,
-        config: { systemInstruction: systemPrompt, temperature: 0.7 }
+      modelUsed = 'openai/gpt-5-nano';
+      const output = await replicate.run("openai/gpt-5-nano", {
+        input: { prompt: fullPrompt, temperature: 0.7, max_tokens: 4096 }
       });
-      responseText = response.text || "";
+      responseText = Array.isArray(output) ? output.join('') : String(output);
     } catch {
-      const fallback = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
-        contents: userPrompt,
-        config: { systemInstruction: systemPrompt, temperature: 0.7 }
-      });
-      responseText = fallback.text || "";
+      console.warn("[V3] gpt-5-nano failed. Falling back to gpt-4.1-nano...");
+      try {
+        modelUsed = 'openai/gpt-4.1-nano';
+        const fallback = await replicate.run("openai/gpt-4.1-nano", {
+          input: { prompt: fullPrompt, temperature: 0.7, max_tokens: 4096 }
+        });
+        responseText = Array.isArray(fallback) ? fallback.join('') : String(fallback);
+      } catch (err: any) {
+        // Both models failed — no credit deduction
+        if (jobId) {
+          await db.update(usageLogs).set({
+            status: 'failed', modelUsed, errorMessage: err.message,
+            durationMs: Date.now() - startTime, completedAt: new Date(),
+          }).where(eq(usageLogs.jobId, jobId));
+        }
+        return NextResponse.json({ success: false, error: "AI text generation failed. Không trừ credit." }, { status: 500 });
+      }
     }
 
     // Save to Drive (if token available)
@@ -136,9 +179,34 @@ Viết liên tục, KHÔNG giải thích gì thêm.`;
       }
     }
 
+    // Deduct credits ONLY after successful text generation
+    const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
+    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, 2);
+
+    // Update usage log
+    if (jobId) {
+      await db.update(usageLogs).set({
+        status: deductRes.success ? 'success' : 'partial',
+        creditsCharged: deductRes.success ? 2 : 0,
+        modelUsed,
+        durationMs: Date.now() - startTime,
+        completedAt: new Date(),
+        errorMessage: deductRes.success ? null : deductRes.error,
+      }).where(eq(usageLogs.jobId, jobId));
+    }
+
     return NextResponse.json({ success: true, text: responseText, documentId });
   } catch (error: any) {
     console.error("Generate V3 Error:", error);
-    return NextResponse.json({ success: false, error: error.message || "Lỗi hệ thống AI." }, { status: 500 });
+    // Mark log as failed if jobId exists
+    if (jobId) {
+      try {
+        await db.update(usageLogs).set({
+          status: 'failed', modelUsed, errorMessage: error.message,
+          durationMs: Date.now() - startTime, completedAt: new Date(),
+        }).where(eq(usageLogs.jobId, jobId));
+      } catch {} // best effort
+    }
+    return NextResponse.json({ success: false, error: error.message || "Lỗi hệ thống AI. Không trừ credit." }, { status: 500 });
   }
 }

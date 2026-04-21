@@ -1,7 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
+import Replicate from 'replicate';
 import { NextRequest, NextResponse } from 'next/server';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 export async function POST(req: NextRequest) {
   try {
@@ -39,31 +37,23 @@ ${selectedHeadings}
 Hãy làm bài viết thật hấp dẫn, không vòng vo, vào thẳng bài đăng!`;
 
     let responseText = "";
+    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+    const fullPrompt = `${systemPrompt}\n\n---\n\n${userPrompt}`;
     
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: userPrompt,
-        config: {
-          systemInstruction: systemPrompt,
-          temperature: 0.7,
-        }
+      const output = await replicate.run("openai/gpt-5-nano", {
+        input: { prompt: fullPrompt, temperature: 0.7, max_tokens: 4096 }
       });
-      responseText = response.text || "";
+      responseText = Array.isArray(output) ? output.join('') : String(output);
     } catch (modelError: any) {
-      console.warn("Gemini 2.5 Flash failed (possibly overloaded). Falling back to 2.5 Flash Lite...");
+      console.warn("GPT-5 Nano failed. Falling back to GPT-4.1 Nano...");
       try {
-        const fallbackResponse = await ai.models.generateContent({
-          model: 'gemini-2.5-flash-lite',
-          contents: userPrompt,
-          config: {
-            systemInstruction: systemPrompt,
-            temperature: 0.7,
-          }
+        const fallback = await replicate.run("openai/gpt-4.1-nano", {
+          input: { prompt: fullPrompt, temperature: 0.7, max_tokens: 4096 }
         });
-        responseText = fallbackResponse.text || "";
+        responseText = Array.isArray(fallback) ? fallback.join('') : String(fallback);
       } catch (fallbackError: any) {
-        throw fallbackError; // If fallback also fails, throw to main catch
+        throw fallbackError;
       }
     }
 

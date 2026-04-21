@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { Loader2, CheckCircle2, AlertCircle, Save, KeyRound, ShieldCheck } from 'lucide-react';
-import { updateProfile, updatePassword, deactivateAccount } from './actions';
+import { Loader2, CheckCircle2, AlertCircle, Save, ShieldCheck } from 'lucide-react';
+import { updateProfile, deactivateAccount } from './actions';
 
 interface Props {
   email: string;
@@ -32,15 +32,9 @@ export default function AccountClientView({
   const [firstName, setFirstName] = useState(initialFirstName || '');
   const [lastName, setLastName] = useState(initialLastName || '');
   
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
 
   const [isPendingProfile, startTransitionProfile] = useTransition();
   const [profileMsg, setProfileMsg] = useState<{type: 'error'|'success', text: string} | null>(null);
-
-  const [isPendingPassword, startTransitionPassword] = useTransition();
-  const [passwordMsg, setPasswordMsg] = useState<{type: 'error'|'success', text: string} | null>(null);
 
   const isSubscribed = subscriptionStatus === 'active' &&
     subscriptionExpiresAt &&
@@ -66,26 +60,6 @@ export default function AccountClientView({
     });
   };
 
-  const handleUpdatePassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setPasswordMsg(null);
-    startTransitionPassword(async () => {
-      const formData = new FormData();
-      formData.append('currentPassword', currentPassword);
-      formData.append('newPassword', newPassword);
-      formData.append('confirmPassword', confirmPassword);
-      
-      const result = await updatePassword(formData);
-      if (result?.error) {
-        setPasswordMsg({ type: 'error', text: result.error });
-      } else {
-        setPasswordMsg({ type: 'success', text: result.message || 'Thành công' });
-        setCurrentPassword('');
-        setNewPassword('');
-        setConfirmPassword('');
-      }
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -208,72 +182,6 @@ export default function AccountClientView({
         </form>
       </section>
 
-      {/* 3. Thay đổi mật khẩu */}
-      <section className="rounded-xl border border-gray-200 bg-white p-6 md:p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-6 border-b border-gray-100 pb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-50 text-orange-600">
-            <KeyRound className="h-5 w-5" />
-          </div>
-          <h2 className="text-lg font-bold text-gray-900">Đổi Mật khẩu</h2>
-        </div>
-
-        {passwordMsg && (
-          <div className={`mb-6 flex items-center gap-2 rounded-lg p-3 text-sm font-medium border ${passwordMsg.type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
-            {passwordMsg.type === 'error' ? <AlertCircle className="h-5 w-5 shrink-0" /> : <CheckCircle2 className="h-5 w-5 shrink-0" />}
-            <p>{passwordMsg.text}</p>
-          </div>
-        )}
-
-        <form onSubmit={handleUpdatePassword} className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-gray-700">Mật khẩu hiện tại</label>
-            <input
-              type="password"
-              required
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className="block w-full max-w-md rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition hover:border-gray-400 focus:border-[#E03C31] focus:outline-none focus:ring-1 focus:ring-[#E03C31]"
-              placeholder="••••••••"
-            />
-          </div>
-          
-          <div className="pt-2 grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">Mật khẩu mới</label>
-              <input
-                type="password"
-                required
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition hover:border-gray-400 focus:border-[#E03C31] focus:outline-none focus:ring-1 focus:ring-[#E03C31]"
-                placeholder="Từ 6 ký tự trở lên"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-gray-700">Xác nhận mật khẩu mới</label>
-              <input
-                type="password"
-                required
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 placeholder-gray-400 transition hover:border-gray-400 focus:border-[#E03C31] focus:outline-none focus:ring-1 focus:ring-[#E03C31]"
-                placeholder="Nhập lại mật khẩu mới"
-              />
-            </div>
-          </div>
-          
-          <div className="flex justify-end pt-4">
-            <button
-              type="submit"
-              disabled={isPendingPassword || newPassword !== confirmPassword || newPassword.length < 6}
-              className="flex items-center gap-2 rounded-lg bg-gray-800 px-8 py-3 text-sm font-bold text-white transition-transform hover:bg-gray-900 hover:-translate-y-0.5 disabled:opacity-50 disabled:transform-none shadow-sm"
-            >
-              {isPendingPassword ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-              Cập nhật Mật khẩu
-            </button>
-          </div>
-        </form>
-      </section>
 
       {/* 4. Vùng nguy hiểm */}
       <section className="rounded-xl border border-red-200 bg-red-50/50 p-6 md:p-8 shadow-sm">

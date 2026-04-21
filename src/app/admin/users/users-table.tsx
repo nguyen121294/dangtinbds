@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Search, Edit2, Trash2, Calendar, Mail, User as UserIcon, X, Check, Loader2 } from 'lucide-react';
+import { Search, Edit2, Trash2, Calendar, Mail, User as UserIcon, X, Check, Loader2, Link2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Plan } from '@/lib/plans';
 
@@ -16,6 +16,8 @@ type UserProfile = {
   subscriptionExpiresAt: Date | null;
   status: string | null;
   createdAt: Date | null;
+  referralCode: string | null;
+  referredBy: string | null;
 };
 
 export default function UsersTable({ initialUsers, plans }: { initialUsers: any[], plans: Plan[] }) {
@@ -25,7 +27,9 @@ export default function UsersTable({ initialUsers, plans }: { initialUsers: any[
     trialExpiresAt: u.trialExpiresAt ? new Date(u.trialExpiresAt) : null,
     paidCredits: u.paidCredits ?? null,
     subscriptionExpiresAt: u.subscriptionExpiresAt ? new Date(u.subscriptionExpiresAt) : null,
-    createdAt: u.createdAt ? new Date(u.createdAt) : null
+    createdAt: u.createdAt ? new Date(u.createdAt) : null,
+    referralCode: u.referralCode ?? null,
+    referredBy: u.referredBy ?? null,
   })));
   const [search, setSearch] = useState('');
   const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
@@ -54,6 +58,7 @@ export default function UsersTable({ initialUsers, plans }: { initialUsers: any[
           subscriptionStatus: editingUser.subscriptionStatus,
           subscriptionExpiresAt: editingUser.subscriptionExpiresAt?.toISOString() || null,
           status: editingUser.status,
+          referredBy: editingUser.referredBy,
         }),
       });
 
@@ -332,6 +337,40 @@ export default function UsersTable({ initialUsers, plans }: { initialUsers: any[
                     }}
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50"
                   />
+                </div>
+
+                <div className="col-span-2 border-t border-zinc-800 pt-4 mt-2">
+                  <p className="text-xs font-bold text-zinc-500 uppercase tracking-wider mb-3">🔗 Giới thiệu (Referral)</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">Mã giới thiệu</label>
+                  <div className="bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-zinc-500 opacity-70 font-mono text-sm">
+                    {editingUser.referralCode || '—'}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-400 mb-2">Được giới thiệu bởi (User ID)</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={editingUser.referredBy || ''}
+                      onChange={(e) => setEditingUser({...editingUser, referredBy: e.target.value.trim() || null})}
+                      placeholder="Nhập User ID của người giới thiệu"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono text-sm"
+                    />
+                    {editingUser.referredBy && (
+                      <button
+                        type="button"
+                        onClick={() => setEditingUser({...editingUser, referredBy: null})}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-red-400 transition"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-xs text-zinc-600 mt-1">Gán user A làm người giới thiệu user này → A sẽ nhận hoa hồng từ các giao dịch.</p>
                 </div>
               </div>
 

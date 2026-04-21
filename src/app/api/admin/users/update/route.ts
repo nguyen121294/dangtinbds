@@ -11,7 +11,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, trialCredits, trialExpiresAt, paidCredits, subscriptionId, subscriptionStatus, subscriptionExpiresAt, status } = await request.json();
+    const { id, trialCredits, trialExpiresAt, paidCredits, subscriptionId, subscriptionStatus, subscriptionExpiresAt, status, referredBy } = await request.json();
 
     await db.update(profiles)
       .set({
@@ -22,6 +22,7 @@ export async function POST(request: Request) {
         subscriptionStatus,
         subscriptionExpiresAt: subscriptionExpiresAt ? new Date(subscriptionExpiresAt) : null,
         status: status || 'active',
+        referredBy: referredBy !== undefined ? referredBy : undefined,
       })
       .where(eq(profiles.id, id));
 

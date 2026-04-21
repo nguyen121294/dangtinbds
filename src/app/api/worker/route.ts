@@ -1,11 +1,8 @@
 
-import { GoogleGenAI } from '@google/genai';
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySignatureAppRouter } from '@upstash/qstash/nextjs';
 import { Client } from '@upstash/qstash';
 import { google } from 'googleapis';
-
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+import Replicate from 'replicate';
 
 async function handler(req: NextRequest) {
   try {
@@ -44,21 +41,20 @@ Viết bài thật hấp dẫn, không vòng vo.`;
 
     let responseText = "";
 
+    const replicate = new Replicate({ auth: process.env.REPLICATE_API_TOKEN });
+    const fullPrompt = `${systemPrompt}\n\n---\n\n${userPrompt}`;
+
     try {
-      const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: userPrompt,
-        config: { systemInstruction: systemPrompt, temperature: 0.7 }
+      const output = await replicate.run("openai/gpt-5-nano", {
+        input: { prompt: fullPrompt, temperature: 0.7, max_tokens: 4096 }
       });
-      responseText = response.text || "";
+      responseText = Array.isArray(output) ? output.join('') : String(output);
     } catch (modelError: any) {
-      console.warn("Gemini 2.5 Flash failed. Falling back to 2.5 Flash Lite...");
-      const fallbackResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
-        contents: userPrompt,
-        config: { systemInstruction: systemPrompt, temperature: 0.7 }
+      console.warn("GPT-5 Nano failed. Falling back to GPT-4.1 Nano...");
+      const fallback = await replicate.run("openai/gpt-4.1-nano", {
+        input: { prompt: fullPrompt, temperature: 0.7, max_tokens: 4096 }
       });
-      responseText = fallbackResponse.text || "";
+      responseText = Array.isArray(fallback) ? fallback.join('') : String(fallback);
     }
 
     // --- 3. GOOGLE DRIVE/DOCS INTEGRATION ---
