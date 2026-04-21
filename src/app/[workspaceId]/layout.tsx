@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { db } from '@/db';
 import { profiles, workspaces, workspaceMembers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { XCircle, LogOut, Building2, Settings, Wallet, Clock, User as UserIcon, Menu, Wrench } from 'lucide-react';
+import { XCircle, AlertCircle, LogOut, Building2, Settings, Wallet, Clock, User as UserIcon, Menu, Wrench } from 'lucide-react';
 import { reactivateAccount } from '@/app/dashboard/account/actions';
 import WorkspaceSwitcher from '@/components/workspace-switcher';
 import { checkWorkspaceAccess, getUserPlanDetails } from '@/lib/workspace-utils';
@@ -51,7 +51,26 @@ export default async function DashboardLayout({
   if (dbUser?.status === 'inactive') {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-4">
-        {/* code bị ẩn đi để gọn */}
+        <div className="max-w-md w-full bg-zinc-900 border border-amber-500/20 rounded-2xl p-8 text-center shadow-2xl">
+          <AlertCircle className="w-16 h-16 text-amber-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Tài khoản đã bị vô hiệu hóa</h1>
+          <p className="text-zinc-400 mb-6">
+            Tài khoản của bạn đang ở trạng thái không hoạt động. Nhấn bên dưới để kích hoạt lại.
+          </p>
+          <form action={async () => { await reactivateAccount(); }}>
+            <button
+              type="submit"
+              className="w-full mb-3 bg-amber-500 hover:bg-amber-600 text-black font-bold py-3 rounded-xl transition"
+            >
+              Kích hoạt lại tài khoản
+            </button>
+          </form>
+          <form action="/auth/signout" method="post">
+            <button type="submit" className="w-full bg-zinc-800 hover:bg-zinc-700 text-white font-bold py-3 rounded-xl transition">
+              Đăng xuất
+            </button>
+          </form>
+        </div>
       </div>
     );
   }
@@ -84,7 +103,8 @@ export default async function DashboardLayout({
   if (!hasAccess && allowedWorkspaces.length > 0) {
     redirect(`/${allowedWorkspaces[0].id}/dashboard`);
   } else if (!hasAccess && allowedWorkspaces.length === 0) {
-    redirect('/auth/callback'); // fix
+    // No workspaces at all → go to dashboard hub to create one (never loop back to /auth/callback)
+    redirect('/dashboard');
   }
 
   // Kiểm tra cái workspace hiện tại có VIP không
@@ -99,6 +119,9 @@ export default async function DashboardLayout({
   }
 
   let paidRemaining = 0;
+  const hasPaidSubscription = !!(dbUser?.subscriptionExpiresAt);
+  const isPaidExpired = hasPaidSubscription && dbUser!.subscriptionExpiresAt !== null &&
+    new Date(dbUser!.subscriptionExpiresAt!).getTime() <= now;
   if (dbUser?.subscriptionExpiresAt) {
      paidRemaining = Math.max(0, Math.ceil((new Date(dbUser.subscriptionExpiresAt).getTime() - now) / (1000 * 60 * 60 * 24)));
   }
@@ -185,7 +208,9 @@ export default async function DashboardLayout({
            <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Gói:</span>
-                 <span className="text-sm font-bold text-gray-900">{planName}</span>
+                 <span className="text-sm font-bold text-gray-900">
+                   {planName}{isPaidExpired ? ' (Hết hạn)' : ''}
+                 </span>
               </div>
 
               <div className="h-6 w-px bg-gray-200" />
@@ -201,7 +226,8 @@ export default async function DashboardLayout({
                  </div>
               )}
 
-              {paidRemaining > 0 && (
+              {/* Paid: còn hạn → badge xanh lá, hết hạn → badge đỏ */}
+              {paidRemaining > 0 ? (
                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-sm">
                     <Wallet className="w-3.5 h-3.5 text-emerald-600" />
                     <span className="text-xs font-bold text-gray-900">{dbUser?.paidCredits || 0}</span>
@@ -210,15 +236,20 @@ export default async function DashboardLayout({
                     <Clock className="w-3 h-3 text-emerald-600" />
                     <span className="text-[10px] font-medium text-gray-600">{paidRemaining}d</span>
                  </div>
+              ) : isPaidExpired && (
+                 <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-1.5 rounded-sm">
+                    <Clock className="w-3 h-3 text-red-500" />
+                    <span className="text-xs font-bold text-red-600">Hết hạn</span>
+                 </div>
               )}
            </div>
 
            <Link href="/pricing" className={`text-xs font-bold px-4 py-2 rounded-sm transition-colors border ${
-              isFree
+              isFree || isPaidExpired
                 ? 'bg-[#E03C31] text-white hover:bg-[#c9362c] border-[#E03C31]'
                 : 'bg-white text-gray-700 hover:bg-gray-100 border-gray-300'
            }`}>
-              {isFree ? 'Nâng cấp' : 'Mua thêm'}
+              {isFree || isPaidExpired ? 'Nâng cấp' : 'Mua thêm'}
            </Link>
         </div>
         <div className="flex-1 w-full bg-[#F2F4F5]">

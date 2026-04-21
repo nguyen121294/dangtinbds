@@ -33,6 +33,9 @@ export default async function DashboardLayout({
   }
 
   let paidRemaining = 0;
+  const hasPaidSubscription = !!(dbUser?.subscriptionExpiresAt);
+  const isPaidExpired = hasPaidSubscription && dbUser!.subscriptionExpiresAt !== null &&
+    new Date(dbUser!.subscriptionExpiresAt!).getTime() <= now;
   if (dbUser?.subscriptionExpiresAt) {
      paidRemaining = Math.max(0, Math.ceil((new Date(dbUser.subscriptionExpiresAt).getTime() - now) / (1000 * 60 * 60 * 24)));
   }
@@ -104,46 +107,54 @@ export default async function DashboardLayout({
 
       {/* MAIN CONTENT */}
       <main className="flex-1 md:ml-64 flex flex-col min-h-screen pt-16 md:pt-0">
-        <div className="h-auto min-h-[56px] border-b border-gray-200 bg-white hidden md:flex items-center justify-between px-6 py-2 shrink-0">
-           <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2">
-                 <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Gói:</span>
-                 <span className="text-sm font-bold text-gray-900">{planName}</span>
-              </div>
+         <div className="h-auto min-h-[56px] border-b border-gray-200 bg-white hidden md:flex items-center justify-between px-6 py-2 shrink-0">
+            <div className="flex items-center gap-3">
+               <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Gói:</span>
+                  <span className="text-sm font-bold text-gray-900">
+                    {planName}{isPaidExpired ? ' (Hết hạn)' : ''}
+                  </span>
+               </div>
 
-              <div className="h-6 w-px bg-gray-200" />
+               <div className="h-6 w-px bg-gray-200" />
 
-              {((dbUser?.trialCredits || 0) > 0) && (trialRemaining > 0 || !dbUser?.trialExpiresAt) && (
-                 <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-sm">
-                    <Wallet className="w-3.5 h-3.5 text-[#E03C31]" />
-                    <span className="text-xs font-bold text-gray-900">{dbUser?.trialCredits || 0}</span>
-                    <span className="text-[10px] text-gray-500">Dùng thử</span>
-                    <span className="text-[10px] text-gray-400">·</span>
-                    <Clock className="w-3 h-3 text-orange-500" />
-                    <span className="text-[10px] font-medium text-gray-600">{dbUser?.trialExpiresAt ? `${trialRemaining}d` : 'Vô hạn'}</span>
-                 </div>
-              )}
+               {((dbUser?.trialCredits || 0) > 0) && (trialRemaining > 0 || !dbUser?.trialExpiresAt) && (
+                  <div className="flex items-center gap-2 bg-orange-50 border border-orange-100 px-3 py-1.5 rounded-sm">
+                     <Wallet className="w-3.5 h-3.5 text-[#E03C31]" />
+                     <span className="text-xs font-bold text-gray-900">{dbUser?.trialCredits || 0}</span>
+                     <span className="text-[10px] text-gray-500">Dùng thử</span>
+                     <span className="text-[10px] text-gray-400">·</span>
+                     <Clock className="w-3 h-3 text-orange-500" />
+                     <span className="text-[10px] font-medium text-gray-600">{dbUser?.trialExpiresAt ? `${trialRemaining}d` : 'Vô hạn'}</span>
+                  </div>
+               )}
 
-              {paidRemaining > 0 && (
-                 <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-sm">
-                    <Wallet className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-xs font-bold text-gray-900">{dbUser?.paidCredits || 0}</span>
-                    <span className="text-[10px] text-gray-500">PRO</span>
-                    <span className="text-[10px] text-gray-400">·</span>
-                    <Clock className="w-3 h-3 text-emerald-600" />
-                    <span className="text-[10px] font-medium text-gray-600">{paidRemaining}d</span>
-                 </div>
-              )}
-           </div>
+               {/* Paid: còn hạn → badge xanh lá, hết hạn → badge đỏ */}
+               {paidRemaining > 0 ? (
+                  <div className="flex items-center gap-2 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-sm">
+                     <Wallet className="w-3.5 h-3.5 text-emerald-600" />
+                     <span className="text-xs font-bold text-gray-900">{dbUser?.paidCredits || 0}</span>
+                     <span className="text-[10px] text-gray-500">PRO</span>
+                     <span className="text-[10px] text-gray-400">·</span>
+                     <Clock className="w-3 h-3 text-emerald-600" />
+                     <span className="text-[10px] font-medium text-gray-600">{paidRemaining}d</span>
+                  </div>
+               ) : isPaidExpired && (
+                  <div className="flex items-center gap-2 bg-red-50 border border-red-200 px-3 py-1.5 rounded-sm">
+                     <Clock className="w-3 h-3 text-red-500" />
+                     <span className="text-xs font-bold text-red-600">Hết hạn</span>
+                  </div>
+               )}
+            </div>
 
-           <Link href="/pricing" className={`text-xs font-bold px-4 py-2 rounded-sm transition-colors border ${
-              isFree
-                ? 'bg-[#E03C31] text-white hover:bg-[#c9362c] border-[#E03C31]'
-                : 'bg-white text-gray-700 hover:bg-gray-100 border-gray-300'
-           }`}>
-              {isFree ? 'Nâng cấp' : 'Mua thêm'}
-           </Link>
-        </div>
+            <Link href="/pricing" className={`text-xs font-bold px-4 py-2 rounded-sm transition-colors border ${
+               isFree || isPaidExpired
+                 ? 'bg-[#E03C31] text-white hover:bg-[#c9362c] border-[#E03C31]'
+                 : 'bg-white text-gray-700 hover:bg-gray-100 border-gray-300'
+            }`}>
+               {isFree || isPaidExpired ? 'Nâng cấp' : 'Mua thêm'}
+            </Link>
+         </div>
         <div className="flex-1 w-full bg-[#F2F4F5]">
           {children}
         </div>

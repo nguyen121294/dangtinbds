@@ -1,6 +1,6 @@
 import { db } from '@/db';
 import { workspaces, workspaceMembers, profiles, plans } from '@/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 
 const MAX_INVITES_PER_VIP_OWNER = 5; // Có thể chuyển thành config env sau
 
@@ -65,17 +65,18 @@ export async function checkInviteQuota(ownerId: string): Promise<{ canInvite: bo
 
   const workspaceIds = ownerWorkspaces.map(w => w.id);
 
-  // Tạm tính Drizzle logic: Rút danh sách userId duy nhất đang tồn tại trong các workspace đó
-  const allMembers = await db.select()
-    .from(workspaceMembers);
-    
-  // Filter memory
-  const uniqueMemberIds = new Set<string>();
-  allMembers.forEach(m => {
-    if (workspaceIds.includes(m.workspaceId) && m.userId !== ownerId) {
-      uniqueMemberIds.add(m.userId);
-    }
-  });
+  // ✅ Fix BUG-02: Query với WHERE clause thay vì fetch toàn bộ bảng
+  const filteredMembers = await db
+    .select({ userId: workspaceMembers.userId })
+    .from(workspaceMembers)
+    .where(inArray(workspaceMembers.workspaceId, workspaceIds));
+
+  // Đếm unique members khác owner
+  const uniqueMemberIds = new Set<string>(
+    filteredMembers
+      .filter(m => m.userId !== ownerId)
+      .map(m => m.userId)
+  );
 
   const used = uniqueMemberIds.size;
   return { 
@@ -327,14 +328,109 @@ export async function deductWorkspaceCredit(workspaceId: string, userId: string,
   if (!ws || ws.length === 0) return { success: false, error: 'Tổ chức không hợp lệ.' };
   const ownerId = ws[0].ownerId;
 
-  // 4. Lấy Ví của Owner
-  const ownerProfile = await db.select().from(profiles).where(eq(profiles.id, ownerId)).limit(1);
+  try {
+    // ✅ Fix BUG-06: Database transaction với SELECT FOR UPDATE
+    // Khóa row owner trong suốt transaction → ngăn race condition khi nhiều request đồng thời trừ tiền
+    return await db.transaction(async (tx) => {
+      // Lock the owner row — prevents concurrent deductions from reading same stale balance
+      const ownerProfile = await tx.select()
+        .from(profiles)
+        .where(eq(profiles.id, ownerId))
+        .for('update')
+        .limit(1);
+
+      if (!ownerProfile || ownerProfile.length === 0) {
+        return { success: false, error: 'Tài khoản chủ sở hữu không hợp lệ.' };
+      }
+
+      const owner = ownerProfile[0];
+      const now = new Date();
+
+      // Xác định ví dư hợp lệ (re-read inside transaction for accuracy)
+      const isTrialExpired = owner.trialExpiresAt ? new Date(owner.trialExpiresAt) <= now : false;
+      const validTrial = !isTrialExpired ? (owner.trialCredits || 0) : 0;
+
+      const isPaidExpired = owner.subscriptionExpiresAt ? new Date(owner.subscriptionExpiresAt) <= now : false;
+      const validPaid = !isPaidExpired ? (owner.paidCredits || 0) : 0;
+
+      if (validTrial + validPaid < amount) {
+        return { success: false, error: 'Tài khoản của Tổ chức chủ quản đã hết hạn/hết credit. Vui lòng liên hệ Admin.' };
+      }
+
+      // Thực hiện trừ tiền tuần tự (ưu tiên Trial trước, thiếu bao nhiêu trừ vào Paid)
+      let remainingAmount = amount;
+      let newTrialCredits = owner.trialCredits || 0;
+      let newPaidCredits = owner.paidCredits || 0;
+
+      if (validTrial > 0) {
+        const deductFromTrial = Math.min(validTrial, remainingAmount);
+        newTrialCredits -= deductFromTrial;
+        remainingAmount -= deductFromTrial;
+      }
+
+      if (remainingAmount > 0 && validPaid > 0) {
+        const deductFromPaid = Math.min(validPaid, remainingAmount);
+        newPaidCredits -= deductFromPaid;
+      }
+
+      // Atomic write — executed within the locked transaction
+      await tx.update(profiles)
+        .set({ trialCredits: newTrialCredits, paidCredits: newPaidCredits })
+        .where(eq(profiles.id, ownerId));
+
+      // Nếu không phải là owner thì cộng số "used" lên
+      if (role !== 'owner') {
+        await tx.update(workspaceMembers)
+          .set({ creditsUsed: sql`${workspaceMembers.creditsUsed} + ${amount}` })
+          .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)));
+      }
+
+      return { success: true };
+    });
+  } catch (error) {
+    console.error('Lỗi khi trừ credit:', error);
+    return { success: false, error: 'Đã xảy ra lỗi khi thanh toán credit.' };
+  }
+}
+
+/**
+ * Kiểm tra xem User có đủ credit để thực hiện thao tác hay không.
+ * Read-only — KHÔNG trừ tiền. Dùng làm pre-flight validation.
+ */
+export async function checkCreditBalance(workspaceId: string, userId: string, amount: number = 1): Promise<{ success: boolean; error?: string }> {
+  // 1. Kiểm tra tư cách thành viên và hạn mức
+  const memberRecord = await db.select()
+    .from(workspaceMembers)
+    .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)))
+    .limit(1);
+
+  if (!memberRecord || memberRecord.length === 0) {
+    return { success: false, error: 'Bạn không phải là thành viên của tổ chức này.' };
+  }
+
+  const { role, creditLimit = 0, creditsUsed = 0 } = memberRecord[0];
+
+  // 2. Kiểm tra hạn mức nếu không phải owner
+  if (role !== 'owner') {
+    if ((creditsUsed ?? 0) + amount > (creditLimit ?? 0)) {
+      return { success: false, error: `Bạn đã đạt Hạn mức tín dụng được chủ tổ chức cấp phép. Vui lòng liên hệ Admin của Tổ chức để mở thêm.` };
+    }
+  }
+
+  // 3. Kiểm tra ví Owner
+  const ws = await db.select({ ownerId: workspaces.ownerId })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+
+  if (!ws || ws.length === 0) return { success: false, error: 'Tổ chức không hợp lệ.' };
+
+  const ownerProfile = await db.select().from(profiles).where(eq(profiles.id, ws[0].ownerId)).limit(1);
   if (!ownerProfile || ownerProfile.length === 0) return { success: false, error: 'Tài khoản chủ sở hữu không hợp lệ.' };
 
   const owner = ownerProfile[0];
   const now = new Date();
 
-  // Xác định ví dư hợp lệ
   const isTrialExpired = owner.trialExpiresAt ? new Date(owner.trialExpiresAt) <= now : false;
   const validTrial = !isTrialExpired ? (owner.trialCredits || 0) : 0;
 
@@ -345,39 +441,5 @@ export async function deductWorkspaceCredit(workspaceId: string, userId: string,
     return { success: false, error: 'Tài khoản của Tổ chức chủ quản đã hết hạn/hết credit. Vui lòng liên hệ Admin.' };
   }
 
-  // Thực hiện trừ tiền tuần tự (ưu tiên Trial trước, thiếu bao nhiêu trừ vào Paid)
-  let remainingAmount = amount;
-  let newTrialCredits = owner.trialCredits || 0;
-  let newPaidCredits = owner.paidCredits || 0;
-
-  if (validTrial > 0) {
-    const deductFromTrial = Math.min(validTrial, remainingAmount);
-    newTrialCredits -= deductFromTrial;
-    remainingAmount -= deductFromTrial;
-  }
-
-  if (remainingAmount > 0 && validPaid > 0) {
-    const deductFromPaid = Math.min(validPaid, remainingAmount);
-    newPaidCredits -= deductFromPaid;
-    remainingAmount -= deductFromPaid;
-  }
-
-  try {
-    // Ghi nhận trừ tiền ở ví Owner
-    await db.update(profiles)
-      .set({ trialCredits: newTrialCredits, paidCredits: newPaidCredits })
-      .where(eq(profiles.id, ownerId));
-
-    // Nếu không phải là owner thì cộng số "used" lên
-    if (role !== 'owner') {
-      await db.update(workspaceMembers)
-        .set({ creditsUsed: sql`${workspaceMembers.creditsUsed} + ${amount}` })
-        .where(and(eq(workspaceMembers.workspaceId, workspaceId), eq(workspaceMembers.userId, userId)));
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error('Lỗi khi trừ credit:', error);
-    return { success: false, error: 'Đã xảy ra lỗi khi thanh toán credit.' };
-  }
+  return { success: true };
 }

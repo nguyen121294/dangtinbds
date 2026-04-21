@@ -72,9 +72,9 @@ Viết liên tục, KHÔNG giải thích gì thêm.`;
       });
       responseText = response.text || "";
     } catch (modelError: any) {
-      console.warn("Gemini 2.5 Flash failed. Falling back to 2.5 Flash Lite...");
+      console.warn("Gemini 2.5 Flash failed. Falling back to gemini-2.0-flash...");
       const fallbackResponse = await ai.models.generateContent({
-        model: 'gemini-2.5-flash-lite',
+        model: 'gemini-2.0-flash',
         contents: userPrompt,
         config: { systemInstruction: systemPrompt, temperature: 0.7 }
       });
@@ -148,32 +148,16 @@ Viết liên tục, KHÔNG giải thích gì thêm.`;
       });
       const anhGocFolderId = anhGocRes.data.id;
 
-      let maskFolderId = undefined;
-      if (imageProcessingEngine === 'vertex_ai' || imageProcessingEngine === 'vision_lama' || imageProcessingEngine === 'vision_flux') {
-        const maskRes = await drive.files.create({
-          requestBody: {
-            name: 'Anh Mask',
-            mimeType: 'application/vnd.google-apps.folder',
-            parents: [subFolderId]
-          },
-          fields: 'id'
-        });
-        maskFolderId = maskRes.data.id;
-      }
-
       const qstashClient = new Client({ token: process.env.QSTASH_TOKEN || "" });
       const protocol = req.headers.get("x-forwarded-proto") || "http";
       const host = req.headers.get("host") || "localhost:3000";
-      let workerImageUrl = `${protocol}://${host}/api/worker-image`;
-      if (imageProcessingEngine === 'vertex_ai') {
-        workerImageUrl = `${protocol}://${host}/api/worker-vertex-image`;
-      } else if (imageProcessingEngine === 'vision_lama') {
-        workerImageUrl = `${protocol}://${host}/api/worker-vision-lama`;
-      } else if (imageProcessingEngine === 'vision_flux') {
-        workerImageUrl = `${protocol}://${host}/api/worker-vision-flux`;
-      } else if (imageProcessingEngine === 'replicate_banana') {
+
+      // Only 2 supported engines: replicate_banana and openai_gpt
+      let workerImageUrl: string;
+      if (imageProcessingEngine === 'replicate_banana') {
         workerImageUrl = `${protocol}://${host}/api/worker-replicate-banana`;
-      } else if (imageProcessingEngine === 'openai_gpt') {
+      } else {
+        // Default: openai_gpt
         workerImageUrl = `${protocol}://${host}/api/worker-openai-gpt`;
       }
 
@@ -202,7 +186,6 @@ Viết liên tục, KHÔNG giải thích gì thêm.`;
             body: {
               imageUrl,
               subFolderId,
-              maskFolderId,
               access_token,
               objectsToRemove: objectsToRemoveStr,
               enhanceImage

@@ -20,26 +20,28 @@ export default async function DashboardHub() {
     .from(workspaceMembers)
     .where(eq(workspaceMembers.userId, user.id));
 
-  const workspaceListObj = await db.select({
-       id: workspaces.id,
-       name: workspaces.name,
-       ownerId: workspaces.ownerId
-  }).from(workspaces);
+  const memberWorkspaceIds = userMemberships.map(m => m.workspaceId);
 
-  const allowedWorkspaces = workspaceListObj
-    .filter(ws => userMemberships.some(m => m.workspaceId === ws.id))
-    .map(ws => {
-       const membership = userMemberships.find(m => m.workspaceId === ws.id);
-       const isOwner = ws.ownerId === user.id;
-       return {
-         id: ws.id,
-         name: ws.name,
-         role: membership?.role || 'member',
-         creditLimit: membership?.creditLimit || 0,
-         creditsUsed: membership?.creditsUsed || 0,
-         ownerId: ws.ownerId
-       };
-    });
+  // ✅ Fix BUG-08: Query chỉ lấy workspaces mà user là thành viên, không full-table-scan
+  const workspaceListObj = memberWorkspaceIds.length > 0
+    ? await db.select({
+           id: workspaces.id,
+           name: workspaces.name,
+           ownerId: workspaces.ownerId
+      }).from(workspaces).where(inArray(workspaces.id, memberWorkspaceIds))
+    : [];
+
+  const allowedWorkspaces = workspaceListObj.map(ws => {
+     const membership = userMemberships.find(m => m.workspaceId === ws.id);
+     return {
+       id: ws.id,
+       name: ws.name,
+       role: membership?.role || 'member',
+       creditLimit: membership?.creditLimit || 0,
+       creditsUsed: membership?.creditsUsed || 0,
+       ownerId: ws.ownerId
+     };
+  });
 
   const ownerIds = Array.from(new Set(allowedWorkspaces.map(ws => ws.ownerId)));
   const ownerProfiles = ownerIds.length > 0 

@@ -50,10 +50,11 @@ export async function POST(req: NextRequest) {
 
     await db.update(profiles)
       .set({
-         defaultDriveFolderId: defaultDriveFolderId !== undefined ? defaultDriveFolderId : undefined,
-         defaultDriveFolderName: defaultDriveFolderName !== undefined ? defaultDriveFolderName : undefined,
-         signatures: signatures !== undefined ? signatures : undefined,
-         customPromptV2: customPromptV2 !== undefined ? customPromptV2 : undefined,
+         // Chỉ cập nhật field nào request body gửi lên (undefined = bỏ qua)
+         ...(defaultDriveFolderId !== undefined && { defaultDriveFolderId }),
+         ...(defaultDriveFolderName !== undefined && { defaultDriveFolderName }),
+         ...(signatures !== undefined && { signatures }),
+         ...(customPromptV2 !== undefined && { customPromptV2 }),
       })
       .where(eq(profiles.id, userId));
 
