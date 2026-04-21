@@ -7,14 +7,9 @@ import imageCompression from 'browser-image-compression';
 import { createClient } from '@/lib/supabase/client';
 import useDrivePicker from 'react-google-drive-picker';
 
-const DEFAULT_PROMPT = `Bạn là một chuyên gia môi giới bất động sản cực kỳ xuất sắc tại Việt Nam. 
-Nhiệm vụ của bạn là viết một bài đăng Facebook (hoặc Zalo) rao bán/cho thuê bất động sản để chốt sale, độ dài 1/2 trang A4.
-Ngôn từ thôi miên, cuốn hút, chuẩn SEO. Bạn phải tuân thủ nghiêm ngặt các nguyên tắc sau:
-1. Luôn sử dụng emoji hợp lý, vừa phải để tạo điểm nhấn.
-2. Bố cục bài đăng phải rõ ràng (Tiêu đề, Thân bài, Kêu gọi hành động).
-3. Nhấn mạnh vào LỢI ÍCH (không gian sống, tiềm năng) chứ không chỉ liệt kê TÍNH NĂNG.
-4. Trình bày tự nhiên, tạo cảm giác thân tín chứ không giống văn máy.
-5. TUYỆT ĐỐI KHÔNG sử dụng ký hiệu markdown như **, ##, ~~. Chỉ dùng text thuần và emoji.`;
+// Không expose prompt mặc định ở client — chỉ label cho user biết
+const PROMPT_MODE_DEFAULT = 'default';
+const PROMPT_MODE_CUSTOM = 'custom';
 
 const styleOptions = [
   "Chuyên nghiệp ngắn gọn",
@@ -26,8 +21,8 @@ const styleOptions = [
 export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }) {
   const [rawInfo, setRawInfo] = useState("");
   const [style, setStyle] = useState(styleOptions[0]);
-  const [customPrompt, setCustomPrompt] = useState(DEFAULT_PROMPT);
-  const [showPromptEditor, setShowPromptEditor] = useState(false);
+  const [promptMode, setPromptMode] = useState<'default' | 'custom'>(PROMPT_MODE_DEFAULT);
+  const [customPrompt, setCustomPrompt] = useState("");
   const [signature, setSignature] = useState("");
   const [availableSignatures, setAvailableSignatures] = useState<string[]>([]);
 
@@ -96,6 +91,7 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
               }
               if (data.customPromptV2 && data.customPromptV2.trim().length > 0) {
                 setCustomPrompt(data.customPromptV2);
+                setPromptMode(PROMPT_MODE_CUSTOM);
               }
             }
           })
@@ -236,7 +232,7 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
       const payload = {
          rawInfo,
          style,
-         customPrompt,
+         customPrompt: promptMode === PROMPT_MODE_CUSTOM ? customPrompt : null,
          signature,
          access_token: accessToken,
          images: uploadedDriveIds,
@@ -320,49 +316,69 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
           </div>
         </div>
 
-        {/* Prompt tùy chỉnh */}
+        {/* Chế độ Prompt */}
         <div>
-          <button 
-            type="button" 
-            onClick={() => setShowPromptEditor(!showPromptEditor)}
-            className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-blue-600 transition"
-          >
-            {showPromptEditor ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            Prompt AI tùy chỉnh (nâng cao)
-          </button>
-          {showPromptEditor && (
+          <label className="block text-sm font-semibold text-gray-700 mb-2">Chế độ Prompt AI</label>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition text-sm ${
+              promptMode === PROMPT_MODE_DEFAULT
+                ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-sm'
+                : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+            }`}>
+              <input type="radio" name="promptMode" value={PROMPT_MODE_DEFAULT}
+                checked={promptMode === PROMPT_MODE_DEFAULT}
+                onChange={() => setPromptMode(PROMPT_MODE_DEFAULT)}
+                className="text-blue-600 focus:ring-blue-500 cursor-pointer" />
+              <div>
+                <span className="font-medium">Prompt chuẩn BĐS</span>
+                <span className="block text-xs text-gray-500">Tối ưu SEO, chuẩn Facebook/Zalo, có hashtag viral</span>
+              </div>
+            </label>
+            <label className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition text-sm ${
+              promptMode === PROMPT_MODE_CUSTOM
+                ? 'bg-blue-50 border-blue-500 text-blue-900 shadow-sm'
+                : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+            }`}>
+              <input type="radio" name="promptMode" value={PROMPT_MODE_CUSTOM}
+                checked={promptMode === PROMPT_MODE_CUSTOM}
+                onChange={() => setPromptMode(PROMPT_MODE_CUSTOM)}
+                className="text-blue-600 focus:ring-blue-500 cursor-pointer" />
+              <div>
+                <span className="font-medium">Prompt tự viết</span>
+                <span className="block text-xs text-gray-500">Tùy chỉnh hoàn toàn theo ý bạn</span>
+              </div>
+            </label>
+          </div>
+
+          {promptMode === PROMPT_MODE_CUSTOM && (
             <div className="mt-3 space-y-2">
               <textarea
                 rows={6}
+                placeholder="Nhập prompt tùy chỉnh của bạn. AI sẽ dùng prompt này thay vì prompt mặc định..."
                 className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition outline-none resize-none text-sm leading-relaxed"
                 value={customPrompt}
                 onChange={e => setCustomPrompt(e.target.value)}
               />
-              <div className="flex gap-2">
-                <button 
-                  type="button" 
-                  onClick={() => setCustomPrompt(DEFAULT_PROMPT)}
-                  className="text-xs text-gray-500 hover:text-blue-600 underline transition"
-                >
-                  Khôi phục mặc định
-                </button>
-                <button 
-                  type="button" 
-                  onClick={async () => {
-                    try {
-                      await fetch('/api/tool-settings', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ customPromptV2: customPrompt })
-                      });
-                      alert('Đã lưu prompt vào cài đặt!');
-                    } catch { alert('Lỗi lưu.'); }
-                  }}
-                  className="text-xs text-blue-600 hover:text-blue-800 underline font-medium transition"
-                >
-                  Lưu vào Cài đặt
-                </button>
-              </div>
+              <button 
+                type="button" 
+                onClick={async () => {
+                  try {
+                    await fetch('/api/tool-settings', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ customPromptV2: customPrompt })
+                    });
+                    setToastType('success');
+                    setToastMessage('Đã lưu prompt tùy chỉnh vào cài đặt!');
+                  } catch {
+                    setToastType('error');
+                    setToastMessage('Lỗi lưu prompt.');
+                  }
+                }}
+                className="text-xs text-blue-600 hover:text-blue-800 underline font-medium transition"
+              >
+                💾 Lưu vào Cài đặt
+              </button>
             </div>
           )}
         </div>

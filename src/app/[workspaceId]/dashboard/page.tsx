@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { workspaces } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { ArrowLeft, Bot, FileText, ImageIcon, ChevronRight, Crown, Sparkles } from 'lucide-react';
+import { ArrowLeft, Bot, FileText, ImageIcon, ChevronRight, Crown, Sparkles, History } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function DashboardPage({
@@ -90,6 +90,22 @@ export default async function DashboardPage({
                 </div>
                 <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-orange-600 transition-colors">
                    <span>Truy cập ngay</span>
+                   <ChevronRight className="w-4 h-4" />
+                </div>
+             </Link>
+
+
+             {/* Thẻ Lịch sử sử dụng */}
+             <Link href={`/${workspaceId}/usage-history`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-indigo-500/50 hover:shadow-md transition-all h-full">
+                <div className="p-5 flex-1">
+                   <div className="w-12 h-12 bg-indigo-50 text-indigo-600 flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
+                      <History className="w-6 h-6" />
+                   </div>
+                   <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-indigo-600 transition-colors">Lịch sử sử dụng</h3>
+                   <p className="text-sm text-gray-500 line-clamp-3">Theo dõi credit, trạng thái xử lý và lịch sử sử dụng các công cụ AI.</p>
+                </div>
+                <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-indigo-600 transition-colors">
+                   <span>Xem lịch sử</span>
                    <ChevronRight className="w-4 h-4" />
                 </div>
              </Link>
