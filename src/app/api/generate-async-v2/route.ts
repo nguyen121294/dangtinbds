@@ -13,7 +13,8 @@ const qstashClient = new Client({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { access_token, workspaceId, imageProcessingEngine, images, signature } = body;
+    const { access_token, workspaceId, imageProcessingEngine, images, imagesToEdit, signature } = body;
+    const editList = imagesToEdit || images || [];
 
     if (!access_token || !workspaceId) {
       return NextResponse.json({ success: false, error: "Thiếu quyền truy cập Google Drive hoặc ID Tổ chức!" }, { status: 400 });
@@ -35,7 +36,7 @@ export async function POST(req: NextRequest) {
     const { getCreditPricing } = await import('@/lib/app-settings');
     const pricing = await getCreditPricing();
     const isBanana = imageProcessingEngine === 'replicate_banana';
-    const imageCount = images && Array.isArray(images) ? images.length : 0;
+    const imageCount = editList.length;
     const requiredCredits = pricing.creditBaseV2V3 + (imageCount * (isBanana ? pricing.creditImageBanana : pricing.creditImageStandard));
 
     // 3. Check credit balance (pre-flight only — NO deduction here)

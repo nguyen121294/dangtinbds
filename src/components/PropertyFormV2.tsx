@@ -27,7 +27,7 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
   const [availableSignatures, setAvailableSignatures] = useState<string[]>([]);
 
   // Image state (reuse from V1)
-  const [images, setImages] = useState<{file: File, preview: string, base64: string}[]>([]);
+  const [images, setImages] = useState<{file: File, preview: string, base64: string, needsEditing: boolean}[]>([]);
   const [objectsToRemove, setObjectsToRemove] = useState<string[]>(["Xe máy, xe hơi", "Xe hơi che phủ bởi vải/bạt", "Xe tải", "Thùng rác", "Biển số nhà", "Mọi chướng ngại vật"]);
   const [customObjectsToRemove, setCustomObjectsToRemove] = useState("");
   const [enhanceImage, setEnhanceImage] = useState(true);
@@ -46,7 +46,8 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
 
   const [pricing, setPricing] = useState({ creditBaseV1: 1, creditBaseV2V3: 2, creditImageStandard: 10, creditImageBanana: 40 });
   const imageMultiplier = imageProcessingEngine === 'replicate_banana' ? pricing.creditImageBanana : pricing.creditImageStandard;
-  const totalCost = pricing.creditBaseV2V3 + (images.length * imageMultiplier);
+  const editedImagesCount = images.filter(img => img.needsEditing).length;
+  const totalCost = pricing.creditBaseV2V3 + (editedImagesCount * imageMultiplier);
 
   const handleOpenPicker = () => {
     openPicker({
@@ -162,7 +163,8 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
         return {
           file: compressedFile,
           preview: URL.createObjectURL(compressedFile),
-          base64: base64
+          base64: base64,
+          needsEditing: true
         };
       } catch (error) {
         console.error(error);
@@ -232,6 +234,16 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
         uploadedDriveIds = uploadData.driveFileIds;
       }
 
+      const imagesToEdit: string[] = [];
+      const imagesToKeep: string[] = [];
+      images.forEach((img, idx) => {
+        if (img.needsEditing) {
+          imagesToEdit.push(uploadedDriveIds[idx]);
+        } else {
+          imagesToKeep.push(uploadedDriveIds[idx]);
+        }
+      });
+
       const objectsStr = [...objectsToRemove, customObjectsToRemove].filter(Boolean).join(", ");
       
       const payload = {
@@ -240,7 +252,8 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
          customPrompt: promptMode === PROMPT_MODE_CUSTOM ? customPrompt : null,
          signature,
          access_token: accessToken,
-         images: uploadedDriveIds,
+         imagesToEdit,
+         imagesToKeep,
          objectsToRemoveStr: objectsStr,
          enhanceImage,
          imageProcessingEngine,
@@ -423,15 +436,32 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
         {images.length > 0 && (
           <div className="flex flex-wrap gap-4 mt-4">
             {images.map((img, index) => (
-              <div key={index} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 shadow-sm">
-                <img src={img.preview} alt="preview" className="w-full h-full object-cover" />
-                <button 
-                  type="button" 
-                  onClick={() => removeImage(index)} 
-                  className="absolute p-1 bg-red-500 text-white rounded-full top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <X size={12} />
-                </button>
+              <div key={index} className="relative w-24 h-32 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 shadow-sm flex flex-col">
+                <div className="relative w-full h-20 bg-gray-200">
+                  <img src={img.preview} alt="preview" className="w-full h-full object-cover" />
+                  <button 
+                    type="button" 
+                    onClick={() => removeImage(index)} 
+                    className="absolute p-1.5 bg-red-500 text-white rounded-full top-1 right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10"
+                  >
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="flex-1 bg-white border-t border-gray-200">
+                  <label className="flex items-center justify-center w-full h-full cursor-pointer p-1">
+                    <input 
+                      type="checkbox" 
+                      checked={img.needsEditing} 
+                      onChange={(e) => {
+                        const newImages = [...images];
+                        newImages[index].needsEditing = e.target.checked;
+                        setImages(newImages);
+                      }}
+                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mr-1.5"
+                    />
+                    <span className="text-xs font-medium text-gray-700 leading-none select-none">Cần AI</span>
+                  </label>
+                </div>
               </div>
             ))}
           </div>
@@ -513,7 +543,7 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
                 <h4 className="font-bold text-gray-800">Dự kiến chi phí (Credits)</h4>
                 <p className="text-sm text-gray-500 mt-0.5">
                      {images.length > 0 
-                       ? `2 Bài đăng (dài+ngắn) + ${images.length} ảnh × ${imageMultiplier} Credits` 
+                       ? `2 Bài đăng (dài+ngắn) + ${editedImagesCount} ảnh AI × ${imageMultiplier} Credits` 
                        : `Xử lý văn bản (2 bài đăng, không ảnh): ${pricing.creditBaseV2V3} Credits`}
                 </p>
             </div>

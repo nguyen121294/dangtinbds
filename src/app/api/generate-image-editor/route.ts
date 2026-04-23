@@ -14,13 +14,16 @@ const qstashClient = new Client({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { access_token, workspaceId, imageProcessingEngine, images, objectsToRemoveStr, enhanceImage, driveFolderId } = body;
+    const { access_token, workspaceId, imageProcessingEngine, images, imagesToEdit, imagesToKeep, objectsToRemoveStr, enhanceImage, driveFolderId } = body;
+
+    const editList = imagesToEdit || images || [];
+    const keepList = imagesToKeep || [];
 
     if (!access_token || !workspaceId) {
       return NextResponse.json({ success: false, error: "Thiếu quyền truy cập Google Drive hoặc ID Tổ chức!" }, { status: 400 });
     }
 
-    if (!images || !Array.isArray(images) || images.length === 0) {
+    if (editList.length === 0 && keepList.length === 0) {
       return NextResponse.json({ success: false, error: "Vui lòng chọn ít nhất 1 ảnh." }, { status: 400 });
     }
 
@@ -35,27 +38,29 @@ export async function POST(req: NextRequest) {
     const { getCreditPricing } = await import('@/lib/app-settings');
     const pricing = await getCreditPricing();
     const isBanana = imageProcessingEngine === 'replicate_banana';
-    const requiredCredits = images.length * (isBanana ? pricing.creditImageBanana : pricing.creditImageStandard);
+    const requiredCredits = editList.length * (isBanana ? pricing.creditImageBanana : pricing.creditImageStandard);
 
-    const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
-    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
-    if (!deductRes.success) {
-      return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
+    if (requiredCredits > 0) {
+      const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
+      const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
+      if (!deductRes.success) {
+        return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
+      }
+
+      // Usage log for image processing
+      const jobId = randomUUID();
+      await db.insert(usageLogs).values({
+        id: randomUUID(),
+        jobId,
+        workspaceId,
+        userId: user.id,
+        tool: `image_editor_${imageProcessingEngine || 'default'}`,
+        creditsCharged: requiredCredits,
+        status: 'success',
+        modelUsed: imageProcessingEngine || 'openai_gpt',
+        inputSummary: `${editList.length} ảnh chỉnh sửa | Engine: ${imageProcessingEngine} | Objects: ${objectsToRemoveStr || 'mặc định'}`.substring(0, 200),
+      });
     }
-
-    // Usage log for image processing
-    const jobId = randomUUID();
-    await db.insert(usageLogs).values({
-      id: randomUUID(),
-      jobId,
-      workspaceId,
-      userId: user.id,
-      tool: `image_editor_${imageProcessingEngine || 'default'}`,
-      creditsCharged: requiredCredits,
-      status: 'success',
-      modelUsed: imageProcessingEngine || 'openai_gpt',
-      inputSummary: `${images.length} ảnh | Engine: ${imageProcessingEngine} | Objects: ${objectsToRemoveStr || 'mặc định'}`.substring(0, 200),
-    });
 
     // Create Drive folder + fan-out via worker-image-editor
     const oAuth2Client = new google.auth.OAuth2();
@@ -74,19 +79,30 @@ export async function POST(req: NextRequest) {
     if (!subFolderId) throw new Error("Không thể tạo thư mục trên Drive");
 
     // Create sub-folders
-    const anhGocRes = await drive.files.create({
-      requestBody: { name: 'Anh Goc', mimeType: 'application/vnd.google-apps.folder', parents: [subFolderId] },
-      fields: 'id'
-    });
-    const anhGocFolderId = anhGocRes.data.id;
+    let anhGocFolderId: string | null = null;
+    let anhChinhSuaFolderId: string | null = null;
+    let anhKhongChinhSuaFolderId: string | null = null;
 
-    let maskFolderId = undefined;
-    if (['vertex_ai', 'vision_lama', 'vision_flux'].includes(imageProcessingEngine)) {
-      const maskRes = await drive.files.create({
-        requestBody: { name: 'Anh Mask', mimeType: 'application/vnd.google-apps.folder', parents: [subFolderId] },
+    if (editList.length > 0) {
+      const anhGocRes = await drive.files.create({
+        requestBody: { name: 'Ảnh gốc', mimeType: 'application/vnd.google-apps.folder', parents: [subFolderId] },
         fields: 'id'
       });
-      maskFolderId = maskRes.data.id;
+      anhGocFolderId = anhGocRes.data.id!;
+
+      const anhChinhSuaRes = await drive.files.create({
+        requestBody: { name: 'Ảnh chỉnh sửa', mimeType: 'application/vnd.google-apps.folder', parents: [subFolderId] },
+        fields: 'id'
+      });
+      anhChinhSuaFolderId = anhChinhSuaRes.data.id!;
+    }
+
+    if (keepList.length > 0) {
+      const anhKhongChinhSuaRes = await drive.files.create({
+        requestBody: { name: 'Ảnh không chỉnh sửa', mimeType: 'application/vnd.google-apps.folder', parents: [subFolderId] },
+        fields: 'id'
+      });
+      anhKhongChinhSuaFolderId = anhKhongChinhSuaRes.data.id!;
     }
 
     // Determine worker URL
@@ -94,55 +110,73 @@ export async function POST(req: NextRequest) {
     const protocol = req.headers.get('x-forwarded-proto') || 'https';
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || `${protocol}://${host}`;
 
-    let workerImageUrl = `${baseUrl}/api/worker-image`;
-    if (imageProcessingEngine === 'vertex_ai') workerImageUrl = `${baseUrl}/api/worker-vertex-image`;
-    else if (imageProcessingEngine === 'vision_lama') workerImageUrl = `${baseUrl}/api/worker-vision-lama`;
-    else if (imageProcessingEngine === 'vision_flux') workerImageUrl = `${baseUrl}/api/worker-vision-flux`;
-    else if (imageProcessingEngine === 'replicate_banana') workerImageUrl = `${baseUrl}/api/worker-replicate-banana`;
-    else if (imageProcessingEngine === 'openai_gpt') workerImageUrl = `${baseUrl}/api/worker-openai-gpt`;
+    const workerImageUrl = imageProcessingEngine === 'replicate_banana'
+      ? `${baseUrl}/api/worker-replicate-banana`
+      : `${baseUrl}/api/worker-openai-gpt`;
 
     // Fan-out each image
-    const publishPromises = images.map(async (fileId: string, index: number) => {
-      try {
-        const file = await drive.files.get({ fileId, fields: 'parents' });
-        const previousParents = file.data.parents?.join(',') || '';
+    if (editList.length > 0) {
+      const publishPromises = editList.map(async (fileId: string, index: number) => {
+        try {
+          const file = await drive.files.get({ fileId, fields: 'parents' });
+          const previousParents = file.data.parents?.join(',') || '';
 
-        await drive.permissions.create({
-          fileId,
-          requestBody: { role: 'reader', type: 'anyone' }
-        });
+          await drive.permissions.create({
+            fileId,
+            requestBody: { role: 'reader', type: 'anyone' }
+          });
 
-        await drive.files.update({
-          fileId,
-          addParents: anhGocFolderId!,
-          removeParents: previousParents,
-          fields: 'id'
-        });
+          await drive.files.update({
+            fileId,
+            addParents: anhGocFolderId!,
+            removeParents: previousParents,
+            fields: 'id'
+          });
 
-        const imageUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
-        const delayTime = index > 0 ? index * 25 : undefined;
+          const imageUrl = `https://drive.google.com/uc?id=${fileId}&export=download`;
+          const delayTime = index > 0 ? index * 25 : undefined;
 
-        return qstashClient.publishJSON({
-          url: workerImageUrl,
-          body: {
-            imageUrl,
-            subFolderId,
-            maskFolderId,
-            access_token,
-            objectsToRemove: objectsToRemoveStr,
-            enhanceImage
-          },
-          delay: delayTime
-        });
-      } catch (e: any) {
-        console.error(`[ImageEditor] Lỗi gom file ${fileId}:`, e.message);
-      }
-    });
+          return qstashClient.publishJSON({
+            url: workerImageUrl,
+            body: {
+              imageUrl,
+              subFolderId: anhChinhSuaFolderId,
+              access_token,
+              objectsToRemove: objectsToRemoveStr,
+              enhanceImage
+            },
+            delay: delayTime
+          });
+        } catch (e: any) {
+          console.error(`[ImageEditor] Lỗi gom file cần chỉnh sửa ${fileId}:`, e.message);
+        }
+      });
 
-    await Promise.allSettled(publishPromises);
-    console.log(`[ImageEditor] 🚀 Đã bắn ${images.length} message sang Image Worker.`);
+      await Promise.allSettled(publishPromises);
+      console.log(`[ImageEditor] 🚀 Đã bắn ${editList.length} message sang Image Worker.`);
+    }
 
-    return NextResponse.json({ success: true, message: `Đã gửi ${images.length} ảnh để xử lý.` });
+    if (keepList.length > 0) {
+      const keepPromises = keepList.map(async (fileId: string) => {
+        try {
+          const file = await drive.files.get({ fileId: fileId, fields: 'parents' });
+          const previousParents = file.data.parents?.join(',') || '';
+
+          await drive.files.update({
+            fileId: fileId,
+            addParents: anhKhongChinhSuaFolderId!,
+            removeParents: previousParents,
+            fields: 'id'
+          });
+        } catch (e: any) {
+          console.error(`[ImageEditor] Lỗi gom file không chỉnh sửa ${fileId}:`, e.message);
+        }
+      });
+      await Promise.allSettled(keepPromises);
+      console.log(`[ImageEditor] ✅ Đã di chuyển ${keepList.length} ảnh vào thư mục "Ảnh không chỉnh sửa".`);
+    }
+
+    return NextResponse.json({ success: true, message: `Đã xử lý: ${editList.length} ảnh cần AI, ${keepList.length} ảnh giữ nguyên.` });
   } catch (error: any) {
     console.error("Image Editor Error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

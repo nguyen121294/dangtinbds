@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import useDrivePicker from 'react-google-drive-picker';
 
 export default function ImageEditorForm({ workspaceId }: { workspaceId?: string }) {
-  const [images, setImages] = useState<{file: File, preview: string, base64: string}[]>([]);
+  const [images, setImages] = useState<{file: File, preview: string, base64: string, needsEditing: boolean}[]>([]);
   const [objectsToRemove, setObjectsToRemove] = useState<string[]>(["Xe máy, xe hơi", "Thùng rác", "Biển số nhà"]);
   const [customObjectsToRemove, setCustomObjectsToRemove] = useState("");
   const [enhanceImage, setEnhanceImage] = useState(true);
@@ -24,7 +24,8 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
 
   const [pricing, setPricing] = useState({ creditBaseV1: 1, creditBaseV2V3: 2, creditImageStandard: 10, creditImageBanana: 40 });
   const imageMultiplier = imageProcessingEngine === 'replicate_banana' ? pricing.creditImageBanana : pricing.creditImageStandard;
-  const totalCost = images.length * imageMultiplier;
+  const editedImagesCount = images.filter(img => img.needsEditing).length;
+  const totalCost = editedImagesCount * imageMultiplier;
 
   const handleOpenPicker = () => {
     openPicker({
@@ -101,7 +102,7 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
       try {
         const cf = await imageCompression(file, options);
         const b64 = await fileToBase64(cf);
-        return { file: cf, preview: URL.createObjectURL(cf), base64: b64 };
+        return { file: cf, preview: URL.createObjectURL(cf), base64: b64, needsEditing: true };
       } catch { return null; }
     }));
     setImages(prev => [...prev, ...compressed.filter((i): i is any => i !== null)]);
@@ -137,6 +138,16 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
       if (!uploadData.success) { alert("Lỗi upload ảnh: " + uploadData.error); setLoading(false); return; }
       uploadedDriveIds = uploadData.driveFileIds;
 
+      const imagesToEdit: string[] = [];
+      const imagesToKeep: string[] = [];
+      images.forEach((img, idx) => {
+        if (img.needsEditing) {
+          imagesToEdit.push(uploadedDriveIds[idx]);
+        } else {
+          imagesToKeep.push(uploadedDriveIds[idx]);
+        }
+      });
+
       const objectsStr = [...objectsToRemove, customObjectsToRemove].filter(Boolean).join(", ");
 
       const res = await fetch("/api/generate-image-editor", {
@@ -144,7 +155,8 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           access_token: accessToken,
-          images: uploadedDriveIds,
+          imagesToEdit,
+          imagesToKeep,
           objectsToRemoveStr: objectsStr,
           enhanceImage,
           imageProcessingEngine,
@@ -174,11 +186,28 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
         {images.length > 0 && (
           <div className="flex flex-wrap gap-4">
             {images.map((img, index) => (
-              <div key={index} className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 shadow-sm">
-                <img src={img.preview} alt="preview" className="w-full h-full object-cover" />
-                <button type="button" onClick={() => removeImage(index)} className="absolute p-1 bg-red-500 text-white rounded-full top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <X size={12} />
-                </button>
+              <div key={index} className="relative w-24 h-32 bg-gray-100 rounded-lg overflow-hidden group border border-gray-200 shadow-sm flex flex-col">
+                <div className="relative w-full h-20 bg-gray-200">
+                  <img src={img.preview} alt="preview" className="w-full h-full object-cover" />
+                  <button type="button" onClick={() => removeImage(index)} className="absolute p-1.5 bg-red-500 text-white rounded-full top-1 right-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity z-10">
+                    <X size={14} />
+                  </button>
+                </div>
+                <div className="flex-1 bg-white border-t border-gray-200">
+                  <label className="flex items-center justify-center w-full h-full cursor-pointer p-1">
+                    <input 
+                      type="checkbox" 
+                      checked={img.needsEditing} 
+                      onChange={(e) => {
+                        const newImages = [...images];
+                        newImages[index].needsEditing = e.target.checked;
+                        setImages(newImages);
+                      }}
+                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 cursor-pointer mr-1.5"
+                    />
+                    <span className="text-xs font-medium text-gray-700 leading-none select-none">Cần AI</span>
+                  </label>
+                </div>
               </div>
             ))}
           </div>
@@ -256,7 +285,7 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
           <div>
             <h4 className="font-bold text-gray-800">Chi phí</h4>
             <p className="text-sm text-gray-500 mt-0.5">
-              {images.length > 0 ? `${images.length} ảnh × ${imageMultiplier} credits` : 'Chưa có ảnh để xử lý'}
+              {images.length > 0 ? `${editedImagesCount} ảnh cần AI × ${imageMultiplier} credits` : 'Chưa có ảnh để xử lý'}
             </p>
           </div>
           <div className="text-right">
