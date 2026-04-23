@@ -63,6 +63,10 @@ export async function GET(request: Request) {
 
         if (refCode) {
           referredById = await findUserByReferralCode(refCode);
+          // ✅ FIX BUG #5: Chặn tự giới thiệu chính mình
+          if (referredById === user.id) {
+            referredById = null;
+          }
           // Xoá cookie sau khi xử lý
           cookieStore.delete('ref_code');
         }

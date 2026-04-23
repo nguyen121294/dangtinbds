@@ -51,6 +51,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ success: true });
       }
 
+      // ✅ FIX BUG #8: Idempotency — Nếu payment đã 'paid' thì bỏ qua (webhook retry)
+      if (payment.status === 'paid') {
+        console.log(`[Webhook] Order ${orderCode} already processed (status=paid), skipping retry.`);
+        return NextResponse.json({ success: true });
+      }
+
       // 2. Update payment status
       await db.update(payments)
         .set({ status: 'paid' })

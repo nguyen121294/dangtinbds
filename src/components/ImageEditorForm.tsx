@@ -22,7 +22,8 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
   const [openPicker] = useDrivePicker();
   const supabase = createClient();
 
-  const imageMultiplier = imageProcessingEngine === 'replicate_banana' ? 40 : 10;
+  const [pricing, setPricing] = useState({ creditBaseV1: 1, creditBaseV2V3: 2, creditImageStandard: 10, creditImageBanana: 40 });
+  const imageMultiplier = imageProcessingEngine === 'replicate_banana' ? pricing.creditImageBanana : pricing.creditImageStandard;
   const totalCost = images.length * imageMultiplier;
 
   const handleOpenPicker = () => {
@@ -72,6 +73,10 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
     });
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
+
+  useEffect(() => {
+    fetch('/api/credit-pricing').then(r => r.json()).then(d => { if (d.success) setPricing(d.pricing); }).catch(() => {});
+  }, []);
 
   const login = useGoogleLogin({
     onSuccess: (cr) => setAccessToken(cr.access_token),
@@ -213,14 +218,14 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
               <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${imageProcessingEngine === 'replicate_banana' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
                 <input type="radio" name="imgEngine" value="replicate_banana" checked={imageProcessingEngine === 'replicate_banana'} onChange={e => setImageProcessingEngine(e.target.value)} className="mt-0.5 text-blue-600 cursor-pointer" />
                 <div className="ml-3">
-                  <span className="block text-sm font-semibold text-gray-900">🍌 Gemini 2.5 Flash (Nano-Banana) — 40 credits/ảnh</span>
+                  <span className="block text-sm font-semibold text-gray-900">🍌 Gemini 2.5 Flash (Nano-Banana) — {pricing.creditImageBanana} credits/ảnh</span>
                   <span className="block text-xs text-gray-500 mt-0.5">Xóa và lấp đầy vật thể siêu nhanh bằng Prompt tự nhiên.</span>
                 </div>
               </label>
               <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${imageProcessingEngine === 'openai_gpt' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
                 <input type="radio" name="imgEngine" value="openai_gpt" checked={imageProcessingEngine === 'openai_gpt'} onChange={e => setImageProcessingEngine(e.target.value)} className="mt-0.5 text-blue-600 cursor-pointer" />
                 <div className="ml-3">
-                  <span className="block text-sm font-semibold text-gray-900">🟢 OpenAI GPT-Image 1.5 — 10 credits/ảnh</span>
+                  <span className="block text-sm font-semibold text-gray-900">🟢 OpenAI GPT-Image 1.5 — {pricing.creditImageStandard} credits/ảnh</span>
                   <span className="block text-xs text-gray-500 mt-0.5">Chỉnh sửa qua Replicate, model GPT-Image 1.5.</span>
                 </div>
               </label>

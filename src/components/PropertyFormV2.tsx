@@ -44,8 +44,9 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
   const [openPicker, authResponse] = useDrivePicker();
   const supabase = createClient();
 
-  const imageMultiplier = imageProcessingEngine === 'replicate_banana' ? 40 : 10;
-  const totalCost = 2 + (images.length * imageMultiplier);
+  const [pricing, setPricing] = useState({ creditBaseV1: 1, creditBaseV2V3: 2, creditImageStandard: 10, creditImageBanana: 40 });
+  const imageMultiplier = imageProcessingEngine === 'replicate_banana' ? pricing.creditImageBanana : pricing.creditImageStandard;
+  const totalCost = pricing.creditBaseV2V3 + (images.length * imageMultiplier);
 
   const handleOpenPicker = () => {
     openPicker({
@@ -121,6 +122,10 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
 
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
+
+  useEffect(() => {
+    fetch('/api/credit-pricing').then(r => r.json()).then(d => { if (d.success) setPricing(d.pricing); }).catch(() => {});
+  }, []);
 
   const login = useGoogleLogin({
     onSuccess: (codeResponse) => setAccessToken(codeResponse.access_token),
@@ -508,8 +513,8 @@ export default function PropertyFormV2({ workspaceId }: { workspaceId?: string }
                 <h4 className="font-bold text-gray-800">Dự kiến chi phí (Credits)</h4>
                 <p className="text-sm text-gray-500 mt-0.5">
                      {images.length > 0 
-                       ? `2 Bài đăng (dài+ngắn) + ${images.length} ảnh × ${imageProcessingEngine === 'replicate_banana' ? '40' : '10'} Credits` 
-                       : 'Xử lý văn bản (2 bài đăng, không ảnh): 2 Credits'}
+                       ? `2 Bài đăng (dài+ngắn) + ${images.length} ảnh × ${imageMultiplier} Credits` 
+                       : `Xử lý văn bản (2 bài đăng, không ảnh): ${pricing.creditBaseV2V3} Credits`}
                 </p>
             </div>
             <div className="text-right">

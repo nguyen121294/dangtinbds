@@ -81,9 +81,11 @@ export async function getMinWithdrawal(): Promise<number> {
 /**
  * Truy ngược chuỗi giới thiệu: F1 → F2 → F3 (tối đa 3 tầng)
  * Trả về mảng user IDs theo thứ tự tầng [tầng1, tầng2, tầng3]
+ * ✅ FIX: Phát hiện vòng lặp (circular referral) để tránh tự nhận hoa hồng
  */
 export async function getReferralChain(userId: string): Promise<string[]> {
   const chain: string[] = [];
+  const seen = new Set<string>([userId]); // Bao gồm buyer để chặn self-referral trong chain
   let currentId = userId;
 
   for (let i = 0; i < 3; i++) {
@@ -95,6 +97,10 @@ export async function getReferralChain(userId: string): Promise<string[]> {
     const referrerId = user[0]?.referredBy;
     if (!referrerId) break;
 
+    // Phát hiện vòng lặp → dừng ngay
+    if (seen.has(referrerId)) break;
+    seen.add(referrerId);
+
     chain.push(referrerId);
     currentId = referrerId;
   }
@@ -105,12 +111,25 @@ export async function getReferralChain(userId: string): Promise<string[]> {
 /**
  * Tạo các bản ghi hoa hồng pending khi có giao dịch thanh toán thành công.
  * Được gọi từ PayOS webhook sau khi cập nhật subscription.
+ * 
+ * ✅ FIX BUG #1: Idempotency — Kiểm tra paymentId đã tồn tại chưa trước khi insert.
+ *    Ngăn webhook retry tạo hoa hồng trùng lặp.
  */
 export async function createPendingCommissions(
   paymentId: string,
   buyerUserId: string,
   paymentAmount: number
 ): Promise<void> {
+  // ✅ Idempotency check: Nếu đã tạo commission cho payment này → bỏ qua
+  const existing = await db.select({ id: referralCommissions.id })
+    .from(referralCommissions)
+    .where(eq(referralCommissions.paymentId, paymentId))
+    .limit(1);
+  if (existing.length > 0) {
+    console.log(`[Commission] Payment ${paymentId} already has commissions, skipping duplicate.`);
+    return;
+  }
+
   const chain = await getReferralChain(buyerUserId);
   if (chain.length === 0) return; // Người mua không có ai giới thiệu
 
@@ -138,99 +157,133 @@ export async function createPendingCommissions(
 
 /**
  * Admin duyệt hoa hồng → cộng tiền vào ví của người nhận
+ * 
+ * ✅ FIX BUG #2: Wrap trong transaction + WHERE status='pending' trong UPDATE
+ *    để ngăn race condition khi admin double-click.
  */
 export async function approveCommission(commissionId: string): Promise<{ success: boolean; error?: string }> {
-  const record = await db.select()
-    .from(referralCommissions)
-    .where(eq(referralCommissions.id, commissionId))
-    .limit(1);
+  try {
+    return await db.transaction(async (tx) => {
+      // SELECT FOR UPDATE: Lock bản ghi để ngăn concurrent approve
+      const record = await tx.select()
+        .from(referralCommissions)
+        .where(and(
+          eq(referralCommissions.id, commissionId),
+          eq(referralCommissions.status, 'pending')
+        ))
+        .for('update')
+        .limit(1);
 
-  if (!record[0]) return { success: false, error: 'Không tìm thấy bản ghi hoa hồng.' };
-  if (record[0].status !== 'pending') return { success: false, error: 'Bản ghi đã được xử lý.' };
+      if (!record[0]) {
+        return { success: false, error: 'Không tìm thấy bản ghi hoa hồng hoặc đã được xử lý.' };
+      }
 
-  // Cập nhật trạng thái
-  await db.update(referralCommissions)
-    .set({ status: 'approved', approvedAt: new Date() })
-    .where(eq(referralCommissions.id, commissionId));
+      // Cập nhật trạng thái
+      await tx.update(referralCommissions)
+        .set({ status: 'approved', approvedAt: new Date() })
+        .where(eq(referralCommissions.id, commissionId));
 
-  // Cộng tiền vào ví
-  await db.update(profiles)
-    .set({ commissionBalance: sql`${profiles.commissionBalance} + ${record[0].amount}` })
-    .where(eq(profiles.id, record[0].beneficiaryId));
+      // Cộng tiền vào ví — atomic trong cùng transaction
+      await tx.update(profiles)
+        .set({ commissionBalance: sql`${profiles.commissionBalance} + ${record[0].amount}` })
+        .where(eq(profiles.id, record[0].beneficiaryId));
 
-  return { success: true };
+      return { success: true };
+    });
+  } catch (err) {
+    console.error('[approveCommission] Transaction error:', err);
+    return { success: false, error: 'Lỗi hệ thống khi duyệt hoa hồng.' };
+  }
 }
 
 /**
  * Admin từ chối hoa hồng
  */
 export async function rejectCommission(commissionId: string): Promise<{ success: boolean; error?: string }> {
-  const record = await db.select()
-    .from(referralCommissions)
-    .where(eq(referralCommissions.id, commissionId))
-    .limit(1);
-
-  if (!record[0]) return { success: false, error: 'Không tìm thấy bản ghi hoa hồng.' };
-  if (record[0].status !== 'pending') return { success: false, error: 'Bản ghi đã được xử lý.' };
-
-  await db.update(referralCommissions)
+  // Dùng WHERE status='pending' trực tiếp trong UPDATE để tránh race
+  const result = await db.update(referralCommissions)
     .set({ status: 'rejected' })
-    .where(eq(referralCommissions.id, commissionId));
+    .where(and(
+      eq(referralCommissions.id, commissionId),
+      eq(referralCommissions.status, 'pending')
+    ))
+    .returning({ id: referralCommissions.id });
+
+  if (result.length === 0) {
+    return { success: false, error: 'Không tìm thấy bản ghi hoa hồng hoặc đã được xử lý.' };
+  }
 
   return { success: true };
 }
 
 /**
  * Admin hoàn thành yêu cầu rút tiền → trừ ví hoa hồng
+ * 
+ * ✅ FIX BUG #3: Wrap trong transaction + SELECT FOR UPDATE trên profiles
+ *    để ngăn race condition khi rút tiền đồng thời.
  */
 export async function completeWithdrawal(withdrawalId: string): Promise<{ success: boolean; error?: string }> {
-  const record = await db.select()
-    .from(withdrawalRequests)
-    .where(eq(withdrawalRequests.id, withdrawalId))
-    .limit(1);
+  try {
+    return await db.transaction(async (tx) => {
+      // Lock withdrawal record
+      const record = await tx.select()
+        .from(withdrawalRequests)
+        .where(and(
+          eq(withdrawalRequests.id, withdrawalId),
+          eq(withdrawalRequests.status, 'pending')
+        ))
+        .for('update')
+        .limit(1);
 
-  if (!record[0]) return { success: false, error: 'Không tìm thấy yêu cầu rút tiền.' };
-  if (record[0].status !== 'pending') return { success: false, error: 'Yêu cầu đã được xử lý.' };
+      if (!record[0]) {
+        return { success: false, error: 'Không tìm thấy yêu cầu rút tiền hoặc đã được xử lý.' };
+      }
 
-  // Kiểm tra số dư đủ không
-  const userProfile = await db.select({ balance: profiles.commissionBalance })
-    .from(profiles)
-    .where(eq(profiles.id, record[0].userId))
-    .limit(1);
+      // Lock profile row để kiểm tra số dư chính xác
+      const userProfile = await tx.select({ balance: profiles.commissionBalance })
+        .from(profiles)
+        .where(eq(profiles.id, record[0].userId))
+        .for('update')
+        .limit(1);
 
-  const currentBalance = userProfile[0]?.balance || 0;
-  if (currentBalance < record[0].amount) {
-    return { success: false, error: 'Số dư ví không đủ để thực hiện rút tiền.' };
+      const currentBalance = userProfile[0]?.balance || 0;
+      if (currentBalance < record[0].amount) {
+        return { success: false, error: 'Số dư ví không đủ để thực hiện rút tiền.' };
+      }
+
+      // Trừ ví — atomic trong cùng transaction
+      await tx.update(profiles)
+        .set({ commissionBalance: sql`${profiles.commissionBalance} - ${record[0].amount}` })
+        .where(eq(profiles.id, record[0].userId));
+
+      // Cập nhật trạng thái
+      await tx.update(withdrawalRequests)
+        .set({ status: 'completed', completedAt: new Date() })
+        .where(eq(withdrawalRequests.id, withdrawalId));
+
+      return { success: true };
+    });
+  } catch (err) {
+    console.error('[completeWithdrawal] Transaction error:', err);
+    return { success: false, error: 'Lỗi hệ thống khi xử lý rút tiền.' };
   }
-
-  // Trừ ví
-  await db.update(profiles)
-    .set({ commissionBalance: sql`${profiles.commissionBalance} - ${record[0].amount}` })
-    .where(eq(profiles.id, record[0].userId));
-
-  // Cập nhật trạng thái
-  await db.update(withdrawalRequests)
-    .set({ status: 'completed', completedAt: new Date() })
-    .where(eq(withdrawalRequests.id, withdrawalId));
-
-  return { success: true };
 }
 
 /**
  * Admin từ chối yêu cầu rút tiền
  */
 export async function rejectWithdrawal(withdrawalId: string): Promise<{ success: boolean; error?: string }> {
-  const record = await db.select()
-    .from(withdrawalRequests)
-    .where(eq(withdrawalRequests.id, withdrawalId))
-    .limit(1);
-
-  if (!record[0]) return { success: false, error: 'Không tìm thấy yêu cầu rút tiền.' };
-  if (record[0].status !== 'pending') return { success: false, error: 'Yêu cầu đã được xử lý.' };
-
-  await db.update(withdrawalRequests)
+  const result = await db.update(withdrawalRequests)
     .set({ status: 'rejected' })
-    .where(eq(withdrawalRequests.id, withdrawalId));
+    .where(and(
+      eq(withdrawalRequests.id, withdrawalId),
+      eq(withdrawalRequests.status, 'pending')
+    ))
+    .returning({ id: withdrawalRequests.id });
+
+  if (result.length === 0) {
+    return { success: false, error: 'Không tìm thấy yêu cầu rút tiền hoặc đã được xử lý.' };
+  }
 
   return { success: true };
 }

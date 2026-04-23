@@ -31,9 +31,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Bạn cần đăng nhập." }, { status: 401 });
     }
 
-    // Credit: images × rate (no base text cost)
+    // Credit: images × rate (no base text cost) — configurable by Super Admin
+    const { getCreditPricing } = await import('@/lib/app-settings');
+    const pricing = await getCreditPricing();
     const isBanana = imageProcessingEngine === 'replicate_banana';
-    const requiredCredits = images.length * (isBanana ? 40 : 10);
+    const requiredCredits = images.length * (isBanana ? pricing.creditImageBanana : pricing.creditImageStandard);
 
     const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
     const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);

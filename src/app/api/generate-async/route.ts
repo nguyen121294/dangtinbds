@@ -30,10 +30,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Bạn cần đăng nhập để tạo bài viết." }, { status: 401 });
     }
 
-    // Dynamic Cost Calculation to prevent client-side spoofing
+    // Dynamic Cost Calculation from app_settings (configurable by Super Admin)
+    const { getCreditPricing } = await import('@/lib/app-settings');
+    const pricing = await getCreditPricing();
     const isBanana = imageProcessingEngine === 'replicate_banana';
     const imageCount = images && Array.isArray(images) ? images.length : 0;
-    const requiredCredits = 1 + (imageCount * (isBanana ? 40 : 10));
+    const requiredCredits = pricing.creditBaseV1 + (imageCount * (isBanana ? pricing.creditImageBanana : pricing.creditImageStandard));
 
     const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
     const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);

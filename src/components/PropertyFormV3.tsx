@@ -35,7 +35,8 @@ export default function PropertyFormV3({ workspaceId }: { workspaceId?: string }
   const [openPicker] = useDrivePicker();
   const supabase = createClient();
 
-  const totalCost = 2;
+  const [pricing, setPricing] = useState({ creditBaseV1: 1, creditBaseV2V3: 2, creditImageStandard: 10, creditImageBanana: 40 });
+  const totalCost = pricing.creditBaseV2V3;
 
   const handleOpenPicker = () => {
     openPicker({
@@ -93,6 +94,10 @@ export default function PropertyFormV3({ workspaceId }: { workspaceId?: string }
     });
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
+
+  useEffect(() => {
+    fetch('/api/credit-pricing').then(r => r.json()).then(d => { if (d.success) setPricing(d.pricing); }).catch(() => {});
+  }, []);
 
   const login = useGoogleLogin({
     onSuccess: (cr) => setAccessToken(cr.access_token),

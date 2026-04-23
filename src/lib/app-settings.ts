@@ -5,6 +5,10 @@ import { eq } from 'drizzle-orm';
 const DEFAULTS: Record<string, string> = {
   trial_credits: '200',
   trial_days: '15',
+  credit_base_v1: '1',
+  credit_base_v2v3: '2',
+  credit_image_standard: '10',
+  credit_image_banana: '40',
 };
 
 export async function getAppSetting(key: string): Promise<string> {
@@ -46,4 +50,28 @@ export function endOfDayVN(date: Date): Date {
   // Set to 16:59:59 UTC = 23:59:59 UTC+7 (Vietnam)
   d.setUTCHours(16, 59, 59, 0);
   return d;
+}
+
+/**
+ * Đọc bảng giá credit từ app_settings (configurable bởi Super Admin).
+ * Trả về object dùng cho cả backend (tính toán trừ credit) và frontend (hiển thị).
+ */
+export async function getCreditPricing(): Promise<{
+  creditBaseV1: number;
+  creditBaseV2V3: number;
+  creditImageStandard: number;
+  creditImageBanana: number;
+}> {
+  const [v1, v2v3, imgStd, imgBanana] = await Promise.all([
+    getAppSetting('credit_base_v1'),
+    getAppSetting('credit_base_v2v3'),
+    getAppSetting('credit_image_standard'),
+    getAppSetting('credit_image_banana'),
+  ]);
+  return {
+    creditBaseV1: parseInt(v1, 10) || 1,
+    creditBaseV2V3: parseInt(v2v3, 10) || 2,
+    creditImageStandard: parseInt(imgStd, 10) || 10,
+    creditImageBanana: parseInt(imgBanana, 10) || 40,
+  };
 }

@@ -10,11 +10,16 @@ interface Props {
   initialCommTier2: string;
   initialCommTier3: string;
   initialMinWithdrawal: string;
+  initialCreditBaseV1: string;
+  initialCreditBaseV2V3: string;
+  initialCreditImageStandard: string;
+  initialCreditImageBanana: string;
 }
 
 export default function SettingsForm({ 
   initialTrialCredits, initialTrialDays,
-  initialCommTier1, initialCommTier2, initialCommTier3, initialMinWithdrawal
+  initialCommTier1, initialCommTier2, initialCommTier3, initialMinWithdrawal,
+  initialCreditBaseV1, initialCreditBaseV2V3, initialCreditImageStandard, initialCreditImageBanana
 }: Props) {
   const [trialCredits, setTrialCredits] = useState(initialTrialCredits);
   const [trialDays, setTrialDays] = useState(initialTrialDays);
@@ -22,6 +27,10 @@ export default function SettingsForm({
   const [commTier2, setCommTier2] = useState(initialCommTier2);
   const [commTier3, setCommTier3] = useState(initialCommTier3);
   const [minWithdrawal, setMinWithdrawal] = useState(initialMinWithdrawal);
+  const [creditBaseV1, setCreditBaseV1] = useState(initialCreditBaseV1);
+  const [creditBaseV2V3, setCreditBaseV2V3] = useState(initialCreditBaseV2V3);
+  const [creditImageStandard, setCreditImageStandard] = useState(initialCreditImageStandard);
+  const [creditImageBanana, setCreditImageBanana] = useState(initialCreditImageBanana);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -41,6 +50,10 @@ export default function SettingsForm({
           commission_tier2: commTier2,
           commission_tier3: commTier3,
           min_withdrawal: minWithdrawal,
+          credit_base_v1: creditBaseV1,
+          credit_base_v2v3: creditBaseV2V3,
+          credit_image_standard: creditImageStandard,
+          credit_image_banana: creditImageBanana,
         }),
       });
 
@@ -178,6 +191,72 @@ export default function SettingsForm({
             <p className="mt-1 text-xs text-gray-400">
               Hiện tại: {parseInt(initialMinWithdrawal).toLocaleString('vi-VN')}đ
             </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Credit Pricing */}
+      <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 mb-4">
+          <Wallet className="w-5 h-5 text-blue-600" />
+          Bảng giá Credit theo Công cụ
+        </h2>
+        <p className="text-sm text-gray-500 mb-6">
+          Cấu hình số credit <strong>trừ cho mỗi lần sử dụng</strong> công cụ AI. Áp dụng ngay lập tức.
+        </p>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                V1 - Bài đăng (Base)
+              </label>
+              <input
+                type="number" min="0" max="1000"
+                value={creditBaseV1}
+                onChange={(e) => setCreditBaseV1(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Credit/bài (Tool V1)</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                V2/V3 - Bài đăng (Base)
+              </label>
+              <input
+                type="number" min="0" max="1000"
+                value={creditBaseV2V3}
+                onChange={(e) => setCreditBaseV2V3(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Credit/bài (Tool V2 & V3)</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                🟢 Ảnh OpenAI (Standard)
+              </label>
+              <input
+                type="number" min="0" max="1000"
+                value={creditImageStandard}
+                onChange={(e) => setCreditImageStandard(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Credit/ảnh (GPT-Image)</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                🍌 Ảnh Banana (Premium)
+              </label>
+              <input
+                type="number" min="0" max="1000"
+                value={creditImageBanana}
+                onChange={(e) => setCreditImageBanana(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Credit/ảnh (Gemini Flash)</p>
+            </div>
           </div>
         </div>
       </div>

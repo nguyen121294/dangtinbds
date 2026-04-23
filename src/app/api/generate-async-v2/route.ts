@@ -31,10 +31,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: "Bạn cần đăng nhập để tạo bài viết." }, { status: 401 });
     }
 
-    // 2. Calculate cost
+    // 2. Calculate cost from app_settings (configurable by Super Admin)
+    const { getCreditPricing } = await import('@/lib/app-settings');
+    const pricing = await getCreditPricing();
     const isBanana = imageProcessingEngine === 'replicate_banana';
     const imageCount = images && Array.isArray(images) ? images.length : 0;
-    const requiredCredits = 2 + (imageCount * (isBanana ? 40 : 10));
+    const requiredCredits = pricing.creditBaseV2V3 + (imageCount * (isBanana ? pricing.creditImageBanana : pricing.creditImageStandard));
 
     // 3. Check credit balance (pre-flight only — NO deduction here)
     const { checkCreditBalance } = await import('@/lib/workspace-utils');

@@ -50,8 +50,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Check credit balance (pre-flight, NO deduction)
+    const { getCreditPricing } = await import('@/lib/app-settings');
+    const pricing = await getCreditPricing();
+    const v3Cost = pricing.creditBaseV2V3;
     const { checkCreditBalance } = await import('@/lib/workspace-utils');
-    const balanceCheck = await checkCreditBalance(workspaceId, user.id, 2);
+    const balanceCheck = await checkCreditBalance(workspaceId, user.id, v3Cost);
     if (!balanceCheck.success) {
       return NextResponse.json({ success: false, error: balanceCheck.error }, { status: 403 });
     }
@@ -182,13 +185,13 @@ Viết liên tục, KHÔNG giải thích gì thêm.`;
 
     // Deduct credits ONLY after successful text generation
     const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
-    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, 2);
+    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, v3Cost);
 
     // Update usage log
     if (jobId) {
       await db.update(usageLogs).set({
         status: deductRes.success ? 'success' : 'partial',
-        creditsCharged: deductRes.success ? 2 : 0,
+        creditsCharged: deductRes.success ? v3Cost : 0,
         modelUsed,
         durationMs: Date.now() - startTime,
         completedAt: new Date(),

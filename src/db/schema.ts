@@ -17,7 +17,7 @@ export const profiles = table('profiles', {
   signatures: text('signatures').array(), // List of signature names/texts
   referralCode: text('referral_code').unique(),             // Mã giới thiệu duy nhất (auto-gen)
   referredBy: text('referred_by'),                          // User ID người giới thiệu
-  commissionBalance: doublePrecision('commission_balance').default(0), // Ví hoa hồng (VNĐ)
+  commissionBalance: integer('commission_balance').default(0), // Ví hoa hồng (VNĐ) — integer vì VNĐ không có xu
   customPromptV2: text('custom_prompt_v2'),                            // Prompt tùy chỉnh cho Tool V2
   createdAt: timestamp('created_at').defaultNow(),
 });
@@ -78,7 +78,7 @@ export const referralCommissions = table('referral_commissions', {
   paymentId: text('payment_id').references(() => payments.id).notNull(),         // Giao dịch phát sinh
   tier: integer('tier').notNull(),                           // 1, 2, hoặc 3
   rate: doublePrecision('rate').notNull(),                   // % tại thời điểm tính (snapshot)
-  amount: doublePrecision('amount').notNull(),               // Số tiền VNĐ hoa hồng
+  amount: integer('amount').notNull(),                        // Số tiền VNĐ hoa hồng (integer, không có xu)
   status: text('status').default('pending').notNull(),       // pending → approved | rejected
   approvedAt: timestamp('approved_at'),
   createdAt: timestamp('created_at').defaultNow(),
@@ -88,7 +88,7 @@ export const referralCommissions = table('referral_commissions', {
 export const withdrawalRequests = table('withdrawal_requests', {
   id: text('id').primaryKey(),
   userId: text('user_id').references(() => profiles.id).notNull(),
-  amount: doublePrecision('amount').notNull(),               // Số tiền yêu cầu rút (VNĐ)
+  amount: integer('amount').notNull(),                        // Số tiền yêu cầu rút (VNĐ, integer)
   phone: text('phone').notNull(),
   bankAccount: text('bank_account').notNull(),
   bankName: text('bank_name').notNull(),

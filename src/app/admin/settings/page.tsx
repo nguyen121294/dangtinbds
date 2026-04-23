@@ -8,6 +8,10 @@ export default async function AdminSettingsPage() {
   const commTier2 = await getAppSetting('commission_tier2') || '5';
   const commTier3 = await getAppSetting('commission_tier3') || '1';
   const minWithdrawal = await getAppSetting('min_withdrawal') || '5000000';
+  const creditBaseV1 = await getAppSetting('credit_base_v1') || '1';
+  const creditBaseV2V3 = await getAppSetting('credit_base_v2v3') || '2';
+  const creditImageStandard = await getAppSetting('credit_image_standard') || '10';
+  const creditImageBanana = await getAppSetting('credit_image_banana') || '40';
 
   return (
     <div className="space-y-8">
@@ -23,6 +27,10 @@ export default async function AdminSettingsPage() {
         initialCommTier2={commTier2}
         initialCommTier3={commTier3}
         initialMinWithdrawal={minWithdrawal}
+        initialCreditBaseV1={creditBaseV1}
+        initialCreditBaseV2V3={creditBaseV2V3}
+        initialCreditImageStandard={creditImageStandard}
+        initialCreditImageBanana={creditImageBanana}
       />
     </div>
   );
