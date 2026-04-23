@@ -14,7 +14,7 @@ const qstashClient = new Client({
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { access_token, workspaceId, imageProcessingEngine, images, imagesToEdit, imagesToKeep, objectsToRemoveStr, enhanceImage, driveFolderId } = body;
+    const { access_token, workspaceId, imageProcessingEngine, images, imagesToEdit, imagesToKeep, objectsToRemoveStr, enhanceImage, driveFolderId, taskName } = body;
 
     const editList = imagesToEdit || images || [];
     const keepList = imagesToKeep || [];
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
 
     const folderName = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }).replace(/[\/:]/g, '-');
     const folderMetadata: any = {
-      name: `[Ảnh AI] [${folderName}]`,
+      name: `[Ảnh AI] [${folderName}] ${taskName ? `[${taskName}]` : ''}`.trim(),
       mimeType: 'application/vnd.google-apps.folder',
     };
     if (driveFolderId) folderMetadata.parents = [driveFolderId];

@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { db } from '@/db';
-import { usageLogs } from '@/db/schema';
+import { usageLogs, propertyRecords } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { deductWorkspaceCredit } from '@/lib/workspace-utils';
+import { parsePropertyFromShortPost } from '@/lib/parse-property';
+import { randomUUID } from 'crypto';
 
 /**
  * Webhook V2 Text — Called by Replicate when text generation is complete.
@@ -106,6 +108,49 @@ export async function POST(req: NextRequest) {
     });
 
     console.log(`[Webhook-V2-Text] 📄 Created Doc: ${documentId}`);
+
+    // ─── RENAME GOOGLE DRIVE FOLDER WITH EXTRACTED INFO ───
+    try {
+      const loaiBDSMatch = generatedText.match(/🏠 Loại BĐS:\s*(.+)/);
+      const viTriMatch = generatedText.match(/📍 Vị trí:\s*(.+)/);
+      const giaBanMatch = generatedText.match(/💰 Giá bán:\s*(.+)/);
+
+      const loaiBDS = loaiBDSMatch ? loaiBDSMatch[1].trim() : '';
+      const viTri = viTriMatch ? viTriMatch[1].trim() : '';
+      const giaBan = giaBanMatch ? giaBanMatch[1].trim() : '';
+
+      const aString = [loaiBDS, viTri, giaBan].filter(Boolean).join(' - ');
+      
+      if (aString) {
+        await drive.files.update({
+          fileId: subFolderId,
+          requestBody: {
+            name: `[V2] [${folderName}] [${aString}]`
+          }
+        });
+        console.log(`[Webhook-V2-Text] 📁 Renamed folder to include property info: ${aString}`);
+      }
+    } catch (renameErr: any) {
+      console.warn(`[Webhook-V2-Text] ⚠️ Could not rename folder:`, renameErr.message);
+    }
+
+    // ─── SAVE PROPERTY RECORD ───
+    if (workspaceId && userId) {
+      try {
+        const parsed = parsePropertyFromShortPost(generatedText);
+        await db.insert(propertyRecords).values({
+          id: randomUUID(),
+          workspaceId,
+          userId,
+          sourceTool: 'v2',
+          jobId: jobId || null,
+          ...parsed,
+        });
+        console.log(`[Webhook-V2-Text] 📋 Saved property record for job ${jobId}`);
+      } catch (saveErr: any) {
+        console.warn(`[Webhook-V2-Text] ⚠️ Could not save property record:`, saveErr.message);
+      }
+    }
 
     // ─── DEDUCT CREDITS (only on success!) ───
     let creditStatus = 'success';

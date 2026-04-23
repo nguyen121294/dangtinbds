@@ -115,3 +115,42 @@ export const usageLogs = table('usage_logs', {
   createdAt: timestamp('created_at').defaultNow(),
   completedAt: timestamp('completed_at'),
 });
+
+// Danh sách tài sản BĐS ghi nhận (trích xuất từ bài đăng ngắn AI)
+export const propertyRecords = table('property_records', {
+  id: text('id').primaryKey(),
+  workspaceId: text('workspace_id').references(() => workspaces.id, { onDelete: 'cascade' }).notNull(),
+  userId: text('user_id').references(() => profiles.id).notNull(),
+  sourceTool: text('source_tool').notNull(), // 'v2' | 'v3'
+  jobId: text('job_id'),
+
+  // Thông tin chung
+  title: text('title'),
+  propertyType: text('property_type'),
+  location: text('location'),
+  permit: text('permit'),
+  usageForm: text('usage_form'),
+  suitableFor: text('suitable_for'),
+  price: text('price'),
+  strengths: text('strengths'),
+
+  // Thông tin thửa đất
+  area: text('area'),
+  length: text('length'),
+  width: text('width'),
+  shape: text('shape'),
+  direction: text('direction'),
+
+  // Thông tin hiện trạng
+  structure: text('structure'),
+  currentUsage: text('current_usage'),
+  frontage: text('frontage'),
+  roadWidth: text('road_width'),
+  roadStructure: text('road_structure'),
+  planning: text('planning'),
+  distanceToMainRoad: text('distance_to_main_road'),
+  vehicleAccess: text('vehicle_access'),
+  transportConnections: text('transport_connections'),
+
+  createdAt: timestamp('created_at').defaultNow(),
+});

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { db } from '@/db';
 import { profiles, workspaces, workspaceMembers } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { XCircle, AlertCircle, LogOut, Building2, Settings, Wallet, Clock, User as UserIcon, Menu, Wrench } from 'lucide-react';
+import { XCircle, AlertCircle, LogOut, Building2, Settings, Wallet, Clock, User as UserIcon, Menu, Wrench, ClipboardList } from 'lucide-react';
 import { reactivateAccount } from '@/app/dashboard/account/actions';
 import WorkspaceSwitcher from '@/components/workspace-switcher';
 import { checkWorkspaceAccess, getUserPlanDetails } from '@/lib/workspace-utils';
@@ -170,6 +170,10 @@ export default async function DashboardLayout({
               {isVipWorkspace && (
                  <span className="text-[9px] bg-[#E03C31] text-white px-1.5 py-0.5 rounded-sm uppercase tracking-wider">PRO</span>
               )}
+           </Link>
+           <Link href={`/${workspaceId}/dashboard/properties`} className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 hover:text-[#E03C31] font-medium text-sm transition-colors">
+              <ClipboardList className="w-5 h-5" />
+              Danh sách Tài sản
            </Link>
            <Link href={`/${workspaceId}/dashboard/workspace-settings`} className="flex items-center gap-3 px-3 py-2.5 rounded-sm text-gray-600 hover:bg-gray-100 hover:text-[#E03C31] font-medium text-sm transition-colors">
               <Settings className="w-5 h-5" />

@@ -13,6 +13,7 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
   const [customObjectsToRemove, setCustomObjectsToRemove] = useState("");
   const [enhanceImage, setEnhanceImage] = useState(true);
   const [imageProcessingEngine, setImageProcessingEngine] = useState("openai_gpt");
+  const [taskName, setTaskName] = useState("");
 
   const [loading, setLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -121,6 +122,7 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { alert("Vui lòng đăng nhập."); window.location.href = '/login'; return; }
     if (!accessToken) { login(); return; }
+    if (!taskName.trim()) { alert("Vui lòng nhập tên cho task chỉnh sửa ảnh."); return; }
     if (images.length === 0) { alert("Vui lòng chọn ít nhất 1 ảnh."); return; }
 
     setLoading(true);
@@ -162,6 +164,7 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
           imageProcessingEngine,
           workspaceId,
           driveFolderId: selectedDriveFolder?.id || null,
+          taskName: taskName.trim(),
         })
       });
       const data = await res.json();
@@ -175,7 +178,23 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
     <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-gray-100">
       {/* UPLOAD */}
       <div className="space-y-4">
-        <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Tải ảnh lên</h2>
+        <h2 className="text-xl font-bold text-gray-800 border-b pb-2">Tên Task & Tải ảnh lên</h2>
+        
+        <div className="space-y-1.5 pb-2">
+          <label className="block text-sm font-semibold text-gray-700">
+            Tên Task (Bắt buộc) <span className="text-red-500">*</span>
+          </label>
+          <input 
+            type="text" 
+            value={taskName} 
+            onChange={(e) => setTaskName(e.target.value)} 
+            placeholder="VD: Nhà hẻm Quận 1, Biệt thự Thảo Điền..." 
+            className="w-full p-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+            required
+          />
+          <p className="text-[11px] text-gray-500">Tên này sẽ được dùng làm tên thư mục trên Google Drive để dễ dàng tra cứu.</p>
+        </div>
+
         <div {...getRootProps()} className={`border-2 border-dashed p-8 rounded-2xl flex flex-col items-center justify-center cursor-pointer transition ${isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}>
           <input {...getInputProps()} />
           <ImagePlus className="w-12 h-12 text-gray-400 mb-3" />

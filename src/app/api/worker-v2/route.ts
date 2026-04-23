@@ -91,15 +91,33 @@ ${signature ? `LƯU Ý CUỐI BÀI: Phải đính kèm nguyên văn chữ ký sa
 **PHẦN 2 - BÀI ĐĂNG NGẮN:**
 Trích xuất thông tin từ đoạn raw text và TRÌNH BÀY ĐÚNG theo format sau. Nếu thông tin KHÔNG CÓ trong raw text thì ghi "Chưa có thông tin". TUYỆT ĐỐI KHÔNG BỊA ĐẶT thêm bớt.
 
+[THÔNG TIN CHUNG]
 📌 Tiêu đề: {ngắn gọn xúc tích, dễ nhớ}
 🏠 Loại BĐS: {loại bất động sản}
 📍 Vị trí: {địa chỉ / khu vực}
-📐 Diện tích, kích thước: {diện tích / ngang x dài}
-🏗 Hiện trạng: {hiện trạng / kết cấu}
-🧭 Hướng: {hướng nhà / đất}
+📜 Thông tin cấp phép: {sổ đỏ/sổ hồng/giấy phép xây dựng...}
+🏷️ Hình thức sử dụng: {chung/riêng}
 🎯 Phù hợp: {mục đích sử dụng}
 💰 Giá bán: {giá}
 ✅ Điểm mạnh: {pháp lý, tiện ích, ưu điểm nổi bật...}
+
+[THÔNG TIN THỬA ĐẤT]
+📐 Diện tích: {diện tích}
+📏 Chiều dài: {chiều dài}
+↔️ Chiều rộng: {chiều rộng / ngang}
+🔷 Hình dạng: {vuông vức / méo / chữ nhật...}
+🧭 Hướng: {hướng nhà / đất}
+
+[THÔNG TIN HIỆN TRẠNG]
+🏗️ Kết cấu: {kết cấu công trình}
+🏚️ Hiện trạng đang sử dụng: {đang ở / cho thuê / bỏ trống...}
+🚪 Mặt tiền tiếp giáp: {đường / hẻm / sông...}
+🛣️ Độ rộng đường trước tài sản: {số m}
+🧱 Kết cấu đường: {nhựa / bê tông / đất...}
+📋 Dự kiến quy hoạch: {thông tin quy hoạch nếu có}
+📍 Khoảng cách ra đường chính: {số m / km}
+🚗 Lối vào phương tiện: {ô tô / xe máy / đi bộ...}
+🔗 Kết nối giao thông: {gần quốc lộ, cao tốc, sân bay...}
 ${signature ? `\n${signature}` : ''}
 
 === FORMAT OUTPUT ===
