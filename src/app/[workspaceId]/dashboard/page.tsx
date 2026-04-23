@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { workspaces } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { ArrowLeft, Bot, FileText, ImageIcon, ChevronRight, Crown, Sparkles, History } from 'lucide-react';
+import { ArrowLeft, Bot, FileText, ImageIcon, ChevronRight, Crown, Sparkles, History, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function DashboardPage({
@@ -110,17 +110,41 @@ export default async function DashboardPage({
                 </div>
              </Link>
 
-             {/* Thẻ Coming soon 2 */}
-             <div className="flex flex-col bg-gray-50 border border-gray-200 border-dashed rounded-sm h-full opacity-60">
-                <div className="p-5 flex-1 relative">
-                   <div className="absolute top-4 right-4 bg-gray-200 text-gray-600 text-[10px] uppercase font-bold px-2 py-0.5 rounded-sm">Sắp ra mắt</div>
-                   <div className="w-12 h-12 bg-gray-200 text-gray-400 flex items-center justify-center rounded-sm mb-4">
-                      <FileText className="w-6 h-6" />
+             {/* Thẻ Danh sách Tài sản */}
+             <Link href={`/${workspaceId}/dashboard/properties`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-[#E03C31]/50 hover:shadow-md transition-all h-full">
+                <div className="p-5 flex-1">
+                   <div className="w-12 h-12 bg-red-50 text-[#E03C31] flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
+                      <ClipboardList className="w-6 h-6" />
                    </div>
-                   <h3 className="text-lg font-bold text-gray-500 mb-2">Xuất Sale Kit Thực Tế</h3>
-                   <p className="text-sm text-gray-500 line-clamp-3">Tự động bắt form và xuất tài liệu PDF thuyết trình căn hộ chuyên nghiệp dạng Slide.</p>
+                   <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-[#E03C31] transition-colors">Danh sách Tài sản</h3>
+                      <span className="text-[10px] font-bold bg-[#E03C31] text-white px-1.5 py-0.5 rounded-sm uppercase">MỚI</span>
+                   </div>
+                   <p className="text-sm text-gray-500 line-clamp-3">Xem toàn bộ tài sản BĐS đã ghi nhận từ V2/V3. Tra cứu, so sánh và quản lý dữ liệu.</p>
                 </div>
-             </div>
+                <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-[#E03C31] transition-colors">
+                   <span>Xem danh sách</span>
+                   <ChevronRight className="w-4 h-4" />
+                </div>
+             </Link>
+
+              {/* Thẻ Sale Kit */}
+              <Link href={`/${workspaceId}/tools/sale-kit`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-blue-500/50 hover:shadow-md transition-all h-full">
+                 <div className="p-5 flex-1">
+                    <div className="w-12 h-12 bg-blue-50 text-blue-600 flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
+                       <FileText className="w-6 h-6" />
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                       <h3 className="text-lg font-bold text-gray-900 group-hover:text-blue-600 transition-colors">Sale Kit Builder</h3>
+                       <span className="text-[10px] font-bold bg-blue-600 text-white px-1.5 py-0.5 rounded-sm uppercase">MỚI</span>
+                    </div>
+                    <p className="text-sm text-gray-500 line-clamp-3">Tạo tài liệu PDF thuyết trình bất động sản chuyên nghiệp dạng Sale Kit.</p>
+                 </div>
+                 <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-blue-600 transition-colors">
+                    <span>Tạo Sale Kit</span>
+                    <ChevronRight className="w-4 h-4" />
+                 </div>
+              </Link>
           </div>
        </main>
     </div>
