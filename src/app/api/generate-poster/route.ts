@@ -139,40 +139,53 @@ function buildPosterPrompt(
   const theme = colorTheme || { name: 'Sang trọng', primary: 'Đen', secondary: 'Vàng Gold' };
   const c = contact || { name: '', phone: '', priceNote: '' };
 
-  return `Một poster quảng cáo bất động sản chuyên nghiệp, được thiết kế theo bố cục dọc (portrait), chia thành nhiều phần rõ rệt với văn bản tiếng Việt rõ ràng. Bảng màu ${theme.name} (${theme.primary} và ${theme.secondary}) để tạo cảm giác sang trọng. Các hình ảnh minh họa chất lượng cao phải thể hiện đúng loại bất động sản.
+  const title = (p.title || p.propertyType || 'BẤT ĐỘNG SẢN').toUpperCase();
+  const location = (p.location || 'VỊ TRÍ ĐẮC ĐỊA').toUpperCase();
+  const strengths = (p.strengths || 'VỊ TRÍ ĐẸP, TIỆN ÍCH ĐẦY ĐỦ').toUpperCase();
+  const area = p.area || 'N/A';
+  const direction = p.direction || 'Đang cập nhật';
+  const permit = p.permit || 'Đang cập nhật';
+  const structure = p.structure || 'Đang cập nhật';
+  const shape = p.shape || 'Đang cập nhật';
+  const price = (c.priceNote || p.price || 'LIÊN HỆ ĐỂ CÓ MỨC GIÁ TỐT NHẤT').toUpperCase();
+  const phone = c.phone || '0900 000 000';
+  const name = c.name || 'Đại lý BĐS';
+  const suitableFor = p.suitableFor || '';
 
-Chi tiết bố cục và nội dung:
+  return `A professional Vietnamese real estate poster. Vertical portrait layout, 2:3 ratio. Color theme: ${theme.primary} + ${theme.secondary}.
 
-[Dải tiêu đề trên cùng - Nền màu đen]:
-Tiêu đề chính (chữ trắng lớn): "SỞ HỮU NGAY ${p.propertyType || 'BẤT ĐỘNG SẢN'} – ${p.location || 'VỊ TRÍ ĐẮC ĐỊA'}".
-Tiêu đề phụ (chữ ${theme.secondary} nhỏ hơn bên dưới): "${p.strengths || 'VỊ TRÍ ĐẸP, TIỆN ÍCH ĐẦY ĐỦ'}".
+CRITICAL — TEXT RENDERING RULES (MUST FOLLOW):
+- The poster contains Vietnamese text with diacritical marks (ă, â, ê, ô, ơ, ư, đ, etc.).
+- You MUST render each Vietnamese word EXACTLY as written below — copy every Unicode character precisely.
+- Do NOT approximate, skip, or replace any diacritical marks.
+- Use bold, clean sans-serif fonts. Make text LARGE and HIGH CONTRAST for readability.
+- Keep text SHORT — only render what is specified below, nothing extra.
 
-[Bố cục dải 1 - Nền màu ${theme.primary}, Ảnh chính (ảnh số ${mainImageIndex + 1} trong ${totalImages} ảnh đính kèm) và Văn bản liên quan]:
-Một bức ảnh chân thực, chất lượng cao — sử dụng ảnh số ${mainImageIndex + 1} được đính kèm (ảnh chính, hiển thị lớn nhất).
-Một dải văn bản phía trên bức ảnh: "${p.title || p.propertyType || 'BẤT ĐỘNG SẢN'} | ${p.strengths || 'THIẾT KẾ SANG TRỌNG'}".
+CRITICAL — IMAGE RULES:
+- Use ONLY the attached input photos. Do NOT generate, draw, or AI-create any property images.
+- Attached image #${mainImageIndex + 1} is the HERO image — display it as the LARGEST element.
 
-[Bảng thuộc tính - Nền màu trắng, Văn bản tiếng Việt]:
-Một bảng lưới thông tin chi tiết với các biểu tượng và văn bản rõ ràng:
-Vị trí: Biểu tượng vị trí + "Vị trí: ${p.location || 'Đang cập nhật'}".
-Diện tích: Biểu tượng diện tích + "Diện tích: ${p.area || 'N/A'}${p.length && p.width ? ` (${p.length}m x ${p.width}m)` : ''}".
-Hình dạng: Biểu tượng hình học + "Hình dạng: ${p.shape || 'Đang cập nhật'}".
-Hướng: Biểu tượng la bàn + "Hướng: ${p.direction || 'Đang cập nhật'}".
-Pháp lý: Biểu tượng pháp lý + "Pháp lý: ${p.permit || 'Đang cập nhật'}".
-Kết cấu: Biểu tượng tòa nhà + "Kết cấu/Chi tiết: ${p.structure || 'Đang cập nhật'}".
+POSTER LAYOUT:
 
-${totalImages > 1 ? `[Bố cục dải 2 - Nền màu ${theme.primary}, Văn bản và Ảnh phụ]:
-Một dải văn bản nhỏ hơn: "${p.suitableFor ? `PHÙ HỢP: ${p.suitableFor}` : 'TIỆN ÍCH NỘI KHU & KHÔNG GIAN SỐNG LÝ TƯỞNG'}".
-Dưới dải văn bản là các ảnh phụ (các ảnh còn lại ngoài ảnh chính), góc rộng, về không gian chung nổi bật.` : ''}
+[HEADER — Dark ${theme.primary} background]:
+Large white text: "${title}"
+Smaller ${theme.secondary} text: "${strengths}"
 
-[Dải dưới cùng - Giá và Liên hệ]:
-Một dải màu ${theme.secondary} nổi bật (thanh ngang) có văn bản: "GIÁ BÁN: ${c.priceNote || p.price || 'LIÊN HỆ ĐỂ CÓ MỨC GIÁ TỐT NHẤT'}".
-Bên dưới dải, trong dải đen ở chân poster, là thông tin liên hệ:
-"${c.phone || 'SĐT LIÊN HỆ'}" (Lớn, căn lề trái).
-"${c.name || 'TÊN ĐẠI LÝ'}" (Nhỏ, căn lề phải).
+[HERO PHOTO — Full width]:
+Attached image #${mainImageIndex + 1}, displayed large and prominent.
 
-LƯU Ý QUAN TRỌNG: 
-- Sử dụng chính xác các ảnh được đính kèm (input images) — KHÔNG tự vẽ ảnh mới.
-- Ảnh số ${mainImageIndex + 1} là ảnh chính, phải hiển thị lớn nhất và nổi bật nhất.
-- Văn bản phải rõ ràng, dễ đọc, font chữ đậm cho tiêu đề.
-- Poster dọc (portrait), tỷ lệ 2:3.`;
+[INFO SECTION — Clean white/light background, grid layout with icons]:
+📍 Vị trí: ${location}
+📐 Diện tích: ${area}${p.length && p.width ? ` (${p.length}m × ${p.width}m)` : ''}
+🧭 Hướng: ${direction}
+📜 Pháp lý: ${permit}
+🏗 Kết cấu: ${structure}
+
+${totalImages > 1 ? `[SECONDARY PHOTOS]:
+Display remaining ${totalImages - 1} attached photos in a row below the info section.
+${suitableFor ? `Small label: "Phù hợp: ${suitableFor}"` : ''}` : ''}
+
+[FOOTER — Price + Contact]:
+${theme.secondary} banner: "GIÁ: ${price}"
+Black bar: "${phone}" (left, large) | "${name}" (right)`;
 }
