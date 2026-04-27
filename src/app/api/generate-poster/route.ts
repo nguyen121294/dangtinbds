@@ -139,53 +139,31 @@ function buildPosterPrompt(
   const theme = colorTheme || { name: 'Sang trọng', primary: 'Đen', secondary: 'Vàng Gold' };
   const c = contact || { name: '', phone: '', priceNote: '' };
 
-  const title = (p.title || p.propertyType || 'BẤT ĐỘNG SẢN').toUpperCase();
-  const location = (p.location || 'VỊ TRÍ ĐẮC ĐỊA').toUpperCase();
-  const strengths = (p.strengths || 'VỊ TRÍ ĐẸP, TIỆN ÍCH ĐẦY ĐỦ').toUpperCase();
-  const area = p.area || 'N/A';
-  const direction = p.direction || 'Đang cập nhật';
-  const permit = p.permit || 'Đang cập nhật';
-  const structure = p.structure || 'Đang cập nhật';
-  const shape = p.shape || 'Đang cập nhật';
-  const price = (c.priceNote || p.price || 'LIÊN HỆ ĐỂ CÓ MỨC GIÁ TỐT NHẤT').toUpperCase();
-  const phone = c.phone || '0900 000 000';
-  const name = c.name || 'Đại lý BĐS';
-  const suitableFor = p.suitableFor || '';
+  // Trích xuất thông tin BĐS
+  const infoLines: string[] = [];
+  if (p.title || p.propertyType) infoLines.push(`Loại: ${p.title || p.propertyType}`);
+  if (p.location) infoLines.push(`Vị trí: ${p.location}`);
+  if (p.area) infoLines.push(`Diện tích: ${p.area}${p.length && p.width ? ` (${p.length}m × ${p.width}m)` : ''}`);
+  if (p.direction) infoLines.push(`Hướng: ${p.direction}`);
+  if (p.permit) infoLines.push(`Pháp lý: ${p.permit}`);
+  if (p.structure) infoLines.push(`Kết cấu: ${p.structure}`);
+  if (p.strengths) infoLines.push(`Ưu điểm: ${p.strengths}`);
+  if (c.priceNote || p.price) infoLines.push(`Giá: ${c.priceNote || p.price}`);
+  const propertyInfo = infoLines.join('\n');
 
-  return `A professional Vietnamese real estate poster. Vertical portrait layout, 2:3 ratio. Color theme: ${theme.primary} + ${theme.secondary}.
+  // Chữ ký / liên hệ
+  const signature = [c.name, c.phone].filter(Boolean).join(' - ');
 
-CRITICAL — TEXT RENDERING RULES (MUST FOLLOW):
-- The poster contains Vietnamese text with diacritical marks (ă, â, ê, ô, ơ, ư, đ, etc.).
-- You MUST render each Vietnamese word EXACTLY as written below — copy every Unicode character precisely.
-- Do NOT approximate, skip, or replace any diacritical marks.
-- Use bold, clean sans-serif fonts. Make text LARGE and HIGH CONTRAST for readability.
-- Keep text SHORT — only render what is specified below, nothing extra.
+  return `Tạo một infographic/poster bằng tiếng Việt cho việc sale bất động sản với bảng màu ${theme.name} (${theme.primary} và ${theme.secondary}).
 
-CRITICAL — IMAGE RULES:
-- Use ONLY the attached input photos. Do NOT generate, draw, or AI-create any property images.
-- Attached image #${mainImageIndex + 1} is the HERO image — display it as the LARGEST element.
+Thông tin bất động sản:
+${propertyInfo || 'Bất động sản đẹp, vị trí đắc địa'}
 
-POSTER LAYOUT:
+Chữ ký: ${signature || 'Đại lý BĐS'}
 
-[HEADER — Dark ${theme.primary} background]:
-Large white text: "${title}"
-Smaller ${theme.secondary} text: "${strengths}"
+Yêu cầu: thu hút người xem, hối thúc ra quyết định. Sử dụng ảnh đính kèm (ảnh số ${mainImageIndex + 1} là ảnh chính, hiển thị lớn nhất). Poster dọc tỷ lệ 2:3.`;
 
-[HERO PHOTO — Full width]:
-Attached image #${mainImageIndex + 1}, displayed large and prominent.
-
-[INFO SECTION — Clean white/light background, grid layout with icons]:
-📍 Vị trí: ${location}
-📐 Diện tích: ${area}${p.length && p.width ? ` (${p.length}m × ${p.width}m)` : ''}
-🧭 Hướng: ${direction}
-📜 Pháp lý: ${permit}
-🏗 Kết cấu: ${structure}
-
-${totalImages > 1 ? `[SECONDARY PHOTOS]:
-Display remaining ${totalImages - 1} attached photos in a row below the info section.
-${suitableFor ? `Small label: "Phù hợp: ${suitableFor}"` : ''}` : ''}
-
-[FOOTER — Price + Contact]:
-${theme.secondary} banner: "GIÁ: ${price}"
-Black bar: "${phone}" (left, large) | "${name}" (right)`;
+  /* === PROMPT CŨ (BACKUP) ===
+  return `A professional Vietnamese real estate poster. Vertical portrait layout, 2:3 ratio...`;
+  === END BACKUP === */
 }

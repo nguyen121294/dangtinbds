@@ -392,14 +392,14 @@ export default function PosterForm({ workspaceId }: { workspaceId?: string }) {
             <input type="radio" name="posterEngine" value="openai_gpt" checked={imageProcessingEngine === 'openai_gpt'} onChange={e => setImageProcessingEngine(e.target.value)} className="mt-0.5 text-[#E03C31] cursor-pointer" />
             <div className="ml-3">
               <span className="block text-sm font-semibold text-gray-900">🟢 Standard — {pricing.creditPosterStandard} credits/poster</span>
-              <span className="block text-xs text-gray-500 mt-0.5">GPT-Image 1.5 · Poster chất lượng tốt</span>
+              <span className="block text-xs text-gray-500 mt-0.5">Poster chất lượng tốt · Xử lý nhanh</span>
             </div>
           </label>
           <label className={`flex items-start p-3 rounded-sm border cursor-pointer transition ${imageProcessingEngine === 'replicate_banana' ? 'bg-white border-[#E03C31] shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
             <input type="radio" name="posterEngine" value="replicate_banana" checked={imageProcessingEngine === 'replicate_banana'} onChange={e => setImageProcessingEngine(e.target.value)} className="mt-0.5 text-[#E03C31] cursor-pointer" />
             <div className="ml-3">
               <span className="block text-sm font-semibold text-gray-900">⭐ Premium — {pricing.creditPosterBanana} credits/poster</span>
-              <span className="block text-xs text-gray-500 mt-0.5">Nano-Banana · Chất lượng cao cấp</span>
+              <span className="block text-xs text-gray-500 mt-0.5">Chất lượng cao cấp · Chi tiết sắc nét</span>
             </div>
           </label>
         </div>
