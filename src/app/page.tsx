@@ -103,7 +103,7 @@ export default async function LandingPage() {
               <div className="mb-6 inline-flex h-12 w-12 items-center justify-center bg-red-50 text-[#E03C31] rounded-sm">
                 <Wand2 className="h-6 w-6" />
               </div>
-              <h3 className="mb-3 text-lg font-bold text-gray-900">Làm Đẹp Kể Cả Ảnh Xấu</h3>
+              <h3 className="mb-3 text-lg font-bold text-gray-900">Làm Đẹp Ảnh BĐS</h3>
               <p className="text-sm text-gray-600 leading-relaxed">
                 Tự động cân bằng sáng, căn chỉnh màu sắc, làm không gian sáng sủa hơn. Kèm theo công cụ xóa xe cộ dư thừa, dây điện rác trong ảnh cực kì thông minh.
               </p>
