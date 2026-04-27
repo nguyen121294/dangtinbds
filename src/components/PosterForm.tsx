@@ -168,7 +168,6 @@ export default function PosterForm({ workspaceId }: { workspaceId?: string }) {
       multiselect: true,
       setIncludeFolders: false,
       setSelectFolderEnabled: false,
-      mimeTypes: 'image/jpeg,image/png,image/webp',
       callbackFunction: async (data) => {
         if (data.action !== 'picked' || !data.docs?.length) return;
         const remaining = 6 - images.length;
