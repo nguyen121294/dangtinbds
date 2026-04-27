@@ -174,5 +174,5 @@ LƯU Ý QUAN TRỌNG:
 - Sử dụng chính xác các ảnh được đính kèm (input images) — KHÔNG tự vẽ ảnh mới.
 - Ảnh số ${mainImageIndex + 1} là ảnh chính, phải hiển thị lớn nhất và nổi bật nhất.
 - Văn bản phải rõ ràng, dễ đọc, font chữ đậm cho tiêu đề.
-- Poster dọc (portrait), tỷ lệ 9:16.`;
+- Poster dọc (portrait), tỷ lệ 2:3.`;
 }

@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       input: {
         input_images: imageBlobs,
         prompt: posterPrompt,
-        aspect_ratio: "9:16",
+        aspect_ratio: "2:3",
         number_of_images: 1,
         quality: "low",
         output_format: "jpeg",

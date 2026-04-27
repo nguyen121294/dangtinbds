@@ -1,6 +1,6 @@
 "use client";
 import { useState, useCallback, useEffect } from "react";
-import { Loader2, Sparkles, ImagePlus, X, FolderOpen, Star } from "lucide-react";
+import { Loader2, Sparkles, ImagePlus, X, FolderOpen, Star, HardDrive } from "lucide-react";
 import { useGoogleLogin } from '@react-oauth/google';
 import { useDropzone } from 'react-dropzone';
 import imageCompression from 'browser-image-compression';
@@ -154,6 +154,50 @@ export default function PosterForm({ workspaceId }: { workspaceId?: string }) {
     else if (mainImageIndex > index) setMainImageIndex(prev => prev - 1);
   };
 
+  // Pick images from Google Drive
+  const handlePickDriveImages = () => {
+    if (!accessToken) { login(); return; }
+    openPicker({
+      clientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || '',
+      developerKey: process.env.NEXT_PUBLIC_GOOGLE_API_KEY || '',
+      viewId: 'DOCS',
+      token: accessToken,
+      showUploadView: false,
+      showUploadFolders: false,
+      supportDrives: true,
+      multiselect: true,
+      setIncludeFolders: false,
+      setSelectFolderEnabled: false,
+      mimeTypes: 'image/jpeg,image/png,image/webp',
+      callbackFunction: async (data) => {
+        if (data.action !== 'picked' || !data.docs?.length) return;
+        const remaining = 6 - images.length;
+        const docs = data.docs.slice(0, remaining);
+        if (docs.length === 0) { alert('Đã đạt tối đa 6 ảnh!'); return; }
+
+        for (const doc of docs) {
+          try {
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files/${doc.id}?alt=media`, {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            });
+            if (!res.ok) continue;
+            const blob = await res.blob();
+            const file = new File([blob], doc.name || 'drive-image.jpg', { type: blob.type || 'image/jpeg' });
+
+            const reader = new FileReader();
+            reader.onload = () => {
+              const b64 = reader.result as string;
+              setImages(prev => [...prev, { file, preview: URL.createObjectURL(blob), base64: b64 }]);
+            };
+            reader.readAsDataURL(file);
+          } catch (e) {
+            console.error('Lỗi tải ảnh từ Drive:', e);
+          }
+        }
+      },
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const { data: { session } } = await supabase.auth.getSession();
@@ -247,12 +291,20 @@ export default function PosterForm({ workspaceId }: { workspaceId?: string }) {
         <h2 className="text-lg font-bold text-gray-900 mb-1">2. Ảnh Bất động sản</h2>
         <p className="text-xs text-gray-500 mb-4">Upload ảnh và chọn ảnh chính (⭐) để hiển thị lớn nhất trên poster</p>
 
-        <div {...getRootProps()} className={`border-2 border-dashed p-6 rounded-sm flex flex-col items-center justify-center cursor-pointer transition ${isDragActive ? 'border-[#E03C31] bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}>
-          <input {...getInputProps()} />
-          <ImagePlus className="w-10 h-10 text-gray-400 mb-2" />
-          <p className="text-sm font-medium text-gray-600">Bấm hoặc kéo thả ảnh vào đây</p>
-          <p className="text-xs text-gray-400 mt-1">Tối đa 6 ảnh, tự động nén</p>
+        <div className="flex gap-3">
+          <div {...getRootProps()} className={`flex-1 border-2 border-dashed p-6 rounded-sm flex flex-col items-center justify-center cursor-pointer transition ${isDragActive ? 'border-[#E03C31] bg-red-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'}`}>
+            <input {...getInputProps()} />
+            <ImagePlus className="w-8 h-8 text-gray-400 mb-2" />
+            <p className="text-sm font-medium text-gray-600">Upload từ máy</p>
+            <p className="text-xs text-gray-400 mt-1">Kéo thả hoặc bấm</p>
+          </div>
+          <button type="button" onClick={handlePickDriveImages} className="flex-1 border-2 border-dashed border-gray-300 bg-gray-50 hover:bg-blue-50 hover:border-blue-400 p-6 rounded-sm flex flex-col items-center justify-center cursor-pointer transition">
+            <HardDrive className="w-8 h-8 text-blue-500 mb-2" />
+            <p className="text-sm font-medium text-blue-600">Chọn từ Drive</p>
+            <p className="text-xs text-gray-400 mt-1">Google Drive</p>
+          </button>
         </div>
+        <p className="text-xs text-gray-400 mt-2 text-center">Tối đa 6 ảnh · Tự động nén</p>
 
         {images.length > 0 && (
           <div className="flex flex-wrap gap-3 mt-4">
