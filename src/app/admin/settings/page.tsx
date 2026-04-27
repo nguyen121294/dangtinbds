@@ -12,6 +12,8 @@ export default async function AdminSettingsPage() {
   const creditBaseV2V3 = await getAppSetting('credit_base_v2v3') || '2';
   const creditImageStandard = await getAppSetting('credit_image_standard') || '10';
   const creditImageBanana = await getAppSetting('credit_image_banana') || '40';
+  const creditPosterStandard = await getAppSetting('credit_poster_standard') || '25';
+  const creditPosterBanana = await getAppSetting('credit_poster_banana') || '65';
 
   return (
     <div className="space-y-8">
@@ -31,6 +33,8 @@ export default async function AdminSettingsPage() {
         initialCreditBaseV2V3={creditBaseV2V3}
         initialCreditImageStandard={creditImageStandard}
         initialCreditImageBanana={creditImageBanana}
+        initialCreditPosterStandard={creditPosterStandard}
+        initialCreditPosterBanana={creditPosterBanana}
       />
     </div>
   );

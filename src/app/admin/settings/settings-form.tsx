@@ -14,12 +14,15 @@ interface Props {
   initialCreditBaseV2V3: string;
   initialCreditImageStandard: string;
   initialCreditImageBanana: string;
+  initialCreditPosterStandard: string;
+  initialCreditPosterBanana: string;
 }
 
 export default function SettingsForm({ 
   initialTrialCredits, initialTrialDays,
   initialCommTier1, initialCommTier2, initialCommTier3, initialMinWithdrawal,
-  initialCreditBaseV1, initialCreditBaseV2V3, initialCreditImageStandard, initialCreditImageBanana
+  initialCreditBaseV1, initialCreditBaseV2V3, initialCreditImageStandard, initialCreditImageBanana,
+  initialCreditPosterStandard, initialCreditPosterBanana
 }: Props) {
   const [trialCredits, setTrialCredits] = useState(initialTrialCredits);
   const [trialDays, setTrialDays] = useState(initialTrialDays);
@@ -31,6 +34,8 @@ export default function SettingsForm({
   const [creditBaseV2V3, setCreditBaseV2V3] = useState(initialCreditBaseV2V3);
   const [creditImageStandard, setCreditImageStandard] = useState(initialCreditImageStandard);
   const [creditImageBanana, setCreditImageBanana] = useState(initialCreditImageBanana);
+  const [creditPosterStandard, setCreditPosterStandard] = useState(initialCreditPosterStandard);
+  const [creditPosterBanana, setCreditPosterBanana] = useState(initialCreditPosterBanana);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -54,6 +59,8 @@ export default function SettingsForm({
           credit_base_v2v3: creditBaseV2V3,
           credit_image_standard: creditImageStandard,
           credit_image_banana: creditImageBanana,
+          credit_poster_standard: creditPosterStandard,
+          credit_poster_banana: creditPosterBanana,
         }),
       });
 
@@ -256,6 +263,32 @@ export default function SettingsForm({
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
               />
               <p className="mt-1 text-xs text-gray-400 text-center">Credit/ảnh (Gemini Flash)</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                🎨 Poster Standard
+              </label>
+              <input
+                type="number" min="0" max="1000"
+                value={creditPosterStandard}
+                onChange={(e) => setCreditPosterStandard(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Credit/poster (GPT-Image)</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                🎨 Poster Premium
+              </label>
+              <input
+                type="number" min="0" max="1000"
+                value={creditPosterBanana}
+                onChange={(e) => setCreditPosterBanana(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Credit/poster (Banana Premium)</p>
             </div>
           </div>
         </div>
