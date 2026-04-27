@@ -63,8 +63,23 @@ export default async function DashboardPage({
                 </div>
              </Link>
 
-             {/* Thẻ Công cụ số 4 - Image Editor — Ẩn theo yêu cầu */}
-
+             {/* Thẻ Công cụ số 4 - Image Editor */}
+             <Link href={`/${workspaceId}/tools/image-editor`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-orange-500/50 hover:shadow-md transition-all h-full">
+                <div className="p-5 flex-1">
+                   <div className="w-12 h-12 bg-orange-50 text-orange-600 flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
+                      <ImageIcon className="w-6 h-6" />
+                   </div>
+                   <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors">Chỉnh sửa Ảnh AI</h3>
+                      <span className="text-[10px] font-bold bg-orange-600 text-white px-1.5 py-0.5 rounded-sm uppercase">AI</span>
+                   </div>
+                   <p className="text-sm text-gray-500 line-clamp-3">Xóa vật thể, làm nét ảnh BĐS bằng AI. Tự lưu kết quả vào Drive.</p>
+                </div>
+                <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-orange-600 transition-colors">
+                   <span>Truy cập ngay</span>
+                   <ChevronRight className="w-4 h-4" />
+                </div>
+             </Link>
 
              {/* Thẻ Lịch sử sử dụng */}
              <Link href={`/${workspaceId}/usage-history`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-indigo-500/50 hover:shadow-md transition-all h-full">
