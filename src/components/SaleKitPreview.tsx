@@ -47,7 +47,7 @@ const pageStyle: React.CSSProperties = {
 
 const Footer = () => (
   <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 48, background: BRAND, display: 'flex', alignItems: 'center', padding: '0 32px', gap: 12 }}>
-    <span style={{ color: '#fff', fontSize: 11, fontWeight: 500, opacity: .8 }}>Sale Kit — Được tạo bởi Môi Giới AI</span>
+    <span style={{ color: '#fff', fontSize: 11, fontWeight: 500, opacity: .8 }}>Sale Kit — Được tạo bởi Trợ lý AI BĐS</span>
   </div>
 );
 

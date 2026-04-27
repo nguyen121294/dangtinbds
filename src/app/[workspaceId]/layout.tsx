@@ -137,7 +137,7 @@ export default async function DashboardLayout({
             <Building2 className="w-5 h-5 text-[#E03C31]" />
          </Link>
          <div className="flex-1 px-4 overflow-hidden truncate font-medium text-gray-900">
-            {allowedWorkspaces.find(w => w.id === workspaceId)?.name || 'Môi Giới AI'}
+            {allowedWorkspaces.find(w => w.id === workspaceId)?.name || 'Trợ lý AI BĐS'}
          </div>
          <label htmlFor="mobile-sidebar-toggle" className="p-2 cursor-pointer text-gray-600 hover:text-[#E03C31] transition">
             <Menu className="w-6 h-6" />

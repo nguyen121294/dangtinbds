@@ -26,20 +26,7 @@ export default async function DashboardPage({
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-             {/* Thẻ Công cụ số 1 */}
-             <Link href={`/${workspaceId}/tools/content`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-[#E03C31]/50 hover:shadow-md transition-all h-full">
-                <div className="p-5 flex-1">
-                   <div className="w-12 h-12 bg-blue-50 text-blue-600 flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
-                      <Bot className="w-6 h-6" />
-                   </div>
-                   <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-[#E03C31] transition-colors">Trợ lý Viết Bài Đăng AI</h3>
-                   <p className="text-sm text-gray-500 line-clamp-3">Công cụ tự động hóa sáng tạo nội dung mô tả bất động sản chuyên nghiệp, tự động định dạng và đề xuất Headline.</p>
-                </div>
-                <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-[#E03C31] transition-colors">
-                   <span>Truy cập ngay</span>
-                   <ChevronRight className="w-4 h-4" />
-                </div>
-             </Link>
+             {/* Thẻ Công cụ số 1 — Ẩn theo yêu cầu */}
 
              {/* Thẻ Công cụ số 2 - V2 */}
              <Link href={`/${workspaceId}/tools/content-v2`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-emerald-500/50 hover:shadow-md transition-all h-full">
@@ -76,23 +63,7 @@ export default async function DashboardPage({
                 </div>
              </Link>
 
-             {/* Thẻ Công cụ số 4 - Image Editor */}
-             <Link href={`/${workspaceId}/tools/image-editor`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-orange-500/50 hover:shadow-md transition-all h-full">
-                <div className="p-5 flex-1">
-                   <div className="w-12 h-12 bg-orange-50 text-orange-600 flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
-                      <ImageIcon className="w-6 h-6" />
-                   </div>
-                   <div className="flex items-center gap-2 mb-2">
-                      <h3 className="text-lg font-bold text-gray-900 group-hover:text-orange-600 transition-colors">Chỉnh sửa Ảnh AI</h3>
-                      <span className="text-[10px] font-bold bg-orange-600 text-white px-1.5 py-0.5 rounded-sm uppercase">MỚI</span>
-                   </div>
-                   <p className="text-sm text-gray-500 line-clamp-3">Xóa vật thể, làm nét ảnh BĐS bằng AI. Tự lưu kết quả vào Drive.</p>
-                </div>
-                <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-orange-600 transition-colors">
-                   <span>Truy cập ngay</span>
-                   <ChevronRight className="w-4 h-4" />
-                </div>
-             </Link>
+             {/* Thẻ Công cụ số 4 - Image Editor — Ẩn theo yêu cầu */}
 
 
              {/* Thẻ Lịch sử sử dụng */}

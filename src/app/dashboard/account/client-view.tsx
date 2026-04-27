@@ -183,32 +183,7 @@ export default function AccountClientView({
       </section>
 
 
-      {/* 4. Vùng nguy hiểm */}
-      <section className="rounded-xl border border-red-200 bg-red-50/50 p-6 md:p-8 shadow-sm">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-red-100 text-red-600">
-            <AlertCircle className="h-5 w-5" />
-          </div>
-          <h2 className="text-lg font-bold text-red-600">Vùng nguy hiểm</h2>
-        </div>
-        <p className="text-gray-600 mb-6 text-sm">
-          Vô hiệu hóa tài khoản sẽ đăng xuất bạn ra khỏi hệ thống và đóng băng mọi hoạt động. 
-          Các hóa đơn và lịch sử của bạn vẫn được giữ nguyên. Cân nhắc kỹ trước khi thực hiện.
-        </p>
-
-        <form action={async () => {
-          if (window.confirm('Bạn có chắc chắn muốn vô hiệu hóa tài khoản này không? Mọi phiên đăng nhập sẽ bị tự động thoát ra.')) {
-            await deactivateAccount()
-          }
-        }}>
-          <button
-            type="submit"
-            className="flex items-center gap-2 rounded-lg bg-white border border-red-200 hover:border-red-600 hover:bg-red-50 text-red-600 px-6 py-3 text-sm font-bold transition-all active:scale-95 shadow-sm"
-          >
-            Vô hiệu hóa Tài khoản
-          </button>
-        </form>
-      </section>
+      {/* 4. Vùng nguy hiểm — Ẩn để tránh tạo ấn tượng tiêu cực cho người dùng */}
 
     </div>
   );

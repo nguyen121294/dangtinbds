@@ -50,7 +50,7 @@ export default async function DashboardLayout({
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-gray-200 z-40 flex items-center justify-between px-4">
          <Link href="/" className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-[#E03C31]" />
-            <div className="font-bold text-lg tracking-tight text-[#E03C31]">Môi Giới AI</div>
+            <div className="font-bold text-lg tracking-tight text-[#E03C31]">Trợ lý AI BĐS</div>
          </Link>
          <label htmlFor="mobile-sidebar-toggle" className="p-2 cursor-pointer text-gray-600 hover:text-[#E03C31] transition">
             <Menu className="w-6 h-6" />
@@ -65,7 +65,7 @@ export default async function DashboardLayout({
         <div className="h-16 flex items-center px-6 border-b border-gray-200 shrink-0">
           <Link href="/" className="flex items-center gap-2">
             <Building2 className="w-6 h-6 text-[#E03C31]" />
-            <div className="font-bold border-none text-xl tracking-tight text-[#E03C31]">Môi Giới AI</div>
+            <div className="font-bold border-none text-xl tracking-tight text-[#E03C31]">Trợ lý AI BĐS</div>
           </Link>
         </div>
 

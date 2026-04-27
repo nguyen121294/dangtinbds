@@ -19,12 +19,12 @@ export default async function LandingPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-sm bg-[#E03C31] text-white">
                 <Bot className="h-5 w-5" />
               </div>
-              <span className="text-xl font-bold tracking-tight text-[#E03C31]">DANGTIN<span className="text-gray-800">AI</span></span>
+              <span className="text-xl font-bold tracking-tight text-[#E03C31]">Trợ lý AI <span className="text-gray-800">BĐS</span></span>
             </Link>
             
             <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
               <Link href={appLink} className="hover:text-[#E03C31]">Viết Content AI</Link>
-              <Link href={appLink} className="hover:text-[#E03C31]">Chỉnh Sửa Ảnh</Link>
+              {/* Chỉnh Sửa Ảnh — Ẩn vì tool đã tạm ẩn */}
               <Link href={appLink} className="hover:text-[#E03C31]">Tạo Sale Kit</Link>
               <Link href="/pricing" className="hover:text-[#E03C31]">Bảng Giá</Link>
             </nav>
@@ -140,7 +140,7 @@ export default async function LandingPage() {
 
       {/* Simple Footer */}
       <footer className="bg-gray-900 py-8 text-center text-sm text-gray-400">
-         <p>© {new Date().getFullYear()} DANGTINAI. UI Style by Batdongsan.</p>
+         <p>© {new Date().getFullYear()} Trợ lý AI BĐS.</p>
       </footer>
     </div>
   );

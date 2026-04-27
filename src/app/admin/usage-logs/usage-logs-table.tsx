@@ -42,8 +42,8 @@ const toolLabels: Record<string, string> = {
   v1_assistant: 'V1 — Form cơ bản',
   v2_assistant: 'V2 — AI + Ảnh',
   v3_assistant: 'V3 — AI nhanh',
-  image_editor_openai_gpt: '🖼️ Ảnh — GPT Image',
-  image_editor_replicate_banana: '🖼️ Ảnh — Nano-Banana',
+  image_editor_openai_gpt: '🖼️ Ảnh — Standard Model',
+  image_editor_replicate_banana: '🖼️ Ảnh — Premium Model',
 };
 
 const getToolLabel = (tool: string) => {

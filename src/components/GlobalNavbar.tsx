@@ -21,7 +21,7 @@ export default async function GlobalNavbar() {
       <div className="mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
         <Link href="/" className="flex items-center gap-2 text-gray-900 hover:opacity-80 transition-opacity">
           <Building2 className="w-6 h-6 text-[#E03C31]" />
-          <span className="font-bold text-xl tracking-tight text-[#E03C31] hidden sm:block">Môi Giới AI</span>
+          <span className="font-bold text-xl tracking-tight text-[#E03C31] hidden sm:block">Trợ lý AI BĐS</span>
         </Link>
         
         <div className="flex items-center gap-4">

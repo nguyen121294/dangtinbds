@@ -266,15 +266,15 @@ export default function ImageEditorForm({ workspaceId }: { workspaceId?: string 
               <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${imageProcessingEngine === 'replicate_banana' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
                 <input type="radio" name="imgEngine" value="replicate_banana" checked={imageProcessingEngine === 'replicate_banana'} onChange={e => setImageProcessingEngine(e.target.value)} className="mt-0.5 text-blue-600 cursor-pointer" />
                 <div className="ml-3">
-                  <span className="block text-sm font-semibold text-gray-900">🍌 Gemini 2.5 Flash (Nano-Banana) — {pricing.creditImageBanana} credits/ảnh</span>
-                  <span className="block text-xs text-gray-500 mt-0.5">Xóa và lấp đầy vật thể siêu nhanh bằng Prompt tự nhiên.</span>
+                  <span className="block text-sm font-semibold text-gray-900">⭐ Premium Model — {pricing.creditImageBanana} credits/ảnh</span>
+                  <span className="block text-xs text-gray-500 mt-0.5">Xóa và lấp đầy vật thể chất lượng cao, chi tiết sắc nét.</span>
                 </div>
               </label>
               <label className={`flex items-start p-3 rounded-lg border cursor-pointer transition ${imageProcessingEngine === 'openai_gpt' ? 'bg-white border-blue-500 shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
                 <input type="radio" name="imgEngine" value="openai_gpt" checked={imageProcessingEngine === 'openai_gpt'} onChange={e => setImageProcessingEngine(e.target.value)} className="mt-0.5 text-blue-600 cursor-pointer" />
                 <div className="ml-3">
-                  <span className="block text-sm font-semibold text-gray-900">🟢 OpenAI GPT-Image 1.5 — {pricing.creditImageStandard} credits/ảnh</span>
-                  <span className="block text-xs text-gray-500 mt-0.5">Chỉnh sửa qua Replicate, model GPT-Image 1.5.</span>
+                  <span className="block text-sm font-semibold text-gray-900">🟢 Standard Model — {pricing.creditImageStandard} credits/ảnh</span>
+                  <span className="block text-xs text-gray-500 mt-0.5">Chỉnh sửa ảnh nhanh gọn, phù hợp nhu cầu cơ bản.</span>
                 </div>
               </label>
             </div>
