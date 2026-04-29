@@ -2,6 +2,13 @@ import { db } from '@/db';
 import { appSettings } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 
+/**
+ * CREDIT POLICY:
+ * - Khi subscription hết hạn, credit KHÔNG bị xóa/reset
+ * - User vẫn giữ nguyên số credit còn lại và có thể dùng tiếp
+ * - Credit chỉ bị trừ khi sử dụng tool thành công
+ * - Nếu tool fail → không trừ credit
+ */
 const DEFAULTS: Record<string, string> = {
   trial_credits: '200',
   trial_days: '15',

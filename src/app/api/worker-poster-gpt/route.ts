@@ -79,9 +79,9 @@ export async function POST(req: NextRequest) {
 
     const webhookUrl = `${protocol}://${host}/api/webhook-poster-gpt?subFolderId=${subFolderId}&token=${encodeURIComponent(access_token)}&fileName=${encodeURIComponent(`poster_${taskName || 'output'}.jpg`)}`;
 
-    console.log(`[Worker-Poster-GPT] Gọi GPT-Image-1.5 với ${imageBlobs.length} ảnh...`);
+    console.log(`[Worker-Poster-GPT] Gọi GPT-Image-2 với ${imageBlobs.length} ảnh...`);
     const prediction = await replicate.predictions.create({
-      model: "openai/gpt-image-1.5",
+      model: "openai/gpt-image-2",
       input: {
         input_images: imageBlobs,
         prompt: posterPrompt,
@@ -89,10 +89,8 @@ export async function POST(req: NextRequest) {
         number_of_images: 1,
         quality: "low",
         output_format: "jpeg",
-        input_fidelity: "low",
         background: "auto",
-        output_compression: 90,
-        moderation: "auto"
+        moderation: "low"
       },
       webhook: webhookUrl,
       webhook_events_filter: ["completed"]

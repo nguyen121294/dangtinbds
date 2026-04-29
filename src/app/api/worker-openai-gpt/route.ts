@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     console.log("[Worker-GPT] 4. Gọi OpenAI GPT Image qua webhook:", webhookUrl);
     const prediction = await replicate.predictions.create({
-      model: "openai/gpt-image-1.5",
+      model: "openai/gpt-image-2",
       input: {
         input_images: [imageBlob],  // ✅ Tên field đúng theo schema Replicate
         prompt: gptPrompt,
@@ -91,10 +91,8 @@ export async function POST(req: NextRequest) {
         number_of_images: 1,
         quality: "low",
         output_format: "jpeg",
-        input_fidelity: "low",
         background: "auto",
-        output_compression: 90,
-        moderation: "auto"
+        moderation: "low"
       },
       webhook: webhookUrl,
       webhook_events_filter: ["completed"]
