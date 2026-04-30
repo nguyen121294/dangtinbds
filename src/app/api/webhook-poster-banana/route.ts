@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
+import { db } from '@/db';
+import { usageLogs } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 export const maxDuration = 60;
 
@@ -11,6 +14,12 @@ export async function POST(req: NextRequest) {
     const access_token = url.searchParams.get("token");
     const originalFileName = url.searchParams.get("fileName") || "poster.jpg";
 
+    // Deferred credit info from worker
+    const jobId = url.searchParams.get("jobId");
+    const workspaceId = url.searchParams.get("workspaceId");
+    const userId = url.searchParams.get("userId");
+    const requiredCredits = parseInt(url.searchParams.get("requiredCredits") || "0", 10);
+
     if (!subFolderId || !access_token) {
       console.error("[Webhook-Poster-Banana] Missing metadata in URL");
       return NextResponse.json({ error: "Missing metadata" }, { status: 400 });
@@ -19,9 +28,29 @@ export async function POST(req: NextRequest) {
     const prediction = await req.json();
     console.log(`[Webhook-Poster-Banana] Nhận webhook từ Replicate. Status: ${prediction.status}`);
 
+    // --- Handle FAILED prediction ---
     if (prediction.status !== "succeeded") {
-      return NextResponse.json({ success: true, message: "Bỏ qua vì tiến trình chưa chạy xong / lỗi" });
+      console.error(`[Webhook-Poster-Banana] ❌ Prediction failed:`, prediction.error || 'Unknown error');
+
+      if (jobId) {
+        try {
+          await db.update(usageLogs).set({
+            status: 'failed',
+            errorMessage: typeof prediction.error === 'string'
+              ? prediction.error.substring(0, 500)
+              : JSON.stringify(prediction.error)?.substring(0, 500) || 'Prediction failed',
+            completedAt: new Date(),
+          }).where(eq(usageLogs.jobId, jobId));
+          console.log(`[Webhook-Poster-Banana] 📋 Usage log ${jobId} → failed (0 credits charged)`);
+        } catch (logErr: any) {
+          console.error(`[Webhook-Poster-Banana] Log update error:`, logErr.message);
+        }
+      }
+
+      return NextResponse.json({ success: true, message: "Prediction failed — no credit charged" });
     }
+
+    // --- Handle SUCCEEDED prediction ---
 
     let resultUrl = "";
     if (Array.isArray(prediction.output) && prediction.output.length > 0) {
@@ -69,6 +98,32 @@ export async function POST(req: NextRequest) {
     });
 
     console.log(`✅ [Webhook-Poster-Banana] Poster đã lưu vào Drive. ID: ${driveRes.data.id}`);
+
+    // --- Deduct credit ONLY after successful save ---
+    if (workspaceId && userId && requiredCredits > 0) {
+      try {
+        const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
+        const deductRes = await deductWorkspaceCredit(workspaceId, userId, requiredCredits);
+
+        if (deductRes.success) {
+          console.log(`💰 [Webhook-Poster-Banana] Trừ ${requiredCredits} credits thành công`);
+        } else {
+          console.error(`[Webhook-Poster-Banana] Trừ credit thất bại:`, deductRes.error);
+        }
+
+        if (jobId) {
+          await db.update(usageLogs).set({
+            status: deductRes.success ? 'success' : 'partial',
+            creditsCharged: deductRes.success ? requiredCredits : 0,
+            completedAt: new Date(),
+            errorMessage: deductRes.success ? null : deductRes.error,
+          }).where(eq(usageLogs.jobId, jobId));
+        }
+      } catch (creditErr: any) {
+        console.error(`[Webhook-Poster-Banana] Credit deduction error:`, creditErr.message);
+      }
+    }
+
     return NextResponse.json({ success: true, fileId: driveRes.data.id });
 
   } catch (error: any) {

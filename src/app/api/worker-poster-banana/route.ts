@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import Replicate from 'replicate';
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { imageUrls, mainImageIndex, subFolderId, access_token, posterPrompt, taskName } = body;
+    const {
+      imageUrls, mainImageIndex, subFolderId, access_token,
+      posterPrompt, taskName,
+      // Deferred credit info
+      jobId, workspaceId, userId, requiredCredits
+    } = body;
 
     if (!imageUrls || imageUrls.length === 0 || !subFolderId || !access_token) {
       return NextResponse.json({ success: false, error: "Missing required parameters" }, { status: 400 });
@@ -64,7 +69,16 @@ export async function POST(req: NextRequest) {
     const protocol = req.headers.get("x-forwarded-proto") || "http";
     const host = req.headers.get("host") || "localhost:3000";
 
-    const webhookUrl = `${protocol}://${host}/api/webhook-poster-banana?subFolderId=${subFolderId}&token=${encodeURIComponent(access_token)}&fileName=${encodeURIComponent(`poster_${taskName || 'output'}.jpg`)}`;
+    const webhookParams = new URLSearchParams({
+      subFolderId,
+      token: access_token,
+      fileName: `poster_${taskName || 'output'}.jpg`,
+      ...(jobId && { jobId }),
+      ...(workspaceId && { workspaceId }),
+      ...(userId && { userId }),
+      ...(requiredCredits != null && { requiredCredits: String(requiredCredits) }),
+    });
+    const webhookUrl = `${protocol}://${host}/api/webhook-poster-banana?${webhookParams.toString()}`;
 
     console.log(`[Worker-Poster-Banana] Gọi Nano-Banana với ${base64Images.length} ảnh...`);
     await replicate.predictions.create({

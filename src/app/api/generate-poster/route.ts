@@ -41,27 +41,28 @@ export async function POST(req: NextRequest) {
     const isBanana = imageProcessingEngine === 'replicate_banana';
     const requiredCredits = isBanana ? pricing.creditPosterBanana : pricing.creditPosterStandard;
 
+    // Pre-flight balance check (NO deduction — credit deducted in webhook on success)
     if (requiredCredits > 0) {
-      const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
-      const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
-      if (!deductRes.success) {
-        return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
+      const { checkCreditBalance } = await import('@/lib/workspace-utils');
+      const balanceCheck = await checkCreditBalance(workspaceId, user.id, requiredCredits);
+      if (!balanceCheck.success) {
+        return NextResponse.json({ success: false, error: balanceCheck.error }, { status: 403 });
       }
-
-      // Usage log
-      const jobId = randomUUID();
-      await db.insert(usageLogs).values({
-        id: randomUUID(),
-        jobId,
-        workspaceId,
-        userId: user.id,
-        tool: `poster_${imageProcessingEngine || 'default'}`,
-        creditsCharged: requiredCredits,
-        status: 'success',
-        modelUsed: imageProcessingEngine || 'openai_gpt',
-        inputSummary: `Poster | ${propertyData?.title || 'N/A'} | ${colorTheme?.name || 'default'} | ${driveFileIds.length} ảnh`.substring(0, 200),
-      });
     }
+
+    // Usage log — pending until webhook confirms success/failure
+    const jobId = randomUUID();
+    await db.insert(usageLogs).values({
+      id: randomUUID(),
+      jobId,
+      workspaceId,
+      userId: user.id,
+      tool: `poster_${imageProcessingEngine || 'default'}`,
+      creditsCharged: 0,
+      status: 'pending',
+      modelUsed: imageProcessingEngine || 'openai_gpt',
+      inputSummary: `Poster | ${propertyData?.title || 'N/A'} | ${colorTheme?.name || 'default'} | ${driveFileIds.length} ảnh`.substring(0, 200),
+    });
 
     // Create Drive folder
     const oAuth2Client = new google.auth.OAuth2();
@@ -106,7 +107,7 @@ export async function POST(req: NextRequest) {
     // Build poster prompt
     const posterPrompt = buildPosterPrompt(propertyData, colorTheme, contactInfo, mainImageIndex, driveFileIds.length);
 
-    // Fan-out 1 message to poster worker
+    // Fan-out 1 message to poster worker (credit info for deferred deduction)
     await qstashClient.publishJSON({
       url: workerUrl,
       body: {
@@ -116,6 +117,11 @@ export async function POST(req: NextRequest) {
         access_token,
         posterPrompt,
         taskName: taskName || 'poster',
+        // Deferred credit info — webhook will deduct on success
+        jobId,
+        workspaceId,
+        userId: user.id,
+        requiredCredits,
       }
     });
 
