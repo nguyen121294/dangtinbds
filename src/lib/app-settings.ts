@@ -18,6 +18,7 @@ const DEFAULTS: Record<string, string> = {
   credit_image_banana: '40',
   credit_poster_standard: '25',
   credit_poster_banana: '65',
+  credit_qwen_image_edit: '75',
 };
 
 export async function getAppSetting(key: string): Promise<string> {
@@ -72,14 +73,16 @@ export async function getCreditPricing(): Promise<{
   creditImageBanana: number;
   creditPosterStandard: number;
   creditPosterBanana: number;
+  creditQwenImageEdit: number;
 }> {
-  const [v1, v2v3, imgStd, imgBanana, posterStd, posterBanana] = await Promise.all([
+  const [v1, v2v3, imgStd, imgBanana, posterStd, posterBanana, qwenEdit] = await Promise.all([
     getAppSetting('credit_base_v1'),
     getAppSetting('credit_base_v2v3'),
     getAppSetting('credit_image_standard'),
     getAppSetting('credit_image_banana'),
     getAppSetting('credit_poster_standard'),
     getAppSetting('credit_poster_banana'),
+    getAppSetting('credit_qwen_image_edit'),
   ]);
   return {
     creditBaseV1: parseInt(v1, 10) || 1,
@@ -88,5 +91,6 @@ export async function getCreditPricing(): Promise<{
     creditImageBanana: parseInt(imgBanana, 10) || 40,
     creditPosterStandard: parseInt(posterStd, 10) || 25,
     creditPosterBanana: parseInt(posterBanana, 10) || 65,
+    creditQwenImageEdit: parseInt(qwenEdit, 10) || 75,
   };
 }

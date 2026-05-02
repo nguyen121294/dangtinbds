@@ -16,13 +16,14 @@ interface Props {
   initialCreditImageBanana: string;
   initialCreditPosterStandard: string;
   initialCreditPosterBanana: string;
+  initialCreditQwenImageEdit: string;
 }
 
 export default function SettingsForm({ 
   initialTrialCredits, initialTrialDays,
   initialCommTier1, initialCommTier2, initialCommTier3, initialMinWithdrawal,
   initialCreditBaseV1, initialCreditBaseV2V3, initialCreditImageStandard, initialCreditImageBanana,
-  initialCreditPosterStandard, initialCreditPosterBanana
+  initialCreditPosterStandard, initialCreditPosterBanana, initialCreditQwenImageEdit
 }: Props) {
   const [trialCredits, setTrialCredits] = useState(initialTrialCredits);
   const [trialDays, setTrialDays] = useState(initialTrialDays);
@@ -36,6 +37,7 @@ export default function SettingsForm({
   const [creditImageBanana, setCreditImageBanana] = useState(initialCreditImageBanana);
   const [creditPosterStandard, setCreditPosterStandard] = useState(initialCreditPosterStandard);
   const [creditPosterBanana, setCreditPosterBanana] = useState(initialCreditPosterBanana);
+  const [creditQwenImageEdit, setCreditQwenImageEdit] = useState(initialCreditQwenImageEdit);
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -61,6 +63,7 @@ export default function SettingsForm({
           credit_image_banana: creditImageBanana,
           credit_poster_standard: creditPosterStandard,
           credit_poster_banana: creditPosterBanana,
+          credit_qwen_image_edit: creditQwenImageEdit,
         }),
       });
 
@@ -289,6 +292,20 @@ export default function SettingsForm({
                 className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
               />
               <p className="mt-1 text-xs text-gray-400 text-center">Credit/poster (Banana Premium)</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                ✨ AI Sáng Tạo (Premium Edit)
+              </label>
+              <input
+                type="number" min="0" max="1000"
+                value={creditQwenImageEdit}
+                onChange={(e) => setCreditQwenImageEdit(e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 text-gray-900 font-bold text-lg text-center focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition"
+              />
+              <p className="mt-1 text-xs text-gray-400 text-center">Credit/ảnh (Premium Edit)</p>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { db } from '@/db';
 import { workspaces } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { ArrowLeft, Bot, FileText, ImageIcon, ChevronRight, Crown, Sparkles, History, ClipboardList, Palette } from 'lucide-react';
+import { ArrowLeft, Bot, FileText, ImageIcon, ChevronRight, Crown, Sparkles, History, ClipboardList, Palette, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default async function DashboardPage({
@@ -80,6 +80,24 @@ export default async function DashboardPage({
                    <ChevronRight className="w-4 h-4" />
                 </div>
              </Link>
+
+              {/* Thẻ Công cụ AI Chỉnh Ảnh Sáng Tạo */}
+              <Link href={`/${workspaceId}/tools/qwen-image-edit`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-cyan-500/50 hover:shadow-md transition-all h-full">
+                 <div className="p-5 flex-1">
+                    <div className="w-12 h-12 bg-cyan-50 text-cyan-600 flex items-center justify-center rounded-sm mb-4 group-hover:scale-110 transition-transform">
+                       <Wand2 className="w-6 h-6" />
+                    </div>
+                    <div className="flex items-center gap-2 mb-2">
+                       <h3 className="text-lg font-bold text-gray-900 group-hover:text-cyan-600 transition-colors">AI Chỉnh Ảnh Sáng Tạo</h3>
+                       <span className="text-[10px] font-bold bg-cyan-600 text-white px-1.5 py-0.5 rounded-sm uppercase">PREMIUM</span>
+                    </div>
+                    <p className="text-sm text-gray-500 line-clamp-3">Tự viết prompt để chỉnh sửa ảnh AI. Thay nền, ghép ảnh, chuyển phong cách — tự lưu Drive.</p>
+                 </div>
+                 <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/50 flex items-center justify-between text-sm font-semibold text-gray-600 group-hover:text-cyan-600 transition-colors">
+                    <span>Truy cập ngay</span>
+                    <ChevronRight className="w-4 h-4" />
+                 </div>
+              </Link>
 
               {/* Thẻ Công cụ Poster AI */}
               <Link href={`/${workspaceId}/tools/poster`} className="group flex flex-col bg-white border border-gray-200 rounded-sm shadow-sm hover:border-pink-500/50 hover:shadow-md transition-all h-full">

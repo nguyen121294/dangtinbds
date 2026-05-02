@@ -46,7 +46,7 @@ export async function POST(request: Request) {
     }
 
     // Credit pricing validation (0-1000 range)
-    for (const key of ['credit_base_v1', 'credit_base_v2v3', 'credit_image_standard', 'credit_image_banana'] as const) {
+    for (const key of ['credit_base_v1', 'credit_base_v2v3', 'credit_image_standard', 'credit_image_banana', 'credit_poster_standard', 'credit_poster_banana', 'credit_qwen_image_edit'] as const) {
       if (body[key] !== undefined) {
         const v = parseInt(body[key], 10);
         if (isNaN(v) || v < 0 || v > 1000) {
