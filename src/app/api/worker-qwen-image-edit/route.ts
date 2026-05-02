@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     await replicate.predictions.create({
       model: "qwen/qwen-image-edit-plus",
       input: {
-        image_input: [base64Original],
+        image: [base64Original],
         prompt: prompt,
         disable_safety_checker: true,
       },

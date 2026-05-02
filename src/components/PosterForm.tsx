@@ -395,6 +395,7 @@ export default function PosterForm({ workspaceId }: { workspaceId?: string }) {
               <span className="block text-xs text-gray-500 mt-0.5">Poster chất lượng tốt · Xử lý nhanh</span>
             </div>
           </label>
+          {/* TẠM ẨN MODEL BANANA DO LỖI FONT TIẾNG VIỆT
           <label className={`flex items-start p-3 rounded-sm border cursor-pointer transition ${imageProcessingEngine === 'replicate_banana' ? 'bg-white border-[#E03C31] shadow-sm' : 'bg-gray-50 border-gray-200 hover:bg-white'}`}>
             <input type="radio" name="posterEngine" value="replicate_banana" checked={imageProcessingEngine === 'replicate_banana'} onChange={e => setImageProcessingEngine(e.target.value)} className="mt-0.5 text-[#E03C31] cursor-pointer" />
             <div className="ml-3">
@@ -402,6 +403,7 @@ export default function PosterForm({ workspaceId }: { workspaceId?: string }) {
               <span className="block text-xs text-gray-500 mt-0.5">Chất lượng cao cấp · Chi tiết sắc nét</span>
             </div>
           </label>
+          */}
         </div>
 
         <div className="mb-4">

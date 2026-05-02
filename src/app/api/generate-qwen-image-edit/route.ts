@@ -42,26 +42,13 @@ export async function POST(req: NextRequest) {
     const pricing = await getCreditPricing();
     const requiredCredits = editList.length * pricing.creditQwenImageEdit;
 
+    // ✅ PRE-CHECK credit (read-only — không trừ trước)
     if (requiredCredits > 0) {
-      const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
-      const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
-      if (!deductRes.success) {
-        return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
+      const { checkCreditBalance } = await import('@/lib/workspace-utils');
+      const balanceCheck = await checkCreditBalance(workspaceId, user.id, requiredCredits);
+      if (!balanceCheck.success) {
+        return NextResponse.json({ success: false, error: balanceCheck.error }, { status: 403 });
       }
-
-      // Usage log
-      const jobId = randomUUID();
-      await db.insert(usageLogs).values({
-        id: randomUUID(),
-        jobId,
-        workspaceId,
-        userId: user.id,
-        tool: 'qwen_image_edit',
-        creditsCharged: requiredCredits,
-        status: 'success',
-        modelUsed: 'premium_edit_image',
-        inputSummary: `${editList.length} ảnh | Prompt: ${prompt.substring(0, 150)}`.substring(0, 200),
-      });
     }
 
     // Create Drive folder structure
@@ -138,9 +125,33 @@ export async function POST(req: NextRequest) {
     await Promise.allSettled(publishPromises);
     console.log(`[QwenImageEdit] 🚀 Đã bắn ${editList.length} message sang Worker.`);
 
+    // ✅ TRỪ CREDIT SAU KHI FAN-OUT THÀNH CÔNG
+    if (requiredCredits > 0) {
+      const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
+      const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
+      if (!deductRes.success) {
+        console.error(`[QwenImageEdit] ⚠️ Fan-out OK nhưng trừ credit thất bại: ${deductRes.error}`);
+      }
+
+      // Usage log
+      const jobId = randomUUID();
+      await db.insert(usageLogs).values({
+        id: randomUUID(),
+        jobId,
+        workspaceId,
+        userId: user.id,
+        tool: 'qwen_image_edit',
+        creditsCharged: requiredCredits,
+        status: 'success',
+        modelUsed: 'premium_edit_image',
+        inputSummary: `${editList.length} ảnh | Prompt: ${prompt.substring(0, 150)}`.substring(0, 200),
+      });
+    }
+
     return NextResponse.json({ success: true, message: `Đã tiếp nhận ${editList.length} ảnh để chỉnh sửa AI.` });
   } catch (error: any) {
     console.error("QwenImageEdit Error:", error);
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
   }
 }
+

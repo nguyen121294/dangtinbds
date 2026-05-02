@@ -37,11 +37,13 @@ export async function POST(req: NextRequest) {
     const imageCount = images && Array.isArray(images) ? images.length : 0;
     const requiredCredits = pricing.creditBaseV1 + (imageCount * (isBanana ? pricing.creditImageBanana : pricing.creditImageStandard));
 
-    const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
-    const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
-    
-    if (!deductRes.success) {
-      return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
+    // ✅ PRE-CHECK credit (read-only — không trừ trước)
+    if (requiredCredits > 0) {
+      const { checkCreditBalance } = await import('@/lib/workspace-utils');
+      const balanceCheck = await checkCreditBalance(workspaceId, user.id, requiredCredits);
+      if (!balanceCheck.success) {
+        return NextResponse.json({ success: false, error: balanceCheck.error }, { status: 403 });
+      }
     }
 
     // Pass everything to QStash Worker
@@ -65,6 +67,15 @@ export async function POST(req: NextRequest) {
       body: workerPayload, // Forward all form fields to the background worker
       retries: 3, // Automatically retry 3 times if something fails (e.g. Gemini 503 error)
     });
+
+    // ✅ TRỪ CREDIT SAU KHI PUBLISH THÀNH CÔNG
+    if (requiredCredits > 0) {
+      const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
+      const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
+      if (!deductRes.success) {
+        console.error(`[GenerateAsync] ⚠️ QStash OK nhưng trừ credit thất bại: ${deductRes.error}`);
+      }
+    }
 
     return NextResponse.json({ success: true, messageId: res.messageId, workerUrl });
   } catch (error: any) {

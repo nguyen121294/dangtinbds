@@ -40,26 +40,13 @@ export async function POST(req: NextRequest) {
     const isBanana = imageProcessingEngine === 'replicate_banana';
     const requiredCredits = editList.length * (isBanana ? pricing.creditImageBanana : pricing.creditImageStandard);
 
+    // ✅ PRE-CHECK credit (read-only — không trừ trước)
     if (requiredCredits > 0) {
-      const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
-      const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
-      if (!deductRes.success) {
-        return NextResponse.json({ success: false, error: deductRes.error }, { status: 403 });
+      const { checkCreditBalance } = await import('@/lib/workspace-utils');
+      const balanceCheck = await checkCreditBalance(workspaceId, user.id, requiredCredits);
+      if (!balanceCheck.success) {
+        return NextResponse.json({ success: false, error: balanceCheck.error }, { status: 403 });
       }
-
-      // Usage log for image processing
-      const jobId = randomUUID();
-      await db.insert(usageLogs).values({
-        id: randomUUID(),
-        jobId,
-        workspaceId,
-        userId: user.id,
-        tool: `image_editor_${imageProcessingEngine || 'default'}`,
-        creditsCharged: requiredCredits,
-        status: 'success',
-        modelUsed: imageProcessingEngine || 'openai_gpt',
-        inputSummary: `${editList.length} ảnh chỉnh sửa | Engine: ${imageProcessingEngine} | Objects: ${objectsToRemoveStr || 'mặc định'}`.substring(0, 200),
-      });
     }
 
     // Create Drive folder + fan-out via worker-image-editor
@@ -174,6 +161,29 @@ export async function POST(req: NextRequest) {
       });
       await Promise.allSettled(keepPromises);
       console.log(`[ImageEditor] ✅ Đã di chuyển ${keepList.length} ảnh vào thư mục "Ảnh không chỉnh sửa".`);
+    }
+
+    // ✅ TRỪ CREDIT SAU KHI FAN-OUT THÀNH CÔNG
+    if (requiredCredits > 0) {
+      const { deductWorkspaceCredit } = await import('@/lib/workspace-utils');
+      const deductRes = await deductWorkspaceCredit(workspaceId, user.id, requiredCredits);
+      if (!deductRes.success) {
+        console.error(`[ImageEditor] ⚠️ QStash OK nhưng trừ credit thất bại: ${deductRes.error}`);
+      }
+
+      // Usage log for image processing
+      const jobId = randomUUID();
+      await db.insert(usageLogs).values({
+        id: randomUUID(),
+        jobId,
+        workspaceId,
+        userId: user.id,
+        tool: `image_editor_${imageProcessingEngine || 'default'}`,
+        creditsCharged: requiredCredits,
+        status: 'success',
+        modelUsed: imageProcessingEngine || 'openai_gpt',
+        inputSummary: `${editList.length} ảnh chỉnh sửa | Engine: ${imageProcessingEngine} | Objects: ${objectsToRemoveStr || 'mặc định'}`.substring(0, 200),
+      });
     }
 
     return NextResponse.json({ success: true, message: `Đã xử lý: ${editList.length} ảnh cần AI, ${keepList.length} ảnh giữ nguyên.` });
